@@ -22,71 +22,139 @@
         <label for="dni">DNI:</label>
         <input type="text" id="dni" name="dni" required>
         
-        <label for="fecha-nacimiento">Fecha de Nacimiento:</label>
-        <input type="date" id="fecha-nacimiento" name="fecha-nacimiento" required>
-        <!-- Leyenda para mostrar la categoría calculada -->
-        <p id="categoria-leyenda"></p>
+        <label for="birth-year">Año de Nacimiento:</label>
+        <select id="birth-year" name="birth-year" required>
+          <option value="">Seleccione su año de nacimiento</option>
+          <!-- Se generarán las opciones automáticamente -->
+        </select>
+        <p id="age-category"></p>
         
         <label for="localidad">Localidad:</label>
         <input type="text" id="localidad" name="localidad" required>
         
-        <label for="grupo-running">Grupo de Running:</label>
-        <input type="text" id="grupo-running" name="grupo-running" required>
+        <label for="tipo-grupo">Grupo de Running:</label>
+        <select id="tipo-grupo" name="tipo-grupo" required>
+          <option value="individual">Individual</option>
+          <option value="grupo">Grupo de Running</option>
+        </select>
+        <!-- Input para el nombre del grupo, se muestra solo si se selecciona "Grupo de Running" -->
+        <div id="nombre-grupo-container" style="display: none;">
+          <label for="nombre-grupo">Nombre del Grupo:</label>
+          <input type="text" id="nombre-grupo" name="nombre-grupo">
+        </div>
+        
+        <label for="apto-medico">Apto Médico:</label>
+        <input type="file" id="apto-medico" name="apto-medico" accept=".pdf,.jpg,.png" required>
+        
+        <fieldset>
+          <legend>Categoría</legend>
+          <label>
+            <input type="radio" name="categoria" value="masculino" required>
+            Masculino
+          </label>
+          <label>
+            <input type="radio" name="categoria" value="femenino">
+            Femenino
+          </label>
+          <label>
+            <input type="radio" name="categoria" value="especial">
+            Especial
+          </label>
+        </fieldset>
+        <!-- Input para certificado de discapacidad, se muestra solo si se selecciona "especial" -->
+        <div id="certificado-container" style="display: none;">
+          <label for="certificado-discapacidad">Certificado de Discapacidad:</label>
+          <input type="file" id="certificado-discapacidad" name="certificado-discapacidad" accept=".pdf,.jpg,.png">
+        </div>
         
         <button type="submit">Registrar Atleta</button>
       </form>
     </section>
   </main>
   <script>
-    // Función para calcular la categoría según la fecha de nacimiento.
-    function calculateCategory(birthDateStr) {
-      const today = new Date();
-      const currentYear = today.getFullYear();
-      const birthDate = new Date(birthDateStr);
-      // Calcula la edad que tendrá al final del año
-      const ageAtYearEnd = currentYear - birthDate.getFullYear();
-      
-      if (ageAtYearEnd < 20) {
-        return "Menos de 20";
-      } else if (ageAtYearEnd >= 20 && ageAtYearEnd <= 24) {
-        return "20 a 24";
-      } else if (ageAtYearEnd >= 25 && ageAtYearEnd <= 29) {
-        return "25 a 29";
-      } else if (ageAtYearEnd >= 30 && ageAtYearEnd <= 34) {
-        return "30 a 34";
-      } else if (ageAtYearEnd >= 35 && ageAtYearEnd <= 39) {
-        return "35 a 39";
-      } else if (ageAtYearEnd >= 40 && ageAtYearEnd <= 44) {
-        return "40 a 44";
-      } else if (ageAtYearEnd >= 45 && ageAtYearEnd <= 49) {
-        return "45 a 49";
-      } else if (ageAtYearEnd >= 50 && ageAtYearEnd <= 54) {
-        return "50 a 54";
-      } else if (ageAtYearEnd >= 55 && ageAtYearEnd <= 59) {
-        return "55 a 59";
-      } else if (ageAtYearEnd >= 60 && ageAtYearEnd <= 64) {
-        return "60 a 64";
-      } else if (ageAtYearEnd >= 65 && ageAtYearEnd <= 69) {
-        return "65 a 69";
-      } else if (ageAtYearEnd >= 70 && ageAtYearEnd <= 74) {
-        return "70 a 74";
-      } else if (ageAtYearEnd >= 75 && ageAtYearEnd <= 79) {
-        return "75 a 79";
-      } else if (ageAtYearEnd >= 80 && ageAtYearEnd <= 84) {
-        return "80 a 84";
-      } else if (ageAtYearEnd >= 85 && ageAtYearEnd <= 89) {
-        return "85 a 89";
-      } else {
-        return "Categoría no definida";
+    // --- Población del combobox de Año de Nacimiento ---
+    (function populateYearSelect() {
+      const select = document.getElementById("birth-year");
+      const currentYear = new Date().getFullYear();
+      // Suponemos que la edad mínima es 10 y máxima 100
+      const startYear = currentYear - 100;
+      const endYear = currentYear - 10;
+      for (let year = endYear; year >= startYear; year--) {
+        const option = document.createElement("option");
+        option.value = year;
+        option.textContent = year;
+        select.appendChild(option);
       }
-    }
+    })();
     
-    // Actualiza la leyenda de la categoría cuando se cambia la fecha de nacimiento.
-    document.getElementById("fecha-nacimiento").addEventListener("change", function() {
-      const birthDateValue = this.value;
-      if (birthDateValue) {
-        const categoria = calculateCategory(birthDateValue);
-        document.getElementById("categoria-leyenda").textContent = "Categoría asignada: " + categoria;
+    // --- Cálculo de la Categoría por Edad ---
+    document.getElementById("birth-year").addEventListener("change", function() {
+      const birthYear = parseInt(this.value);
+      const currentYear = new Date().getFullYear();
+      if (birthYear) {
+        const ageAtYearEnd = currentYear - birthYear;
+        let category;
+        if (ageAtYearEnd < 20) {
+          category = "Menos de 20";
+        } else if (ageAtYearEnd >= 20 && ageAtYearEnd <= 24) {
+          category = "20 a 24";
+        } else if (ageAtYearEnd >= 25 && ageAtYearEnd <= 29) {
+          category = "25 a 29";
+        } else if (ageAtYearEnd >= 30 && ageAtYearEnd <= 34) {
+          category = "30 a 34";
+        } else if (ageAtYearEnd >= 35 && ageAtYearEnd <= 39) {
+          category = "35 a 39";
+        } else if (ageAtYearEnd >= 40 && ageAtYearEnd <= 44) {
+          category = "40 a 44";
+        } else if (ageAtYearEnd >= 45 && ageAtYearEnd <= 49) {
+          category = "45 a 49";
+        } else if (ageAtYearEnd >= 50 && ageAtYearEnd <= 54) {
+          category = "50 a 54";
+        } else if (ageAtYearEnd >= 55 && ageAtYearEnd <= 59) {
+          category = "55 a 59";
+        } else if (ageAtYearEnd >= 60 && ageAtYearEnd <= 64) {
+          category = "60 a 64";
+        } else if (ageAtYearEnd >= 65 && ageAtYearEnd <= 69) {
+          category = "65 a 69";
+        } else if (ageAtYearEnd >= 70 && ageAtYearEnd <= 74) {
+          category = "70 a 74";
+        } else if (ageAtYearEnd >= 75 && ageAtYearEnd <= 79) {
+          category = "75 a 79";
+        } else if (ageAtYearEnd >= 80 && ageAtYearEnd <= 84) {
+          category = "80 a 84";
+        } else if (ageAtYearEnd >= 85 && ageAtYearEnd <= 89) {
+          category = "85 a 89";
+        } else {
+          category = "Categoría no definida";
+        }
+        document.getElementById("age-category").textContent = "Categoría por edad: " + category;
+      } else {
+        document.getElementById("age-category").textContent = "";
+      }
+    });
+    
+    // --- Mostrar/Ocultar certificado de discapacidad según la categoría elegida ---
+    const categoriaRadios = document.getElementsByName("categoria");
+    categoriaRadios.forEach(function(radio) {
+      radio.addEventListener("change", function() {
+        if (this.value === "especial") {
+          document.getElementById("certificado-container").style.display = "block";
+          document.getElementById("certificado-discapacidad").required = true;
+        } else {
+          document.getElementById("certificado-container").style.display = "none";
+          document.getElementById("certificado-discapacidad").required = false;
+        }
+      });
+    });
+    
+    // --- Mostrar/Ocultar el campo para el nombre del grupo ---
+    document.getElementById("tipo-grupo").addEventListener("change", function() {
+      if (this.value === "grupo") {
+        document.getElementById("nombre-grupo-container").style.display = "block";
+        document.getElementById("nombre-grupo").required = true;
+      } else {
+        document.getElementById("nombre-grupo-container").style.display = "none";
+        document.getElementById("nombre-grupo").required = false;
       }
     });
   </script>
