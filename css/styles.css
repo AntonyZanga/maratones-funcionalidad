@@ -1,34 +1,103 @@
 /* css/styles.css */
 
-/* Estilos básicos */
-body {
-  font-family: Arial, sans-serif;
-  margin: 20px;
-  background-color: #f7f7f7;
+/* Estilos básicos y mobile-first */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f7f7f7;
+  padding: 10px;
+}
+
+/* Encabezado */
 header h1 {
   text-align: center;
   color: #333;
-  margin-bottom: 40px;
+  margin-bottom: 20px;
+  font-size: 24px;
 }
 
+/* Contenido principal */
 main {
+  padding: 10px;
   text-align: center;
 }
 
-/* Estilos para el botón */
+/* Botón principal en index.html */
 button {
-  padding: 10px 20px;
-  font-size: 16px;
-  cursor: pointer;
+  padding: 15px;
+  font-size: 18px;
   background-color: #007bff;
   border: none;
-  color: #fff;
-  border-radius: 4px;
+  color: white;
+  border-radius: 5px;
+  width: 100%;
+  max-width: 300px;
+  margin: 10px auto;
+  display: block;
+  cursor: pointer;
   transition: background-color 0.3s ease;
 }
 
 button:hover {
   background-color: #0056b3;
+}
+
+/* Estilos para el formulario de registration.html */
+#form-registro {
+  max-width: 500px;
+  margin: 20px auto;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+#form-registro form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Etiquetas e inputs en el formulario */
+#form-registro label {
+  margin-bottom: 5px;
+  font-size: 16px;
+  text-align: left;
+}
+
+#form-registro input {
+  margin-bottom: 15px;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 100%;
+}
+
+/* Botón del formulario */
+#form-registro button {
+  padding: 15px;
+  font-size: 18px;
+  background-color: #007bff;
+  border: none;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#form-registro button:hover {
+  background-color: #0056b3;
+}
+
+/* Leyenda para la categoría */
+#categoria-leyenda {
+  margin-bottom: 15px;
+  font-style: italic;
+  color: #555;
+  text-align: left;
 }
