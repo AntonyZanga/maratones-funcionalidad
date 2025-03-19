@@ -19,18 +19,16 @@
         <label for="apellido">Apellido:</label>
         <input type="text" id="apellido" name="apellido" required>
 
-         <!-- Campos para Contraseña -->
+        <!-- Campos de contraseña -->
         <label for="password">Contraseña (6 dígitos):</label>
         <input type="password" id="password" name="password" pattern="\d{6}" required>
 
-        <label for="confirm-password">Reingrese Contraseña (6 dígitos):</label>
+        <label for="confirm-password">Confirmar contraseña (6 dígitos):</label>
         <input type="password" id="confirm-password" name="confirm-password" pattern="\d{6}" required>
-        <span id="password-valid" style="color: green; font-size: 18px; margin-left: 10px;"></span>
 
         <label for="dni">DNI:</label>
         <input type="text" id="dni" name="dni" required>
 
-        <!-- Input para fecha completa -->
         <label for="fecha-nacimiento">Fecha de Nacimiento:</label>
         <input type="date" id="fecha-nacimiento" name="fecha-nacimiento" required>
         <p id="age-category"></p>
@@ -43,17 +41,15 @@
           <option value="individual">Individual</option>
           <option value="grupo">Grupo de Running</option>
         </select>
-        <!-- Campo para el nombre del grupo, visible solo si se selecciona "Grupo de Running" -->
         <div id="nombre-grupo-container" style="display: none;">
           <label for="nombre-grupo">Nombre del Grupo:</label>
           <input type="text" id="nombre-grupo" name="nombre-grupo">
         </div>
 
-        <!-- Apto Médico ya no es obligatorio -->
         <label for="apto-medico">Apto Médico:</label>
+        <!-- Apto Médico ya no es obligatorio -->
         <input type="file" id="apto-medico" name="apto-medico" accept=".pdf,.jpg,.png">
 
-        <!-- Radio buttons para categoría -->
         <fieldset>
           <legend>Categoría</legend>
           <label>
@@ -69,7 +65,6 @@
             Especial
           </label>
         </fieldset>
-        <!-- Campo para certificado, visible solo si se selecciona "especial" -->
         <div id="certificado-container" style="display: none;">
           <label for="certificado-discapacidad">Certificado de Discapacidad:</label>
           <input type="file" id="certificado-discapacidad" name="certificado-discapacidad" accept=".pdf,.jpg,.png">
@@ -80,7 +75,27 @@
     </section>
   </main>
   <script>
-    // Validación del formulario: se impide el envío si algún campo requerido falta.
+    // Validación de contraseñas en tiempo real
+    const passwordField = document.getElementById("password");
+    const confirmPasswordField = document.getElementById("confirm-password");
+
+    function validatePasswords() {
+      const pass = passwordField.value;
+      const confirmPass = confirmPasswordField.value;
+      // Comprueba si ambos tienen 6 dígitos y coinciden
+      if (pass === confirmPass && pass.length === 6) {
+        passwordField.style.borderColor = "green";
+        confirmPasswordField.style.borderColor = "green";
+      } else {
+        passwordField.style.borderColor = "red";
+        confirmPasswordField.style.borderColor = "red";
+      }
+    }
+
+    passwordField.addEventListener("input", validatePasswords);
+    confirmPasswordField.addEventListener("input", validatePasswords);
+
+    // Validación del formulario: se previene el envío si algún campo requerido falta.
     document.getElementById("registro-form").addEventListener("submit", function(e) {
       if (!this.checkValidity()) {
         e.preventDefault();
@@ -157,25 +172,6 @@
       } else {
         document.getElementById("nombre-grupo-container").style.display = "none";
         document.getElementById("nombre-grupo").required = false;
-      }
-    });
-
-    // Validación en tiempo real para la contraseña y su confirmación
-    const passwordField = document.getElementById("password");
-    const confirmPasswordField = document.getElementById("confirm-password");
-    const passwordValidSpan = document.getElementById("password-valid");
-
-    confirmPasswordField.addEventListener("input", function() {
-      if (confirmPasswordField.value !== passwordField.value) {
-        confirmPasswordField.setCustomValidity("Las contraseñas no coinciden.");
-        passwordValidSpan.textContent = "";
-      } else {
-        confirmPasswordField.setCustomValidity("");
-        if (/^\d{6}$/.test(confirmPasswordField.value)) {
-          passwordValidSpan.textContent = "✓";
-        } else {
-          passwordValidSpan.textContent = "";
-        }
       }
     });
   </script>
