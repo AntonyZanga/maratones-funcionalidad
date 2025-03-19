@@ -97,7 +97,7 @@ fieldset {
   padding: 0;
 }
 
-/* Leyenda del fieldset: agregar margen inferior para separar de los radio buttons */
+/* Leyenda del fieldset: agregar margen inferior */
 fieldset legend {
   font-size: 16px;
   font-weight: bold;
@@ -110,4 +110,3 @@ input[type="date"] {
   -moz-appearance: none;
   appearance: auto;
 }
-
