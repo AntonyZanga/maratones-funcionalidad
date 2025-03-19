@@ -35,7 +35,7 @@
           <option value="individual">Individual</option>
           <option value="grupo">Grupo de Running</option>
         </select>
-        <!-- Campo adicional para el nombre del grupo, se muestra solo si se selecciona "Grupo de Running" -->
+        <!-- Campo adicional para el nombre del grupo -->
         <div id="nombre-grupo-container" style="display: none;">
           <label for="nombre-grupo">Nombre del Grupo:</label>
           <input type="text" id="nombre-grupo" name="nombre-grupo">
@@ -44,7 +44,7 @@
         <label for="apto-medico">Apto Médico:</label>
         <input type="file" id="apto-medico" name="apto-medico" accept=".pdf,.jpg,.png" required>
 
-        <!-- Radio buttons para categoría -->
+        <!-- Fieldset para categoría con radio buttons en línea -->
         <fieldset>
           <legend>Categoría</legend>
           <label>
@@ -60,7 +60,7 @@
             Especial
           </label>
         </fieldset>
-        <!-- Campo para certificado de discapacidad que se muestra si se selecciona "especial" -->
+        <!-- Campo para certificado, visible solo si se selecciona "especial" -->
         <div id="certificado-container" style="display: none;">
           <label for="certificado-discapacidad">Certificado de Discapacidad:</label>
           <input type="file" id="certificado-discapacidad" name="certificado-discapacidad" accept=".pdf,.jpg,.png">
@@ -71,13 +71,20 @@
     </section>
   </main>
   <script>
+    // Validación del formulario: se impide el envío si algún campo requerido falta.
+    document.getElementById("registro-form").addEventListener("submit", function(e) {
+      if (!this.checkValidity()) {
+        e.preventDefault();
+        this.reportValidity();
+      }
+    });
+
     // Cálculo de la categoría por edad usando la fecha completa
     document.getElementById("fecha-nacimiento").addEventListener("change", function() {
       const birthDateValue = this.value;
       if (birthDateValue) {
         const birthDate = new Date(birthDateValue);
         const currentYear = new Date().getFullYear();
-        // Calcular la edad que tendrá al finalizar el año
         const ageAtYearEnd = currentYear - birthDate.getFullYear();
         let category;
         if (ageAtYearEnd < 20) {
