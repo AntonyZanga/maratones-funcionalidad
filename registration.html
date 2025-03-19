@@ -19,6 +19,14 @@
         <label for="apellido">Apellido:</label>
         <input type="text" id="apellido" name="apellido" required>
 
+         <!-- Campos para Contraseña -->
+        <label for="password">Contraseña (6 dígitos):</label>
+        <input type="password" id="password" name="password" pattern="\d{6}" required>
+
+        <label for="confirm-password">Reingrese Contraseña (6 dígitos):</label>
+        <input type="password" id="confirm-password" name="confirm-password" pattern="\d{6}" required>
+        <span id="password-valid" style="color: green; font-size: 18px; margin-left: 10px;"></span>
+
         <label for="dni">DNI:</label>
         <input type="text" id="dni" name="dni" required>
 
@@ -44,14 +52,6 @@
         <!-- Apto Médico ya no es obligatorio -->
         <label for="apto-medico">Apto Médico:</label>
         <input type="file" id="apto-medico" name="apto-medico" accept=".pdf,.jpg,.png">
-
-        <!-- Campos para Contraseña -->
-        <label for="password">Contraseña (6 dígitos):</label>
-        <input type="password" id="password" name="password" pattern="\d{6}" required>
-
-        <label for="confirm-password">Reingrese Contraseña (6 dígitos):</label>
-        <input type="password" id="confirm-password" name="confirm-password" pattern="\d{6}" required>
-        <span id="password-valid" style="color: green; font-size: 18px; margin-left: 10px;"></span>
 
         <!-- Radio buttons para categoría -->
         <fieldset>
