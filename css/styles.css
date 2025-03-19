@@ -86,7 +86,7 @@ button:hover {
   color: #555;
 }
 
-/* Fieldset para los radio buttons: mostrar en línea */
+/* Fieldset para los radio buttons: mostrarlos en línea */
 fieldset {
   display: flex;
   flex-direction: row;
@@ -97,12 +97,14 @@ fieldset {
   padding: 0;
 }
 
+/* Leyenda del fieldset: agregar margen inferior para separar de los radio buttons */
 fieldset legend {
   font-size: 16px;
   font-weight: bold;
+  margin-bottom: 10px;
 }
 
-/* Estilos para inputs de tipo date (para asegurar que se vea el date picker) */
+/* Estilos para inputs de tipo date */
 input[type="date"] {
   -webkit-appearance: none;
   -moz-appearance: none;
