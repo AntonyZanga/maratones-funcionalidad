@@ -15,37 +15,36 @@
       <form id="registro-form">
         <label for="nombre">Nombre:</label>
         <input type="text" id="nombre" name="nombre" required>
-        
+
         <label for="apellido">Apellido:</label>
         <input type="text" id="apellido" name="apellido" required>
-        
+
         <label for="dni">DNI:</label>
         <input type="text" id="dni" name="dni" required>
-        
-        <label for="birth-year">Año de Nacimiento:</label>
-        <select id="birth-year" name="birth-year" required>
-          <option value="">Seleccione su año de nacimiento</option>
-          <!-- Se generarán las opciones automáticamente -->
-        </select>
+
+        <!-- Se vuelve a usar el date picker para la fecha completa -->
+        <label for="fecha-nacimiento">Fecha de Nacimiento:</label>
+        <input type="date" id="fecha-nacimiento" name="fecha-nacimiento" required>
         <p id="age-category"></p>
-        
+
         <label for="localidad">Localidad:</label>
         <input type="text" id="localidad" name="localidad" required>
-        
+
         <label for="tipo-grupo">Grupo de Running:</label>
         <select id="tipo-grupo" name="tipo-grupo" required>
           <option value="individual">Individual</option>
           <option value="grupo">Grupo de Running</option>
         </select>
-        <!-- Input para el nombre del grupo, se muestra solo si se selecciona "Grupo de Running" -->
+        <!-- Se muestra solo si se selecciona "Grupo de Running" -->
         <div id="nombre-grupo-container" style="display: none;">
           <label for="nombre-grupo">Nombre del Grupo:</label>
           <input type="text" id="nombre-grupo" name="nombre-grupo">
         </div>
-        
+
         <label for="apto-medico">Apto Médico:</label>
         <input type="file" id="apto-medico" name="apto-medico" accept=".pdf,.jpg,.png" required>
-        
+
+        <!-- Radio buttons para seleccionar la categoría -->
         <fieldset>
           <legend>Categoría</legend>
           <label>
@@ -61,38 +60,25 @@
             Especial
           </label>
         </fieldset>
-        <!-- Input para certificado de discapacidad, se muestra solo si se selecciona "especial" -->
+        <!-- Se muestra el input para certificado si se elige "especial" -->
         <div id="certificado-container" style="display: none;">
           <label for="certificado-discapacidad">Certificado de Discapacidad:</label>
           <input type="file" id="certificado-discapacidad" name="certificado-discapacidad" accept=".pdf,.jpg,.png">
         </div>
-        
+
         <button type="submit">Registrar Atleta</button>
       </form>
     </section>
   </main>
   <script>
-    // --- Población del combobox de Año de Nacimiento ---
-    (function populateYearSelect() {
-      const select = document.getElementById("birth-year");
-      const currentYear = new Date().getFullYear();
-      // Suponemos que la edad mínima es 10 y máxima 100
-      const startYear = currentYear - 100;
-      const endYear = currentYear - 10;
-      for (let year = endYear; year >= startYear; year--) {
-        const option = document.createElement("option");
-        option.value = year;
-        option.textContent = year;
-        select.appendChild(option);
-      }
-    })();
-    
-    // --- Cálculo de la Categoría por Edad ---
-    document.getElementById("birth-year").addEventListener("change", function() {
-      const birthYear = parseInt(this.value);
-      const currentYear = new Date().getFullYear();
-      if (birthYear) {
-        const ageAtYearEnd = currentYear - birthYear;
+    // Cálculo de la categoría por edad usando la fecha completa
+    document.getElementById("fecha-nacimiento").addEventListener("change", function() {
+      const birthDateValue = this.value;
+      if (birthDateValue) {
+        const birthDate = new Date(birthDateValue);
+        const currentYear = new Date().getFullYear();
+        // Calcular la edad que tendrá al finalizar el año
+        const ageAtYearEnd = currentYear - birthDate.getFullYear();
         let category;
         if (ageAtYearEnd < 20) {
           category = "Menos de 20";
@@ -132,8 +118,8 @@
         document.getElementById("age-category").textContent = "";
       }
     });
-    
-    // --- Mostrar/Ocultar certificado de discapacidad según la categoría elegida ---
+
+    // Mostrar/Ocultar el certificado de discapacidad según la categoría seleccionada
     const categoriaRadios = document.getElementsByName("categoria");
     categoriaRadios.forEach(function(radio) {
       radio.addEventListener("change", function() {
@@ -146,8 +132,8 @@
         }
       });
     });
-    
-    // --- Mostrar/Ocultar el campo para el nombre del grupo ---
+
+    // Mostrar/Ocultar el campo para el nombre del grupo de running
     document.getElementById("tipo-grupo").addEventListener("change", function() {
       if (this.value === "grupo") {
         document.getElementById("nombre-grupo-container").style.display = "block";
