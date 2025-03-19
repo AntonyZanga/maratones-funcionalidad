@@ -22,7 +22,7 @@
         <label for="dni">DNI:</label>
         <input type="text" id="dni" name="dni" required>
 
-        <!-- Input de tipo date para seleccionar fecha completa -->
+        <!-- Input para fecha completa -->
         <label for="fecha-nacimiento">Fecha de Nacimiento:</label>
         <input type="date" id="fecha-nacimiento" name="fecha-nacimiento" required>
         <p id="age-category"></p>
@@ -35,16 +35,25 @@
           <option value="individual">Individual</option>
           <option value="grupo">Grupo de Running</option>
         </select>
-        <!-- Campo adicional para el nombre del grupo -->
+        <!-- Campo para el nombre del grupo, visible solo si se selecciona "Grupo de Running" -->
         <div id="nombre-grupo-container" style="display: none;">
           <label for="nombre-grupo">Nombre del Grupo:</label>
           <input type="text" id="nombre-grupo" name="nombre-grupo">
         </div>
 
+        <!-- Apto Médico ya no es obligatorio -->
         <label for="apto-medico">Apto Médico:</label>
-        <input type="file" id="apto-medico" name="apto-medico" accept=".pdf,.jpg,.png" required>
+        <input type="file" id="apto-medico" name="apto-medico" accept=".pdf,.jpg,.png">
 
-        <!-- Fieldset para categoría con radio buttons en línea -->
+        <!-- Campos para Contraseña -->
+        <label for="password">Contraseña (6 dígitos):</label>
+        <input type="password" id="password" name="password" pattern="\d{6}" required>
+
+        <label for="confirm-password">Reingrese Contraseña (6 dígitos):</label>
+        <input type="password" id="confirm-password" name="confirm-password" pattern="\d{6}" required>
+        <span id="password-valid" style="color: green; font-size: 18px; margin-left: 10px;"></span>
+
+        <!-- Radio buttons para categoría -->
         <fieldset>
           <legend>Categoría</legend>
           <label>
@@ -148,6 +157,25 @@
       } else {
         document.getElementById("nombre-grupo-container").style.display = "none";
         document.getElementById("nombre-grupo").required = false;
+      }
+    });
+
+    // Validación en tiempo real para la contraseña y su confirmación
+    const passwordField = document.getElementById("password");
+    const confirmPasswordField = document.getElementById("confirm-password");
+    const passwordValidSpan = document.getElementById("password-valid");
+
+    confirmPasswordField.addEventListener("input", function() {
+      if (confirmPasswordField.value !== passwordField.value) {
+        confirmPasswordField.setCustomValidity("Las contraseñas no coinciden.");
+        passwordValidSpan.textContent = "";
+      } else {
+        confirmPasswordField.setCustomValidity("");
+        if (/^\d{6}$/.test(confirmPasswordField.value)) {
+          passwordValidSpan.textContent = "✓";
+        } else {
+          passwordValidSpan.textContent = "";
+        }
       }
     });
   </script>
