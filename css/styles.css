@@ -63,7 +63,7 @@ button:hover {
   flex-direction: column;
 }
 
-/* Etiquetas e inputs */
+/* Etiquetas, inputs y select */
 #form-registro label {
   margin-bottom: 5px;
   font-size: 16px;
@@ -79,11 +79,33 @@ button:hover {
   width: 100%;
 }
 
-/* Leyendas y contenedores condicionales */
-#age-category,
-#certificado-container,
-#nombre-grupo-container {
+/* Campo para mostrar la categoría calculada */
+#age-category {
   margin-bottom: 15px;
   font-style: italic;
   color: #555;
 }
+
+/* Fieldset para los radio buttons: mostrar en línea */
+fieldset {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+  border: none;
+  padding: 0;
+}
+
+fieldset legend {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* Estilos para inputs de tipo date (para asegurar que se vea el date picker) */
+input[type="date"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: auto;
+}
+
