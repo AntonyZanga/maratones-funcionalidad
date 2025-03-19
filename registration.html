@@ -22,7 +22,7 @@
         <label for="dni">DNI:</label>
         <input type="text" id="dni" name="dni" required>
 
-        <!-- Se vuelve a usar el date picker para la fecha completa -->
+        <!-- Input de tipo date para seleccionar fecha completa -->
         <label for="fecha-nacimiento">Fecha de Nacimiento:</label>
         <input type="date" id="fecha-nacimiento" name="fecha-nacimiento" required>
         <p id="age-category"></p>
@@ -35,7 +35,7 @@
           <option value="individual">Individual</option>
           <option value="grupo">Grupo de Running</option>
         </select>
-        <!-- Se muestra solo si se selecciona "Grupo de Running" -->
+        <!-- Campo adicional para el nombre del grupo, se muestra solo si se selecciona "Grupo de Running" -->
         <div id="nombre-grupo-container" style="display: none;">
           <label for="nombre-grupo">Nombre del Grupo:</label>
           <input type="text" id="nombre-grupo" name="nombre-grupo">
@@ -44,7 +44,7 @@
         <label for="apto-medico">Apto Médico:</label>
         <input type="file" id="apto-medico" name="apto-medico" accept=".pdf,.jpg,.png" required>
 
-        <!-- Radio buttons para seleccionar la categoría -->
+        <!-- Radio buttons para categoría -->
         <fieldset>
           <legend>Categoría</legend>
           <label>
@@ -60,7 +60,7 @@
             Especial
           </label>
         </fieldset>
-        <!-- Se muestra el input para certificado si se elige "especial" -->
+        <!-- Campo para certificado de discapacidad que se muestra si se selecciona "especial" -->
         <div id="certificado-container" style="display: none;">
           <label for="certificado-discapacidad">Certificado de Discapacidad:</label>
           <input type="file" id="certificado-discapacidad" name="certificado-discapacidad" accept=".pdf,.jpg,.png">
