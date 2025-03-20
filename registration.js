@@ -29,6 +29,23 @@ document.getElementById("password").addEventListener("input", function() {
   }
 });
 
+// Función para subir archivos a Firebase Storage
+async function subirArchivo(dni, archivo, carpeta) {
+  if (!archivo) return null; // Si no hay archivo, no sube nada
+
+  const extension = archivo.name.split('.').pop(); // Obtener la extensión
+  const nombreArchivo = `${dni}_${Date.now()}.${extension}`; // Evitar duplicados
+  const archivoRef = ref(storage, `${carpeta}/${nombreArchivo}`);
+
+  try {
+    await uploadBytes(archivoRef, archivo);
+    return await getDownloadURL(archivoRef); // Retorna la URL del archivo
+  } catch (error) {
+    console.error(`Error subiendo ${carpeta}:`, error);
+    return null;
+  }
+}
+
 // Función para registrar atleta
 async function registrarAtleta() {
   // Obtener valores del formulario
@@ -70,21 +87,11 @@ async function registrarAtleta() {
       return;
     }
 
-    let certificadoURL = null;
-    if (categoria === "especial" && certificadoDiscapacidad) {
-      const certificadoRef = ref(storage, `certificados_discapacidad/${dni}_${certificadoDiscapacidad.name}`);
-      await uploadBytes(certificadoRef, certificadoDiscapacidad);
-      certificadoURL = await getDownloadURL(certificadoRef);
-    }
+    // Subir archivos y obtener URLs
+    let certificadoURL = await subirArchivo(dni, certificadoDiscapacidad, "certificados_discapacidad");
+    let aptoMedicoURL = await subirArchivo(dni, aptoMedico, "aptos_medicos");
 
-    let aptoMedicoURL = null;
-    if (aptoMedico) {
-      const aptoRef = ref(storage, `aptos_medicos/${dni}_${aptoMedico.name}`);
-      await uploadBytes(aptoRef, aptoMedico);
-      aptoMedicoURL = await getDownloadURL(aptoRef);
-    }
-
-    // Guardar el atleta en Firestore
+    // Guardar atleta en Firestore
     await setDoc(atletaRef, {
       nombre,
       apellido,
@@ -92,9 +99,9 @@ async function registrarAtleta() {
       fechaNacimiento,
       localidad,
       grupoRunning: tipoGrupo,
-      grupoRunningNombre: nombreGrupo || "",  // Se guarda solo si es grupo
+      grupoRunningNombre: nombreGrupo || "", // Se guarda solo si es grupo
       categoria,
-      password,  // ⚠️ Debe encriptarse en producción
+      password, // ⚠️ En producción debe encriptarse
       aptoMedico: aptoMedicoURL,
       certificadoDiscapacidad: certificadoURL
     });
