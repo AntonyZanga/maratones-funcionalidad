@@ -5,31 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Registro de Atleta - Maratones de Sudeste</title>
   <link rel="stylesheet" href="css/styles.css">
-  <!-- Firebase SDK -->
-<script type="module">
-  // Importar Firebase desde los servidores de Google
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyAFHZcfSELn2Cfgh3I1og2mw3rIL8gqlAM",
-  authDomain: "maratonessudeste.firebaseapp.com",
-  projectId: "maratonessudeste",
-  storageBucket: "maratonessudeste.firebasestorage.app",
-  messagingSenderId: "76996108214",
-  appId: "1:76996108214:web:036e55fbfd01e15b462b17",
-  measurementId: "G-B1GL7QJGSH"
-};
-
-  // Inicializar Firebase
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  // Hacer accesible la base de datos en otros scripts
-  window.db = db;
-</script>
-
 </head>
 <body>
   <header>
@@ -44,12 +19,12 @@ const firebaseConfig = {
         <label for="apellido">Apellido:</label>
         <input type="text" id="apellido" name="apellido" required>
 
-        <!-- Campos de contraseña -->
         <label for="password">Contraseña (6 dígitos):</label>
         <input type="password" id="password" name="password" pattern="\d{6}" required>
 
-        <label for="confirm-password">Confirmar contraseña (6 dígitos):</label>
+        <label for="confirm-password">Confirmar contraseña:</label>
         <input type="password" id="confirm-password" name="confirm-password" pattern="\d{6}" required>
+        <span id="password-match"></span>
 
         <label for="dni">DNI:</label>
         <input type="text" id="dni" name="dni" required>
@@ -72,134 +47,25 @@ const firebaseConfig = {
         </div>
 
         <label for="apto-medico">Apto Médico:</label>
-        <!-- Apto Médico ya no es obligatorio -->
         <input type="file" id="apto-medico" name="apto-medico" accept=".pdf,.jpg,.png">
 
         <fieldset>
           <legend>Categoría</legend>
-          <label>
-            <input type="radio" name="categoria" value="masculino" required>
-            Masculino
-          </label>
-          <label>
-            <input type="radio" name="categoria" value="femenino">
-            Femenino
-          </label>
-          <label>
-            <input type="radio" name="categoria" value="especial">
-            Especial
-          </label>
+          <label><input type="radio" name="categoria" value="masculino" required> Masculino</label>
+          <label><input type="radio" name="categoria" value="femenino"> Femenino</label>
+          <label><input type="radio" name="categoria" value="especial"> Especial</label>
         </fieldset>
         <div id="certificado-container" style="display: none;">
           <label for="certificado-discapacidad">Certificado de Discapacidad:</label>
           <input type="file" id="certificado-discapacidad" name="certificado-discapacidad" accept=".pdf,.jpg,.png">
         </div>
 
-        <button type="submit">Registrar Atleta</button>
+        <button type="submit" id="btnRegistrar">Registrar Atleta</button>
+        <p id="registro-mensaje"></p>
       </form>
     </section>
   </main>
-  <script>
-    // Validación de contraseñas en tiempo real
-    const passwordField = document.getElementById("password");
-    const confirmPasswordField = document.getElementById("confirm-password");
 
-    function validatePasswords() {
-      const pass = passwordField.value;
-      const confirmPass = confirmPasswordField.value;
-      // Comprueba si ambos tienen 6 dígitos y coinciden
-      if (pass === confirmPass && pass.length === 6) {
-        passwordField.style.borderColor = "green";
-        confirmPasswordField.style.borderColor = "green";
-      } else {
-        passwordField.style.borderColor = "red";
-        confirmPasswordField.style.borderColor = "red";
-      }
-    }
-
-    passwordField.addEventListener("input", validatePasswords);
-    confirmPasswordField.addEventListener("input", validatePasswords);
-
-    // Validación del formulario: se previene el envío si algún campo requerido falta.
-    document.getElementById("registro-form").addEventListener("submit", function(e) {
-      if (!this.checkValidity()) {
-        e.preventDefault();
-        this.reportValidity();
-      }
-    });
-
-    // Cálculo de la categoría por edad usando la fecha completa
-    document.getElementById("fecha-nacimiento").addEventListener("change", function() {
-      const birthDateValue = this.value;
-      if (birthDateValue) {
-        const birthDate = new Date(birthDateValue);
-        const currentYear = new Date().getFullYear();
-        const ageAtYearEnd = currentYear - birthDate.getFullYear();
-        let category;
-        if (ageAtYearEnd < 20) {
-          category = "Menos de 20";
-        } else if (ageAtYearEnd >= 20 && ageAtYearEnd <= 24) {
-          category = "20 a 24";
-        } else if (ageAtYearEnd >= 25 && ageAtYearEnd <= 29) {
-          category = "25 a 29";
-        } else if (ageAtYearEnd >= 30 && ageAtYearEnd <= 34) {
-          category = "30 a 34";
-        } else if (ageAtYearEnd >= 35 && ageAtYearEnd <= 39) {
-          category = "35 a 39";
-        } else if (ageAtYearEnd >= 40 && ageAtYearEnd <= 44) {
-          category = "40 a 44";
-        } else if (ageAtYearEnd >= 45 && ageAtYearEnd <= 49) {
-          category = "45 a 49";
-        } else if (ageAtYearEnd >= 50 && ageAtYearEnd <= 54) {
-          category = "50 a 54";
-        } else if (ageAtYearEnd >= 55 && ageAtYearEnd <= 59) {
-          category = "55 a 59";
-        } else if (ageAtYearEnd >= 60 && ageAtYearEnd <= 64) {
-          category = "60 a 64";
-        } else if (ageAtYearEnd >= 65 && ageAtYearEnd <= 69) {
-          category = "65 a 69";
-        } else if (ageAtYearEnd >= 70 && ageAtYearEnd <= 74) {
-          category = "70 a 74";
-        } else if (ageAtYearEnd >= 75 && ageAtYearEnd <= 79) {
-          category = "75 a 79";
-        } else if (ageAtYearEnd >= 80 && ageAtYearEnd <= 84) {
-          category = "80 a 84";
-        } else if (ageAtYearEnd >= 85 && ageAtYearEnd <= 89) {
-          category = "85 a 89";
-        } else {
-          category = "Categoría no definida";
-        }
-        document.getElementById("age-category").textContent = "Categoría por edad: " + category;
-      } else {
-        document.getElementById("age-category").textContent = "";
-      }
-    });
-
-    // Mostrar/Ocultar el certificado de discapacidad según la categoría seleccionada
-    const categoriaRadios = document.getElementsByName("categoria");
-    categoriaRadios.forEach(function(radio) {
-      radio.addEventListener("change", function() {
-        if (this.value === "especial") {
-          document.getElementById("certificado-container").style.display = "block";
-          document.getElementById("certificado-discapacidad").required = true;
-        } else {
-          document.getElementById("certificado-container").style.display = "none";
-          document.getElementById("certificado-discapacidad").required = false;
-        }
-      });
-    });
-
-    // Mostrar/Ocultar el campo para el nombre del grupo de running
-    document.getElementById("tipo-grupo").addEventListener("change", function() {
-      if (this.value === "grupo") {
-        document.getElementById("nombre-grupo-container").style.display = "block";
-        document.getElementById("nombre-grupo").required = true;
-      } else {
-        document.getElementById("nombre-grupo-container").style.display = "none";
-        document.getElementById("nombre-grupo").required = false;
-      }
-    });
-  </script>
   <script type="module" src="registration.js"></script>
 </body>
 </html>
