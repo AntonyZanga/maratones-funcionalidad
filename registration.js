@@ -19,45 +19,17 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// Referencia al botón de registro
-const btnRegistrar = document.querySelector("#btn-registrar");
-
-// Validación en tiempo real de la contraseña
-document.getElementById("password").addEventListener("input", function() {
-  this.style.borderColor = this.value.length === 6 ? "green" : "red";
-});
-
 // Función para mostrar mensajes de estado
-function mostrarMensaje(mensaje, tipo = "info") {
-  const mensajeDiv = document.getElementById("mensaje");
-  mensajeDiv.innerText = mensaje;
-  mensajeDiv.style.color = tipo === "error" ? "red" : "black";
-}
-
-// Función para subir archivos a Firebase Storage
-async function subirArchivo(dni, archivo, carpeta) {
-  if (!archivo) return null;
-
-  const extension = archivo.name.split('.').pop();
-  const nombreArchivo = `${dni}_${Date.now()}.${extension}`;
-  const archivoRef = ref(storage, `${carpeta}/${nombreArchivo}`);
-
-  try {
-    mostrarMensaje(`Subiendo ${carpeta}...`);
-    await uploadBytes(archivoRef, archivo);
-    return await getDownloadURL(archivoRef);
-  } catch (error) {
-    console.error(`Error subiendo ${carpeta}:`, error);
-    mostrarMensaje(`Error al subir ${carpeta}`, "error");
-    return null;
-  }
+function mostrarMensaje(mensaje, color = "black") {
+  const mensajeElemento = document.getElementById("mensaje");
+  mensajeElemento.textContent = mensaje;
+  mensajeElemento.style.color = color;
 }
 
 // Función para registrar atleta
 async function registrarAtleta() {
-  // Deshabilitar el botón mientras se procesa
-  btnRegistrar.disabled = true;
-  mostrarMensaje("Procesando registro...");
+  // Evitar el envío automático del formulario
+  event.preventDefault();
 
   // Obtener valores del formulario
   let dni = document.getElementById("dni").value.trim();
@@ -75,8 +47,7 @@ async function registrarAtleta() {
 
   // Validaciones básicas
   if (!dni || !nombre || !apellido || !fechaNacimiento || !localidad || !categoria || !password || !confirmPassword) {
-    mostrarMensaje("Todos los campos son obligatorios.", "error");
-    btnRegistrar.disabled = false;
+    mostrarMensaje("Todos los campos son obligatorios.", "red");
     return;
   }
 
@@ -95,16 +66,27 @@ async function registrarAtleta() {
     const atletaSnap = await getDoc(atletaRef);
 
     if (atletaSnap.exists()) {
-      mostrarMensaje("Este DNI ya está registrado.", "error");
-      btnRegistrar.disabled = false;
+      mostrarMensaje("Este DNI ya está registrado.", "red");
       return;
     }
 
-    // Subir archivos y obtener URLs
-    let certificadoURL = await subirArchivo(dni, certificadoDiscapacidad, "certificados_discapacidad");
-    let aptoMedicoURL = await subirArchivo(dni, aptoMedico, "aptos_medicos");
+    let certificadoURL = null;
+    if (categoria === "especial" && certificadoDiscapacidad) {
+      mostrarMensaje("Subiendo certificado de discapacidad...", "blue");
+      const certificadoRef = ref(storage, `certificados/${dni}_certificado.${certificadoDiscapacidad.name.split('.').pop()}`);
+      await uploadBytes(certificadoRef, certificadoDiscapacidad);
+      certificadoURL = await getDownloadURL(certificadoRef);
+    }
 
-    // Guardar atleta en Firestore
+    let aptoMedicoURL = null;
+    if (aptoMedico) {
+      mostrarMensaje("Subiendo apto médico...", "blue");
+      const aptoRef = ref(storage, `aptos_medicos/${dni}_apto.${aptoMedico.name.split('.').pop()}`);
+      await uploadBytes(aptoRef, aptoMedico);
+      aptoMedicoURL = await getDownloadURL(aptoRef);
+    }
+
+    // Guardar el atleta en Firestore
     await setDoc(atletaRef, {
       nombre,
       apellido,
@@ -114,24 +96,42 @@ async function registrarAtleta() {
       grupoRunning: tipoGrupo,
       grupoRunningNombre: nombreGrupo || "",
       categoria,
-      password, // ⚠️ En producción debe encriptarse
+      password, // ⚠️ Debe encriptarse en producción
       aptoMedico: aptoMedicoURL,
       certificadoDiscapacidad: certificadoURL
     });
 
-    mostrarMensaje("Registro exitoso.");
+    mostrarMensaje("Registro exitoso.", "green");
     document.getElementById("registro-form").reset();
   } catch (error) {
     console.error("Error al registrar:", error);
-    mostrarMensaje("Hubo un error al registrar. Inténtalo nuevamente.", "error");
+    mostrarMensaje("Hubo un error al registrar. Inténtalo nuevamente.", "red");
+  }
+}
+
+// Validación en vivo de la contraseña
+document.getElementById("password").addEventListener("input", validarPassword);
+document.getElementById("confirm-password").addEventListener("input", validarPassword);
+
+function validarPassword() {
+  let password = document.getElementById("password").value;
+  let confirmPassword = document.getElementById("confirm-password").value;
+  let passwordMatch = document.getElementById("password-match");
+
+  if (password.length < 6) {
+    passwordMatch.textContent = "La contraseña debe tener 6 caracteres.";
+    passwordMatch.style.color = "red";
+    return;
   }
 
-  // Habilitar nuevamente el botón
-  btnRegistrar.disabled = false;
+  if (password === confirmPassword && password.length === 6) {
+    passwordMatch.textContent = "Las contraseñas coinciden.";
+    passwordMatch.style.color = "green";
+  } else {
+    passwordMatch.textContent = "Las contraseñas no coinciden.";
+    passwordMatch.style.color = "red";
+  }
 }
 
 // Asignar la función al botón de registro
-document.getElementById("registro-form").addEventListener("submit", function (e) {
-  e.preventDefault();
-  registrarAtleta();
-});
+document.getElementById("registro-form").addEventListener("submit", registrarAtleta);
