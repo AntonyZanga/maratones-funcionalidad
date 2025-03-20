@@ -81,14 +81,12 @@ async function registrarAtleta() {
   }
 
   if (password.length !== 6) {
-    mostrarMensaje("La contraseña debe tener 6 caracteres.", "error");
-    btnRegistrar.disabled = false;
+    mostrarMensaje("La contraseña debe tener exactamente 6 caracteres.", "red");
     return;
   }
 
   if (password !== confirmPassword) {
-    mostrarMensaje("Las contraseñas no coinciden.", "error");
-    btnRegistrar.disabled = false;
+    mostrarMensaje("Las contraseñas no coinciden.", "red");
     return;
   }
 
@@ -130,6 +128,30 @@ async function registrarAtleta() {
 
   // Habilitar nuevamente el botón
   btnRegistrar.disabled = false;
+}
+
+// Validación en vivo de la contraseña
+document.getElementById("password").addEventListener("input", validarPassword);
+document.getElementById("confirm-password").addEventListener("input", validarPassword);
+
+function validarPassword() {
+  let password = document.getElementById("password").value;
+  let confirmPassword = document.getElementById("confirm-password").value;
+  let passwordMatch = document.getElementById("password-match");
+
+  if (password.length < 6) {
+    passwordMatch.textContent = "La contraseña debe tener 6 caracteres.";
+    passwordMatch.style.color = "red";
+    return;
+  }
+
+  if (password === confirmPassword && password.length === 6) {
+    passwordMatch.textContent = "Las contraseñas coinciden.";
+    passwordMatch.style.color = "green";
+  } else {
+    passwordMatch.textContent = "Las contraseñas no coinciden.";
+    passwordMatch.style.color = "red";
+  }
 }
 
 // Asignar la función al botón de registro
