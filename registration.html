@@ -65,7 +65,17 @@
       </form>
     </section>
   </main>
+<script>
+  document.getElementById("tipo-grupo").addEventListener("change", function () {
+    document.getElementById("nombre-grupo-container").style.display = this.value === "grupo" ? "block" : "none";
+  });
 
+  document.querySelectorAll('input[name="categoria"]').forEach(radio => {
+    radio.addEventListener("change", function () {
+      document.getElementById("certificado-container").style.display = this.value === "especial" ? "block" : "none";
+    });
+  });
+</script>
   <script type="module" src="registration.js"></script>
 </body>
 </html>
