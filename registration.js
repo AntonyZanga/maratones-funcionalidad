@@ -19,6 +19,16 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
+// Validación en tiempo real de la contraseña
+document.getElementById("password").addEventListener("input", function() {
+  const password = this.value;
+  if (password.length === 6) {
+    this.style.borderColor = "green";
+  } else {
+    this.style.borderColor = "red";
+  }
+});
+
 // Función para registrar atleta
 async function registrarAtleta() {
   // Obtener valores del formulario
@@ -62,14 +72,14 @@ async function registrarAtleta() {
 
     let certificadoURL = null;
     if (categoria === "especial" && certificadoDiscapacidad) {
-      const certificadoRef = ref(storage, `certificados/${dni}_certificado.pdf`);
+      const certificadoRef = ref(storage, `certificados_discapacidad/${dni}_${certificadoDiscapacidad.name}`);
       await uploadBytes(certificadoRef, certificadoDiscapacidad);
       certificadoURL = await getDownloadURL(certificadoRef);
     }
 
     let aptoMedicoURL = null;
     if (aptoMedico) {
-      const aptoRef = ref(storage, `aptos_medicos/${dni}_apto.pdf`);
+      const aptoRef = ref(storage, `aptos_medicos/${dni}_${aptoMedico.name}`);
       await uploadBytes(aptoRef, aptoMedico);
       aptoMedicoURL = await getDownloadURL(aptoRef);
     }
