@@ -66,25 +66,6 @@
     </section>
   </main>
   <script>
-    // Validación de contraseñas en tiempo real
-    const passwordField = document.getElementById("password");
-    const confirmPasswordField = document.getElementById("confirm-password");
-
-    function validatePasswords() {
-      const pass = passwordField.value;
-      const confirmPass = confirmPasswordField.value;
-      // Comprueba si ambos tienen 6 dígitos y coinciden
-      if (pass === confirmPass && pass.length === 6) {
-        passwordField.style.borderColor = "green";
-        confirmPasswordField.style.borderColor = "green";
-      } else {
-        passwordField.style.borderColor = "red";
-        confirmPasswordField.style.borderColor = "red";
-      }
-    }
-
-    passwordField.addEventListener("input", validatePasswords);
-    confirmPasswordField.addEventListener("input", validatePasswords);
     
     // Función para calcular la categoría según la fecha de nacimiento.
     function calculateCategory(birthDateStr) {
