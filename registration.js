@@ -19,35 +19,46 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
+// Referencia al botón de registro
+const btnRegistrar = document.getElementById("btn-registrar");
+
 // Validación en tiempo real de la contraseña
 document.getElementById("password").addEventListener("input", function() {
-  const password = this.value;
-  if (password.length === 6) {
-    this.style.borderColor = "green";
-  } else {
-    this.style.borderColor = "red";
-  }
+  this.style.borderColor = this.value.length === 6 ? "green" : "red";
 });
+
+// Función para mostrar mensajes de estado
+function mostrarMensaje(mensaje, tipo = "info") {
+  const mensajeDiv = document.getElementById("mensaje");
+  mensajeDiv.innerText = mensaje;
+  mensajeDiv.style.color = tipo === "error" ? "red" : "black";
+}
 
 // Función para subir archivos a Firebase Storage
 async function subirArchivo(dni, archivo, carpeta) {
-  if (!archivo) return null; // Si no hay archivo, no sube nada
+  if (!archivo) return null;
 
-  const extension = archivo.name.split('.').pop(); // Obtener la extensión
-  const nombreArchivo = `${dni}_${Date.now()}.${extension}`; // Evitar duplicados
+  const extension = archivo.name.split('.').pop();
+  const nombreArchivo = `${dni}_${Date.now()}.${extension}`;
   const archivoRef = ref(storage, `${carpeta}/${nombreArchivo}`);
 
   try {
+    mostrarMensaje(`Subiendo ${carpeta}...`);
     await uploadBytes(archivoRef, archivo);
-    return await getDownloadURL(archivoRef); // Retorna la URL del archivo
+    return await getDownloadURL(archivoRef);
   } catch (error) {
     console.error(`Error subiendo ${carpeta}:`, error);
+    mostrarMensaje(`Error al subir ${carpeta}`, "error");
     return null;
   }
 }
 
 // Función para registrar atleta
 async function registrarAtleta() {
+  // Deshabilitar el botón mientras se procesa
+  btnRegistrar.disabled = true;
+  mostrarMensaje("Procesando registro...");
+
   // Obtener valores del formulario
   let dni = document.getElementById("dni").value.trim();
   let nombre = document.getElementById("nombre").value.trim();
@@ -64,17 +75,20 @@ async function registrarAtleta() {
 
   // Validaciones básicas
   if (!dni || !nombre || !apellido || !fechaNacimiento || !localidad || !categoria || !password || !confirmPassword) {
-    alert("Todos los campos son obligatorios.");
+    mostrarMensaje("Todos los campos son obligatorios.", "error");
+    btnRegistrar.disabled = false;
     return;
   }
 
   if (password.length !== 6) {
-    alert("La contraseña debe tener 6 caracteres.");
+    mostrarMensaje("La contraseña debe tener 6 caracteres.", "error");
+    btnRegistrar.disabled = false;
     return;
   }
 
   if (password !== confirmPassword) {
-    alert("Las contraseñas no coinciden.");
+    mostrarMensaje("Las contraseñas no coinciden.", "error");
+    btnRegistrar.disabled = false;
     return;
   }
 
@@ -83,7 +97,8 @@ async function registrarAtleta() {
     const atletaSnap = await getDoc(atletaRef);
 
     if (atletaSnap.exists()) {
-      alert("Este DNI ya está registrado.");
+      mostrarMensaje("Este DNI ya está registrado.", "error");
+      btnRegistrar.disabled = false;
       return;
     }
 
@@ -99,23 +114,26 @@ async function registrarAtleta() {
       fechaNacimiento,
       localidad,
       grupoRunning: tipoGrupo,
-      grupoRunningNombre: nombreGrupo || "", // Se guarda solo si es grupo
+      grupoRunningNombre: nombreGrupo || "",
       categoria,
       password, // ⚠️ En producción debe encriptarse
       aptoMedico: aptoMedicoURL,
       certificadoDiscapacidad: certificadoURL
     });
 
-    alert("Registro exitoso.");
+    mostrarMensaje("Registro exitoso.");
     document.getElementById("registro-form").reset();
   } catch (error) {
     console.error("Error al registrar:", error);
-    alert("Hubo un error al registrar. Inténtalo nuevamente.");
+    mostrarMensaje("Hubo un error al registrar. Inténtalo nuevamente.", "error");
   }
+
+  // Habilitar nuevamente el botón
+  btnRegistrar.disabled = false;
 }
 
 // Asignar la función al botón de registro
 document.getElementById("registro-form").addEventListener("submit", function (e) {
-  e.preventDefault(); // Evita el envío automático del formulario
+  e.preventDefault();
   registrarAtleta();
 });
