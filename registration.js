@@ -1,37 +1,53 @@
+// Importar Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
+// Configuración de Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAFHZcfSELn2Cfgh3I1og2mw3rIL8gqlAM",
   authDomain: "maratonessudeste.firebaseapp.com",
   projectId: "maratonessudeste",
-  storageBucket: "maratonessudeste.firebasestorage.app",
+  storageBucket: "maratonessudeste.appspot.com",
   messagingSenderId: "76996108214",
   appId: "1:76996108214:web:036e55fbfd01e15b462b17",
   measurementId: "G-B1GL7QJGSH"
 };
 
+// Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
-document.getElementById("registro-form").addEventListener("submit", async function (event) {
-  event.preventDefault();
-  const mensaje = document.getElementById("registro-mensaje");
-  mensaje.textContent = "Procesando registro...";
-
+// Función para registrar atleta
+async function registrarAtleta() {
+  // Obtener valores del formulario
   let dni = document.getElementById("dni").value.trim();
   let nombre = document.getElementById("nombre").value.trim();
   let apellido = document.getElementById("apellido").value.trim();
   let fechaNacimiento = document.getElementById("fecha-nacimiento").value;
   let localidad = document.getElementById("localidad").value.trim();
-  let grupoRunning = document.getElementById("tipo-grupo").value;
-  let nombreGrupo = grupoRunning === "grupo" ? document.getElementById("nombre-grupo").value.trim() : "";
-  let categoria = document.querySelector("input[name='categoria']:checked").value;
+  let tipoGrupo = document.getElementById("tipo-grupo").value;
+  let nombreGrupo = tipoGrupo === "grupo" ? document.getElementById("nombre-grupo").value.trim() : null;
+  let categoria = document.querySelector('input[name="categoria"]:checked')?.value;
   let password = document.getElementById("password").value;
   let confirmPassword = document.getElementById("confirm-password").value;
+  let aptoMedico = document.getElementById("apto-medico").files[0];
+  let certificadoDiscapacidad = document.getElementById("certificado-discapacidad").files[0];
 
-  if (password.length !== 6 || password !== confirmPassword) {
-    mensaje.textContent = "Error: Las contraseñas deben coincidir y tener 6 dígitos.";
+  // Validaciones básicas
+  if (!dni || !nombre || !apellido || !fechaNacimiento || !localidad || !categoria || !password || !confirmPassword) {
+    alert("Todos los campos son obligatorios.");
+    return;
+  }
+
+  if (password.length !== 6) {
+    alert("La contraseña debe tener 6 caracteres.");
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    alert("Las contraseñas no coinciden.");
     return;
   }
 
@@ -40,26 +56,49 @@ document.getElementById("registro-form").addEventListener("submit", async functi
     const atletaSnap = await getDoc(atletaRef);
 
     if (atletaSnap.exists()) {
-      mensaje.textContent = "Error: Este DNI ya está registrado.";
+      alert("Este DNI ya está registrado.");
       return;
     }
 
+    let certificadoURL = null;
+    if (categoria === "especial" && certificadoDiscapacidad) {
+      const certificadoRef = ref(storage, `certificados/${dni}_certificado.pdf`);
+      await uploadBytes(certificadoRef, certificadoDiscapacidad);
+      certificadoURL = await getDownloadURL(certificadoRef);
+    }
+
+    let aptoMedicoURL = null;
+    if (aptoMedico) {
+      const aptoRef = ref(storage, `aptos_medicos/${dni}_apto.pdf`);
+      await uploadBytes(aptoRef, aptoMedico);
+      aptoMedicoURL = await getDownloadURL(aptoRef);
+    }
+
+    // Guardar el atleta en Firestore
     await setDoc(atletaRef, {
       nombre,
       apellido,
       dni: parseInt(dni),
       fechaNacimiento,
       localidad,
-      grupoRunning,
-      nombreGrupo,
+      grupoRunning: tipoGrupo,
+      grupoRunningNombre: nombreGrupo || "",  // Se guarda solo si es grupo
       categoria,
-      password, // 🔴 Se recomienda encriptar en producción
+      password,  // ⚠️ Debe encriptarse en producción
+      aptoMedico: aptoMedicoURL,
+      certificadoDiscapacidad: certificadoURL
     });
 
-    mensaje.textContent = "Registro exitoso.";
+    alert("Registro exitoso.");
     document.getElementById("registro-form").reset();
   } catch (error) {
-    mensaje.textContent = "Error al registrar. Inténtalo nuevamente.";
     console.error("Error al registrar:", error);
+    alert("Hubo un error al registrar. Inténtalo nuevamente.");
   }
+}
+
+// Asignar la función al botón de registro
+document.getElementById("registro-form").addEventListener("submit", function (e) {
+  e.preventDefault(); // Evita el envío automático del formulario
+  registrarAtleta();
 });
