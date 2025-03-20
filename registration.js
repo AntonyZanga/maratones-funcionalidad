@@ -1,51 +1,49 @@
-// Importar funciones necesarias de Firebase
-import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-// Función para registrar un atleta
-async function registrarAtleta() {
-  const db = window.db; // Accede a la base de datos Firestore
+const firebaseConfig = {
+  apiKey: "AIzaSyAFHZcfSELn2Cfgh3I1og2mw3rIL8gqlAM",
+  authDomain: "maratonessudeste.firebaseapp.com",
+  projectId: "maratonessudeste",
+  storageBucket: "maratonessudeste.firebasestorage.app",
+  messagingSenderId: "76996108214",
+  appId: "1:76996108214:web:036e55fbfd01e15b462b17",
+  measurementId: "G-B1GL7QJGSH"
+};
 
-  // Obtener valores del formulario
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+document.getElementById("registro-form").addEventListener("submit", async function (event) {
+  event.preventDefault();
+  const mensaje = document.getElementById("registro-mensaje");
+  mensaje.textContent = "Procesando registro...";
+
   let dni = document.getElementById("dni").value.trim();
   let nombre = document.getElementById("nombre").value.trim();
   let apellido = document.getElementById("apellido").value.trim();
-  let fechaNacimiento = document.getElementById("fechaNacimiento").value;
+  let fechaNacimiento = document.getElementById("fecha-nacimiento").value;
   let localidad = document.getElementById("localidad").value.trim();
-  let grupoRunning = document.getElementById("grupoRunning").value.trim();
-  let categoria = document.getElementById("categoria").value;
+  let grupoRunning = document.getElementById("tipo-grupo").value;
+  let nombreGrupo = grupoRunning === "grupo" ? document.getElementById("nombre-grupo").value.trim() : "";
+  let categoria = document.querySelector("input[name='categoria']:checked").value;
   let password = document.getElementById("password").value;
-  let confirmPassword = document.getElementById("confirmPassword").value;
-  let aptoMedico = document.getElementById("aptoMedico").checked;
-  let certificadoDiscapacidad = document.getElementById("certificadoDiscapacidad").checked;
+  let confirmPassword = document.getElementById("confirm-password").value;
 
-  // Verificar que todos los campos estén llenos
-  if (!dni || !nombre || !apellido || !fechaNacimiento || !localidad || !grupoRunning || !categoria || !password || !confirmPassword) {
-    alert("Todos los campos son obligatorios.");
-    return;
-  }
-
-  // Verificar que la contraseña tenga 6 caracteres
-  if (password.length !== 6) {
-    alert("La contraseña debe tener 6 caracteres.");
-    return;
-  }
-
-  // Verificar que las contraseñas coincidan
-  if (password !== confirmPassword) {
-    alert("Las contraseñas no coinciden.");
+  if (password.length !== 6 || password !== confirmPassword) {
+    mensaje.textContent = "Error: Las contraseñas deben coincidir y tener 6 dígitos.";
     return;
   }
 
   try {
-    const atletaRef = doc(db, "atletas", dni); // Referencia al documento con el DNI como ID
+    const atletaRef = doc(db, "atletas", dni);
     const atletaSnap = await getDoc(atletaRef);
 
     if (atletaSnap.exists()) {
-      alert("Este DNI ya está registrado.");
+      mensaje.textContent = "Error: Este DNI ya está registrado.";
       return;
     }
 
-    // Si el DNI no existe, guardar el atleta
     await setDoc(atletaRef, {
       nombre,
       apellido,
@@ -53,19 +51,15 @@ async function registrarAtleta() {
       fechaNacimiento,
       localidad,
       grupoRunning,
+      nombreGrupo,
       categoria,
-      password, // 🔴 En producción deberías encriptarla
-      aptoMedico,
-      certificadoDiscapacidad
+      password, // 🔴 Se recomienda encriptar en producción
     });
 
-    alert("Registro exitoso.");
-    document.getElementById("registrationForm").reset(); // Limpiar el formulario
+    mensaje.textContent = "Registro exitoso.";
+    document.getElementById("registro-form").reset();
   } catch (error) {
+    mensaje.textContent = "Error al registrar. Inténtalo nuevamente.";
     console.error("Error al registrar:", error);
-    alert("Hubo un error al registrar. Inténtalo nuevamente.");
   }
-}
-
-// Asignar la función al botón de registro
-document.getElementById("btnRegistrar").addEventListener("click", registrarAtleta);
+});
