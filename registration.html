@@ -5,6 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Registro de Atleta - Maratones de Sudeste</title>
   <link rel="stylesheet" href="css/styles.css">
+  <!-- Firebase SDK -->
+<script type="module">
+  // Importar Firebase desde los servidores de Google
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyAFHZcfSELn2Cfgh3I1og2mw3rIL8gqlAM",
+  authDomain: "maratonessudeste.firebaseapp.com",
+  projectId: "maratonessudeste",
+  storageBucket: "maratonessudeste.firebasestorage.app",
+  messagingSenderId: "76996108214",
+  appId: "1:76996108214:web:036e55fbfd01e15b462b17",
+  measurementId: "G-B1GL7QJGSH"
+};
+
+  // Inicializar Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // Hacer accesible la base de datos en otros scripts
+  window.db = db;
+</script>
+
 </head>
 <body>
   <header>
