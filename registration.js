@@ -20,7 +20,7 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 // Referencia al botón de registro
-const btnRegistrar = document.getElementById("btn-registrar");
+const btnRegistrar = document.querySelector("#btn-registrar");
 
 // Validación en tiempo real de la contraseña
 document.getElementById("password").addEventListener("input", function() {
