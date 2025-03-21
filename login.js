@@ -1,6 +1,5 @@
 // Importar Firebase
-// Importar la configuración centralizada
-import { app } from "./firebase-config.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // Configuración de Firebase
