@@ -12,23 +12,37 @@
   </header>
   <main>
     <button id="btn-inscribirse">Inscribirse</button>
-    <section id="recuperar-password">
-  <h2>Recuperar Contraseña</h2>
-  <form id="recuperar-form">
-    <label for="dni-recuperar">DNI:</label>
-    <input type="text" id="dni-recuperar" name="dni-recuperar" required>
+    <section id="login-section">
+    <h2>Iniciar Sesión</h2>
+    <form id="login-form">
+      <label for="login-dni">DNI:</label>
+      <input type="text" id="login-dni" name="login-dni" required>
 
-    <label for="fecha-nacimiento-recuperar">Fecha de Nacimiento:</label>
-    <input type="date" id="fecha-nacimiento-recuperar" name="fecha-nacimiento-recuperar" required>
+      <label for="login-password">Contraseña:</label>
+      <input type="password" id="login-password" name="login-password" required>
 
-    <label for="nueva-password">Nueva Contraseña (6 dígitos):</label>
-    <input type="password" id="nueva-password" name="nueva-password" pattern="\d{6}" required>
+      <button type="submit">Iniciar Sesión</button>
+    </form>
 
-    <button type="submit">Restablecer Contraseña</button>
-    <p id="mensaje-recuperar"></p>
-  </form>
-</section>
+    <button id="forgot-password-btn">¿Olvidaste tu contraseña?</button>
+  </section>
+
+  <!-- Modal para recuperación de contraseña -->
+  <div id="password-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Recuperar Contraseña</h2>
+      <p>Ingrese su DNI y le enviaremos su contraseña.</p>
+      <form id="recover-form">
+        <label for="recover-dni">DNI:</label>
+        <input type="text" id="recover-dni" name="recover-dni" required>
+        <button type="submit">Recuperar</button>
+      </form>
+      <p id="recover-message"></p>
+    </div>
+  </div>
   </main>
   <script src="js/script.js"></script>
+  <script type="module" src="recuperar_password.js"></script>
 </body>
 </html>
