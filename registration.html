@@ -1,135 +1,137 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Registro de Atleta - Maratones de Sudeste</title>
-  <link rel="stylesheet" href="css/styles.css">
-</head>
-<body>
-  <header>
-    <h1>Registro de Nuevo Atleta</h1>
-  </header>
-  <main>
-    <section id="form-registro">
-      <form id="registro-form">
-        <label for="nombre">Nombre:</label>
-        <input type="text" id="nombre" name="nombre" required>
+// Importar Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
-        <label for="apellido">Apellido:</label>
-        <input type="text" id="apellido" name="apellido" required>
+// Configuración de Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyAFHZcfSELn2Cfgh3I1og2mw3rIL8gqlAM",
+  authDomain: "maratonessudeste.firebaseapp.com",
+  projectId: "maratonessudeste",
+  storageBucket: "maratonessudeste.appspot.com",
+  messagingSenderId: "76996108214",
+  appId: "1:76996108214:web:036e55fbfd01e15b462b17",
+  measurementId: "G-B1GL7QJGSH"
+};
 
-        <label for="password">Contraseña (6 dígitos):</label>
-        <input type="password" id="password" name="password" pattern="\d{6}" required>
+// Inicializar Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const storage = getStorage(app);
 
-        <label for="confirm-password">Confirmar contraseña:</label>
-        <input type="password" id="confirm-password" name="confirm-password" pattern="\d{6}" required>
-        <span id="password-match"></span>
+// Función para mostrar mensajes de estado
+function mostrarMensaje(mensaje, color = "black") {
+  const mensajeElemento = document.getElementById("mensaje");
+  mensajeElemento.textContent = mensaje;
+  mensajeElemento.style.color = color;
+}
 
-        <label for="dni">DNI:</label>
-        <input type="text" id="dni" name="dni" required>
+// Función para registrar atleta
+async function registrarAtleta() {
+  // Evitar el envío automático del formulario
+  event.preventDefault();
 
-        <label for="fecha-nacimiento">Fecha de Nacimiento:</label>
-        <input type="date" id="fecha-nacimiento" name="fecha-nacimiento" required>
-        <p id="age-category"></p>
+  // Obtener valores del formulario
+  let dni = document.getElementById("dni").value.trim();
+  let nombre = document.getElementById("nombre").value.trim();
+  let apellido = document.getElementById("apellido").value.trim();
+  let fechaNacimiento = document.getElementById("fecha-nacimiento").value;
+  let localidad = document.getElementById("localidad").value.trim();
+  let tipoGrupo = document.getElementById("tipo-grupo").value;
+  let nombreGrupo = tipoGrupo === "grupo" ? document.getElementById("nombre-grupo").value.trim() : null;
+  let categoria = document.querySelector('input[name="categoria"]:checked')?.value;
+  let password = document.getElementById("password").value;
+  let confirmPassword = document.getElementById("confirm-password").value;
+  let aptoMedico = document.getElementById("apto-medico").files[0];
+  let certificadoDiscapacidad = document.getElementById("certificado-discapacidad").files[0];
 
-        <label for="localidad">Localidad:</label>
-        <input type="text" id="localidad" name="localidad" required>
+  // Validaciones básicas
+  if (!dni || !nombre || !apellido || !fechaNacimiento || !localidad || !categoria || !password || !confirmPassword) {
+    mostrarMensaje("Todos los campos son obligatorios.", "red");
+    return;
+  }
 
-        <label for="tipo-grupo">Grupo de Running:</label>
-        <select id="tipo-grupo" name="tipo-grupo" required>
-          <option value="individual">Individual</option>
-          <option value="grupo">Grupo de Running</option>
-        </select>
-        <div id="nombre-grupo-container" style="display: none;">
-          <label for="nombre-grupo">Nombre del Grupo:</label>
-          <input type="text" id="nombre-grupo" name="nombre-grupo">
-        </div>
+  if (password.length !== 6) {
+    mostrarMensaje("La contraseña debe tener exactamente 6 caracteres.", "red");
+    return;
+  }
 
-        <label for="apto-medico">Apto Médico:</label>
-        <input type="file" id="apto-medico" name="apto-medico" accept=".pdf,.jpg,.png">
+  if (password !== confirmPassword) {
+    mostrarMensaje("Las contraseñas no coinciden.", "red");
+    return;
+  }
 
-        <fieldset>
-          <legend>Categoría</legend>
-          <label><input type="radio" name="categoria" value="masculino" required> Masculino</label>
-          <label><input type="radio" name="categoria" value="femenino"> Femenino</label>
-          <label><input type="radio" name="categoria" value="especial"> Especial</label>
-        </fieldset>
-        <div id="certificado-container" style="display: none;">
-          <label for="certificado-discapacidad">Certificado de Discapacidad:</label>
-          <input type="file" id="certificado-discapacidad" name="certificado-discapacidad" accept=".pdf,.jpg,.png">
-        </div>
+  try {
+    const atletaRef = doc(db, "atletas", dni);
+    const atletaSnap = await getDoc(atletaRef);
 
-        <button type="submit" id="btn-registrar">Registrar Atleta</button>
-        <p id="mensaje"></p>
-      </form>
-    </section>
-  </main>
-  <script>
-    
-    // Función para calcular la categoría según la fecha de nacimiento.
-    function calculateCategory(birthDateStr) {
-      const today = new Date();
-      const currentYear = today.getFullYear();
-      const birthDate = new Date(birthDateStr);
-      // Calcula la edad que tendrá al final del año
-      const ageAtYearEnd = currentYear - birthDate.getFullYear();
-      
-      if (ageAtYearEnd < 20) {
-        return "Menos de 20";
-      } else if (ageAtYearEnd >= 20 && ageAtYearEnd <= 24) {
-        return "20 a 24";
-      } else if (ageAtYearEnd >= 25 && ageAtYearEnd <= 29) {
-        return "25 a 29";
-      } else if (ageAtYearEnd >= 30 && ageAtYearEnd <= 34) {
-        return "30 a 34";
-      } else if (ageAtYearEnd >= 35 && ageAtYearEnd <= 39) {
-        return "35 a 39";
-      } else if (ageAtYearEnd >= 40 && ageAtYearEnd <= 44) {
-        return "40 a 44";
-      } else if (ageAtYearEnd >= 45 && ageAtYearEnd <= 49) {
-        return "45 a 49";
-      } else if (ageAtYearEnd >= 50 && ageAtYearEnd <= 54) {
-        return "50 a 54";
-      } else if (ageAtYearEnd >= 55 && ageAtYearEnd <= 59) {
-        return "55 a 59";
-      } else if (ageAtYearEnd >= 60 && ageAtYearEnd <= 64) {
-        return "60 a 64";
-      } else if (ageAtYearEnd >= 65 && ageAtYearEnd <= 69) {
-        return "65 a 69";
-      } else if (ageAtYearEnd >= 70 && ageAtYearEnd <= 74) {
-        return "70 a 74";
-      } else if (ageAtYearEnd >= 75 && ageAtYearEnd <= 79) {
-        return "75 a 79";
-      } else if (ageAtYearEnd >= 80 && ageAtYearEnd <= 84) {
-        return "80 a 84";
-      } else if (ageAtYearEnd >= 85 && ageAtYearEnd <= 89) {
-        return "85 a 89";
-      } else {
-        return "Categoría no definida";
-      }
+    if (atletaSnap.exists()) {
+      mostrarMensaje("Este DNI ya está registrado.", "red");
+      return;
     }
-    
-    // Actualiza la leyenda de la categoría cuando se cambia la fecha de nacimiento.
-    document.getElementById("fecha-nacimiento").addEventListener("change", function() {
-      const birthDateValue = this.value;
-      if (birthDateValue) {
-        const categoria = calculateCategory(birthDateValue);
-        document.getElementById("age-category").textContent = "Categoría asignada: " + categoria;
-      }
-    });
-  </script>
-<script>
-  document.getElementById("tipo-grupo").addEventListener("change", function () {
-    document.getElementById("nombre-grupo-container").style.display = this.value === "grupo" ? "block" : "none";
-  });
 
-  document.querySelectorAll('input[name="categoria"]').forEach(radio => {
-    radio.addEventListener("change", function () {
-      document.getElementById("certificado-container").style.display = this.value === "especial" ? "block" : "none";
+    let certificadoURL = null;
+    if (categoria === "especial" && certificadoDiscapacidad) {
+      mostrarMensaje("Subiendo certificado de discapacidad...", "blue");
+      const certificadoRef = ref(storage, `certificados/${dni}_certificado.${certificadoDiscapacidad.name.split('.').pop()}`);
+      await uploadBytes(certificadoRef, certificadoDiscapacidad);
+      certificadoURL = await getDownloadURL(certificadoRef);
+    }
+
+    let aptoMedicoURL = null;
+    if (aptoMedico) {
+      mostrarMensaje("Subiendo apto médico...", "blue");
+      const aptoRef = ref(storage, `aptos_medicos/${dni}_apto.${aptoMedico.name.split('.').pop()}`);
+      await uploadBytes(aptoRef, aptoMedico);
+      aptoMedicoURL = await getDownloadURL(aptoRef);
+    }
+
+    // Guardar el atleta en Firestore
+    await setDoc(atletaRef, {
+      nombre,
+      apellido,
+      dni: parseInt(dni),
+      fechaNacimiento,
+      localidad,
+      grupoRunning: tipoGrupo,
+      grupoRunningNombre: nombreGrupo || "",
+      categoria,
+      password, // ⚠️ Debe encriptarse en producción
+      aptoMedico: aptoMedicoURL,
+      certificadoDiscapacidad: certificadoURL
     });
-  });
-</script>
-  <script type="module" src="registration.js"></script>
-</body>
-</html>
+
+    mostrarMensaje("Registro exitoso.", "green");
+    document.getElementById("registro-form").reset();
+  } catch (error) {
+    console.error("Error al registrar:", error);
+    mostrarMensaje("Hubo un error al registrar. Inténtalo nuevamente.", "red");
+  }
+}
+
+// Validación en vivo de la contraseña
+document.getElementById("password").addEventListener("input", validarPassword);
+document.getElementById("confirm-password").addEventListener("input", validarPassword);
+
+function validarPassword() {
+  let password = document.getElementById("password").value;
+  let confirmPassword = document.getElementById("confirm-password").value;
+  let passwordMatch = document.getElementById("password-match");
+
+  if (password.length < 6) {
+    passwordMatch.textContent = "La contraseña debe tener 6 caracteres.";
+    passwordMatch.style.color = "red";
+    return;
+  }
+
+  if (password === confirmPassword && password.length === 6) {
+    passwordMatch.textContent = "Las contraseñas coinciden.";
+    passwordMatch.style.color = "green";
+  } else {
+    passwordMatch.textContent = "Las contraseñas no coinciden.";
+    passwordMatch.style.color = "red";
+  }
+}
+
+// Asignar la función al botón de registro
+document.getElementById("registro-form").addEventListener("submit", registrarAtleta);
