@@ -1,8 +1,8 @@
 // Importar Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-// Configuración de Firebase (Usa la misma que en registration.js)
+// Configuración de Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAFHZcfSELn2Cfgh3I1og2mw3rIL8gqlAM",
   authDomain: "maratonessudeste.firebaseapp.com",
@@ -17,28 +17,43 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Función para mostrar mensajes en el formulario
-function mostrarMensajeRecuperar(mensaje, color = "black") {
-  const mensajeElemento = document.getElementById("mensaje-recuperar");
-  mensajeElemento.textContent = mensaje;
-  mensajeElemento.style.color = color;
+// Función para mostrar mensajes
+function mostrarMensaje(elemento, mensaje, color = "black") {
+  elemento.textContent = mensaje;
+  elemento.style.color = color;
 }
 
-// Función para restablecer la contraseña
-async function recuperarPassword(event) {
+// Manejo del modal de recuperación de contraseña
+const modal = document.getElementById("password-modal");
+const btnOpenModal = document.getElementById("forgot-password-btn");
+const btnCloseModal = document.querySelector(".close");
+
+// Abrir el modal
+btnOpenModal.addEventListener("click", () => {
+  modal.style.display = "block";
+});
+
+// Cerrar el modal
+btnCloseModal.addEventListener("click", () => {
+  modal.style.display = "none";
+});
+
+// Cerrar el modal si se hace clic fuera de él
+window.addEventListener("click", (event) => {
+  if (event.target === modal) {
+    modal.style.display = "none";
+  }
+});
+
+// Función para recuperar la contraseña
+document.getElementById("recover-form").addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  const dni = document.getElementById("dni-recuperar").value.trim();
-  const fechaNacimiento = document.getElementById("fecha-nacimiento-recuperar").value;
-  const nuevaPassword = document.getElementById("nueva-password").value;
+  const dni = document.getElementById("recover-dni").value.trim();
+  const mensajeElemento = document.getElementById("recover-message");
 
-  if (!dni || !fechaNacimiento || !nuevaPassword) {
-    mostrarMensajeRecuperar("Todos los campos son obligatorios.", "red");
-    return;
-  }
-
-  if (nuevaPassword.length !== 6) {
-    mostrarMensajeRecuperar("La contraseña debe tener exactamente 6 dígitos.", "red");
+  if (!dni) {
+    mostrarMensaje(mensajeElemento, "Por favor, ingrese su DNI.", "red");
     return;
   }
 
@@ -46,27 +61,17 @@ async function recuperarPassword(event) {
     const atletaRef = doc(db, "atletas", dni);
     const atletaSnap = await getDoc(atletaRef);
 
-    if (!atletaSnap.exists()) {
-      mostrarMensajeRecuperar("El DNI no está registrado.", "red");
-      return;
+    if (atletaSnap.exists()) {
+      const atletaData = atletaSnap.data();
+      const password = atletaData.password;
+
+      mostrarMensaje(mensajeElemento, `Tu contraseña es: ${password}`, "green");
+    } else {
+      mostrarMensaje(mensajeElemento, "No se encontró un atleta con este DNI.", "red");
     }
-
-    const atletaData = atletaSnap.data();
-    if (atletaData.fechaNacimiento !== fechaNacimiento) {
-      mostrarMensajeRecuperar("Los datos no coinciden. Verifica tu información.", "red");
-      return;
-    }
-
-    // Actualizar la contraseña
-    await updateDoc(atletaRef, { password: nuevaPassword });
-
-    mostrarMensajeRecuperar("Contraseña actualizada con éxito.", "green");
-    document.getElementById("recuperar-form").reset();
   } catch (error) {
     console.error("Error al recuperar la contraseña:", error);
-    mostrarMensajeRecuperar("Hubo un error al restablecer la contraseña. Inténtalo de nuevo.", "red");
+    mostrarMensaje(mensajeElemento, "Error al recuperar la contraseña. Intente nuevamente.", "red");
   }
-}
+});
 
-// Agregar evento al formulario
-document.getElementById("recuperar-form").addEventListener("submit", recuperarPassword);
