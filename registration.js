@@ -59,7 +59,9 @@ async function registrarAtleta() {
   let apellido = document.getElementById("apellido").value.trim();
   let fechaNacimiento = document.getElementById("fecha-nacimiento").value;
   let localidad = document.getElementById("localidad").value.trim();
-  let tipoGrupo = document.getElementById("tipo-grupo").value || "Individual"; // Si no elige, es "Individual"
+  let selectGrupo = document.getElementById("tipo-grupo");
+  let tipoGrupo = selectGrupo.value.trim();
+  if (!tipoGrupo) tipoGrupo = "Individual"; // ✅ Asigna "Individual" si está vacío
   let nombreGrupo = tipoGrupo === "grupo" ? document.getElementById("nombre-grupo").value.trim() : null;
   let categoria = document.querySelector('input[name="categoria"]:checked')?.value;
   let password = document.getElementById("password").value;
