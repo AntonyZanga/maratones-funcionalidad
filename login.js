@@ -1,6 +1,6 @@
 // Importar Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -77,4 +77,61 @@ document.addEventListener("DOMContentLoaded", () => {
 document.getElementById("logout")?.addEventListener("click", () => {
     localStorage.removeItem("usuario");
     window.location.reload();
+});
+
+// =========================
+// 🔥 RECUPERACIÓN DE CONTRASEÑA 🔥
+// =========================
+
+// Mostrar formulario de recuperación
+document.getElementById("forgot-password-link").addEventListener("click", function(event) {
+    event.preventDefault();
+    document.getElementById("password-recovery").style.display = "block";
+});
+
+// Verificar DNI y fecha de nacimiento en Firebase
+document.getElementById("check-dni").addEventListener("click", async function() {
+    const dni = document.getElementById("dni-recovery").value;
+    const fechaNacimiento = document.getElementById("fecha-nacimiento-recovery").value;
+
+    if (!dni || !fechaNacimiento) {
+        document.getElementById("recovery-message").textContent = "Completa todos los campos.";
+        return;
+    }
+
+    const atletaRef = doc(db, "atletas", dni);
+    const atletaSnap = await getDoc(atletaRef);
+
+    if (atletaSnap.exists()) {
+        const atletaData = atletaSnap.data();
+        
+        if (atletaData.fechaNacimiento === fechaNacimiento) {
+            document.getElementById("new-password-section").style.display = "block";
+            document.getElementById("recovery-message").textContent = "Datos correctos. Ingresa tu nueva contraseña.";
+        } else {
+            document.getElementById("recovery-message").textContent = "Fecha de nacimiento incorrecta.";
+        }
+    } else {
+        document.getElementById("recovery-message").textContent = "DNI no encontrado.";
+    }
+});
+
+// Actualizar la contraseña en Firebase
+document.getElementById("update-password").addEventListener("click", async function() {
+    const dni = document.getElementById("dni-recovery").value;
+    const newPassword = document.getElementById("new-password").value;
+
+    if (!newPassword.match(/^\d{6}$/)) {
+        document.getElementById("recovery-message").textContent = "La contraseña debe tener 6 dígitos.";
+        return;
+    }
+
+    const atletaRef = doc(db, "atletas", dni);
+    
+    await updateDoc(atletaRef, { password: newPassword });
+
+    document.getElementById("recovery-message").textContent = "Contraseña actualizada con éxito. Redirigiendo...";
+    setTimeout(() => {
+        window.location.href = "index.html";
+    }, 2000);
 });
