@@ -18,12 +18,16 @@
     <section id="login-section">
         <h2>Login</h2>
         <form id="login-form">
-            <label for="login-dni">DNI:</label>
-            <input type="text" id="login-dni" required>
+            <div class="form-group">
+                <label for="login-dni">DNI:</label>
+                <input type="text" id="login-dni" required>
+            </div>
             
-            <label for="login-password">Contraseña:</label>
-            <input type="password" id="login-password" required>
-            
+            <div class="form-group">
+                <label for="login-password">Contraseña:</label>
+                <input type="password" id="login-password" required>
+            </div>
+
             <button type="submit">Iniciar sesión</button>
             <p id="login-message"></p>
         </form>
