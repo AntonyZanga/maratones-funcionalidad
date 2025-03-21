@@ -110,12 +110,6 @@ async function registrarAtleta() {
         console.error("Error al registrar el atleta:", error);
         document.getElementById("mensaje").textContent = "Hubo un error al registrar. Intenta nuevamente.";
     }
-    // mostrarMensaje("Registro exitoso.", "green");
-    //document.getElementById("registro-form").reset();
-  //} catch (error) {
-    //console.error("Error al registrar:", error);
-    //mostrarMensaje("Hubo un error al registrar. Inténtalo nuevamente.", "red");
-  //}
 }
 
 // Validación en vivo de la contraseña
