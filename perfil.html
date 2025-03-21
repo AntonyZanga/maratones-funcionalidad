@@ -5,101 +5,88 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Perfil de Usuario</title>
   <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <h1>Mi Perfil</h1>
+
+  <p>Grupo de Running Actual: <strong id="grupo-actual">Cargando...</strong></p>
+
+  <label for="nuevo-grupo">Nuevo Grupo de Running:</label>
+  <input type="text" id="nuevo-grupo" placeholder="Escribe un grupo o 'Individual'">
+  <button id="actualizar-grupo">Actualizar Grupo</button>
+
+  <a href="index.html">Volver al Inicio</a>
+
   <script type="module">
+    // Importar las funciones necesarias de Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getFirestore, doc, getDoc, updateDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
     // Configuración de Firebase
     const firebaseConfig = {
-      apiKey: "AIzaSyAFHZcfSELn2Cfgh3I1og2mw3rIL8gqlAM",
-      authDomain: "maratonessudeste.firebaseapp.com",
-      projectId: "maratonessudeste",
-      storageBucket: "maratonessudeste.appspot.com",
-      messagingSenderId: "76996108214",
-      appId: "1:76996108214:web:036e55fbfd01e15b462b17",
-      measurementId: "G-B1GL7QJGSH"
+      apiKey: "TU_API_KEY",
+      authDomain: "TU_AUTH_DOMAIN",
+      projectId: "TU_PROJECT_ID",
+      storageBucket: "TU_STORAGE_BUCKET",
+      messagingSenderId: "TU_MESSAGING_SENDER_ID",
+      appId: "TU_APP_ID",
+      measurementId: "TU_MEASUREMENT_ID"
     };
 
+    // Inicializar Firebase
     const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
     const db = getFirestore(app);
-    const auth = getAuth();
 
-    // Cargar datos del usuario logueado
+    // Detectar el estado de autenticación del usuario
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         const dni = sessionStorage.getItem("dni");
-        const userDocRef = doc(db, "atletas", dni);
-        const userDoc = await getDoc(userDocRef);
+        if (!dni) {
+          console.error("No se encontró el DNI en sessionStorage.");
+          return;
+        }
 
-        if (userDoc.exists()) {
-          document.getElementById("user-name").textContent = userDoc.data().nombre + " " + userDoc.data().apellido;
-          document.getElementById("tipo-grupo").value = userDoc.data().grupoRunning || "Individual";
-          cargarGrupos();
+        // Obtener datos del atleta
+        const atletaRef = doc(db, "atletas", dni);
+        const atletaSnap = await getDoc(atletaRef);
+
+        if (atletaSnap.exists()) {
+          const atletaData = atletaSnap.data();
+          document.getElementById("grupo-actual").textContent = atletaData.grupoRunning || "Individual";
+        } else {
+          console.error("No se encontró el atleta en la base de datos.");
         }
       } else {
+        console.error("Usuario no autenticado.");
         window.location.href = "index.html"; // Redirigir si no está logueado
       }
     });
 
-    // Cargar la lista de grupos de running
-    async function cargarGrupos() {
-      const selectGrupo = document.getElementById("tipo-grupo");
-      selectGrupo.innerHTML = '<option value="Individual">Individual</option>';
-
-      try {
-        const querySnapshot = await getDocs(collection(db, "grupos"));
-        querySnapshot.forEach((doc) => {
-          const grupo = doc.data().nombre;
-          const option = document.createElement("option");
-          option.value = grupo;
-          option.textContent = grupo;
-          selectGrupo.appendChild(option);
-        });
-      } catch (error) {
-        console.error("Error al cargar los grupos:", error);
+    // Función para actualizar el grupo de running
+    document.getElementById("actualizar-grupo").addEventListener("click", async () => {
+      const nuevoGrupo = document.getElementById("nuevo-grupo").value.trim();
+      if (!nuevoGrupo) {
+        alert("Debe ingresar un nuevo grupo o escribir 'Individual'.");
+        return;
       }
-    }
 
-    // Guardar cambios en el grupo de running
-    document.getElementById("guardar-cambios").addEventListener("click", async () => {
       const dni = sessionStorage.getItem("dni");
-      const nuevoGrupo = document.getElementById("tipo-grupo").value;
-
       if (!dni) {
-        console.error("No se encontró el DNI del usuario.");
+        console.error("No se encontró el DNI en sessionStorage.");
         return;
       }
 
       try {
-        const userDocRef = doc(db, "atletas", dni);
-        await updateDoc(userDocRef, { grupoRunning: nuevoGrupo });
-
-        document.getElementById("mensaje").textContent = "Grupo actualizado correctamente.";
-        document.getElementById("mensaje").style.color = "green";
+        const atletaRef = doc(db, "atletas", dni);
+        await updateDoc(atletaRef, { grupoRunning: nuevoGrupo });
+        alert("Grupo actualizado con éxito.");
+        document.getElementById("grupo-actual").textContent = nuevoGrupo;
       } catch (error) {
         console.error("Error al actualizar el grupo:", error);
-        document.getElementById("mensaje").textContent = "Error al actualizar el grupo.";
-        document.getElementById("mensaje").style.color = "red";
       }
     });
   </script>
-</head>
-<body>
-  <header>
-    <h1>Perfil de Usuario</h1>
-  </header>
-  <main>
-    <section>
-      <p>Bienvenido, <span id="user-name"></span></p>
-      <label for="tipo-grupo">Grupo de Running:</label>
-      <select id="tipo-grupo">
-        <option value="Individual">Individual</option>
-      </select>
-      <button id="guardar-cambios">Guardar Cambios</button>
-      <p id="mensaje"></p>
-      <a href="index.html">Volver al inicio</a>
-    </section>
-  </main>
 </body>
 </html>
