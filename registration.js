@@ -19,6 +19,28 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
+// Función para cargar los grupos de running desde Firebase
+async function cargarGrupos() {
+    const selectGrupo = document.getElementById("tipo-grupo");
+    selectGrupo.innerHTML = '<option value="">Seleccione un grupo...</option>'; // Reset opciones
+
+    try {
+        const querySnapshot = await getDocs(collection(db, "grupos"));
+        querySnapshot.forEach((doc) => {
+            const grupo = doc.data().nombre;
+            const option = document.createElement("option");
+            option.value = grupo;
+            option.textContent = grupo;
+            selectGrupo.appendChild(option);
+        });
+    } catch (error) {
+        console.error("Error al cargar los grupos:", error);
+    }
+}
+
+// Llamar a la función al cargar la página
+document.addEventListener("DOMContentLoaded", cargarGrupos);
+
 // Función para mostrar mensajes de estado
 function mostrarMensaje(mensaje, color = "black") {
   const mensajeElemento = document.getElementById("mensaje");
