@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - Maratones del Sudeste</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Bienvenido, <span id="nombre-usuario"></span></h1>
+        <a href="index.html">Inicio</a>
+    </header>
+    
+    <main>
+        <section id="perfil">
+            <h2>Mis Datos</h2>
+            <p><strong>DNI:</strong> <span id="dni"></span></p>
+            <p><strong>Nombre:</strong> <span id="nombre"></span></p>
+            <p><strong>Apellido:</strong> <span id="apellido"></span></p>
+            <p><strong>Localidad:</strong> <span id="localidad"></span></p>
+            <p><strong>Grupo de Running:</strong> <span id="grupo-actual"></span></p>
+        </section>
+
+        <section id="cambiar-grupo">
+            <h2>Cambiar Grupo de Running</h2>
+            <form id="form-cambiar-grupo">
+                <label for="nuevo-grupo">Selecciona tu nuevo grupo de running:</label>
+                <select id="nuevo-grupo">
+                    <option value="Individual">Individual</option>
+                </select>
+                <button type="submit">Actualizar Grupo</button>
+                <p id="mensaje-cambio-grupo"></p>
+            </form>
+        </section>
+    </main>
+
+    <script type="module" src="perfil.js"></script>
+</body>
+</html>
