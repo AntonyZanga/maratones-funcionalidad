@@ -19,21 +19,20 @@
 
   <script type="module">
     // Importar las funciones necesarias de Firebase
-    import { getApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-    import { getAuth } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
-    import { getFirestore } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
-
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 
     // Configuración de Firebase
     const firebaseConfig = {
-  apiKey: "AIzaSyAFHZcfSELn2Cfgh3I1og2mw3rIL8gqlAM",
-  authDomain: "maratonessudeste.firebaseapp.com",
-  projectId: "maratonessudeste",
-  storageBucket: "maratonessudeste.appspot.com",
-  messagingSenderId: "76996108214",
-  appId: "1:76996108214:web:036e55fbfd01e15b462b17",
-  measurementId: "G-B1GL7QJGSH"
-};
+      apiKey: "AIzaSyAFHZcfSELn2Cfgh3I1og2mw3rIL8gqlAM",
+      authDomain: "maratonessudeste.firebaseapp.com",
+      projectId: "maratonessudeste",
+      storageBucket: "maratonessudeste.appspot.com",
+      messagingSenderId: "76996108214",
+      appId: "1:76996108214:web:036e55fbfd01e15b462b17",
+      measurementId: "G-B1GL7QJGSH"
+    };
 
     // Inicializar Firebase
     const app = initializeApp(firebaseConfig);
@@ -43,9 +42,11 @@
     // Detectar el estado de autenticación del usuario
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        const dni = sessionStorage.getItem("dni");
+        // Extraer el objeto 'usuario' desde localStorage y obtener el DNI
+        const usuario = JSON.parse(localStorage.getItem("usuario"));
+        const dni = usuario ? usuario.dni : null;
         if (!dni) {
-          console.error("No se encontró el DNI en sessionStorage.");
+          console.error("No se encontró el DNI en localStorage.");
           return;
         }
 
@@ -73,9 +74,11 @@
         return;
       }
 
-      const dni = sessionStorage.getItem("dni");
+      // Extraer el DNI desde localStorage
+      const usuario = JSON.parse(localStorage.getItem("usuario"));
+      const dni = usuario ? usuario.dni : null;
       if (!dni) {
-        console.error("No se encontró el DNI en sessionStorage.");
+        console.error("No se encontró el DNI en localStorage.");
         return;
       }
 
@@ -91,3 +94,4 @@
   </script>
 </body>
 </html>
+
