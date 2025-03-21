@@ -19,6 +19,56 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
+// Función para recuperar contraseña
+async function recuperarPassword() {
+  event.preventDefault();
+  
+  const dni = document.getElementById("recuperar-dni").value.trim();
+  const fechaNacimiento = document.getElementById("recuperar-fecha-nacimiento").value;
+  const nuevaPassword = document.getElementById("nueva-password").value;
+  const confirmarPassword = document.getElementById("confirmar-nueva-password").value;
+
+  if (!dni || !fechaNacimiento || !nuevaPassword || !confirmarPassword) {
+    alert("Todos los campos son obligatorios.");
+    return;
+  }
+
+  if (nuevaPassword.length !== 6) {
+    alert("La nueva contraseña debe tener exactamente 6 dígitos.");
+    return;
+  }
+
+  if (nuevaPassword !== confirmarPassword) {
+    alert("Las contraseñas no coinciden.");
+    return;
+  }
+
+  try {
+    const atletaRef = doc(db, "atletas", dni);
+    const atletaSnap = await getDoc(atletaRef);
+
+    if (!atletaSnap.exists()) {
+      alert("No se encontró un atleta con este DNI.");
+      return;
+    }
+
+    const atletaData = atletaSnap.data();
+    if (atletaData.fechaNacimiento !== fechaNacimiento) {
+      alert("La fecha de nacimiento no coincide.");
+      return;
+    }
+
+    // Actualizar la contraseña en Firestore
+    await updateDoc(atletaRef, { password: nuevaPassword });
+    alert("Contraseña actualizada exitosamente.");
+  } catch (error) {
+    console.error("Error al recuperar contraseña:", error);
+    alert("Hubo un error. Inténtalo nuevamente.");
+  }
+}
+// Asignar función al formulario de recuperación
+document.getElementById("recuperar-form").addEventListener("submit", recuperarPassword);
+
 // Función para mostrar mensajes de estado
 function mostrarMensaje(mensaje, color = "black") {
   const mensajeElemento = document.getElementById("mensaje");
