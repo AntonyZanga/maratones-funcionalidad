@@ -12,6 +12,22 @@
   </header>
   <main>
     <button id="btn-inscribirse">Inscribirse</button>
+    <section id="recuperar-password">
+  <h2>Recuperar Contraseña</h2>
+  <form id="recuperar-form">
+    <label for="dni-recuperar">DNI:</label>
+    <input type="text" id="dni-recuperar" name="dni-recuperar" required>
+
+    <label for="fecha-nacimiento-recuperar">Fecha de Nacimiento:</label>
+    <input type="date" id="fecha-nacimiento-recuperar" name="fecha-nacimiento-recuperar" required>
+
+    <label for="nueva-password">Nueva Contraseña (6 dígitos):</label>
+    <input type="password" id="nueva-password" name="nueva-password" pattern="\d{6}" required>
+
+    <button type="submit">Restablecer Contraseña</button>
+    <p id="mensaje-recuperar"></p>
+  </form>
+</section>
   </main>
   <script src="js/script.js"></script>
 </body>
