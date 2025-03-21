@@ -1,40 +1,105 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Perfil - Maratones del Sudeste</title>
-    <link rel="stylesheet" href="css/styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perfil de Usuario</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getFirestore, doc, getDoc, updateDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+    // Configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyAFHZcfSELn2Cfgh3I1og2mw3rIL8gqlAM",
+      authDomain: "maratonessudeste.firebaseapp.com",
+      projectId: "maratonessudeste",
+      storageBucket: "maratonessudeste.appspot.com",
+      messagingSenderId: "76996108214",
+      appId: "1:76996108214:web:036e55fbfd01e15b462b17",
+      measurementId: "G-B1GL7QJGSH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth();
+
+    // Cargar datos del usuario logueado
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const dni = sessionStorage.getItem("dni");
+        const userDocRef = doc(db, "atletas", dni);
+        const userDoc = await getDoc(userDocRef);
+
+        if (userDoc.exists()) {
+          document.getElementById("user-name").textContent = userDoc.data().nombre + " " + userDoc.data().apellido;
+          document.getElementById("tipo-grupo").value = userDoc.data().grupoRunning || "Individual";
+          cargarGrupos();
+        }
+      } else {
+        window.location.href = "index.html"; // Redirigir si no está logueado
+      }
+    });
+
+    // Cargar la lista de grupos de running
+    async function cargarGrupos() {
+      const selectGrupo = document.getElementById("tipo-grupo");
+      selectGrupo.innerHTML = '<option value="Individual">Individual</option>';
+
+      try {
+        const querySnapshot = await getDocs(collection(db, "grupos"));
+        querySnapshot.forEach((doc) => {
+          const grupo = doc.data().nombre;
+          const option = document.createElement("option");
+          option.value = grupo;
+          option.textContent = grupo;
+          selectGrupo.appendChild(option);
+        });
+      } catch (error) {
+        console.error("Error al cargar los grupos:", error);
+      }
+    }
+
+    // Guardar cambios en el grupo de running
+    document.getElementById("guardar-cambios").addEventListener("click", async () => {
+      const dni = sessionStorage.getItem("dni");
+      const nuevoGrupo = document.getElementById("tipo-grupo").value;
+
+      if (!dni) {
+        console.error("No se encontró el DNI del usuario.");
+        return;
+      }
+
+      try {
+        const userDocRef = doc(db, "atletas", dni);
+        await updateDoc(userDocRef, { grupoRunning: nuevoGrupo });
+
+        document.getElementById("mensaje").textContent = "Grupo actualizado correctamente.";
+        document.getElementById("mensaje").style.color = "green";
+      } catch (error) {
+        console.error("Error al actualizar el grupo:", error);
+        document.getElementById("mensaje").textContent = "Error al actualizar el grupo.";
+        document.getElementById("mensaje").style.color = "red";
+      }
+    });
+  </script>
 </head>
 <body>
-    <header>
-        <h1>Bienvenido, <span id="nombre-usuario"></span></h1>
-        <a href="index.html">Inicio</a>
-    </header>
-    
-    <main>
-        <section id="perfil">
-            <h2>Mis Datos</h2>
-            <p><strong>DNI:</strong> <span id="dni"></span></p>
-            <p><strong>Nombre:</strong> <span id="nombre"></span></p>
-            <p><strong>Apellido:</strong> <span id="apellido"></span></p>
-            <p><strong>Localidad:</strong> <span id="localidad"></span></p>
-            <p><strong>Grupo de Running:</strong> <span id="grupo-actual"></span></p>
-        </section>
-
-        <section id="cambiar-grupo">
-            <h2>Cambiar Grupo de Running</h2>
-            <form id="form-cambiar-grupo">
-                <label for="nuevo-grupo">Selecciona tu nuevo grupo de running:</label>
-                <select id="nuevo-grupo">
-                    <option value="Individual">Individual</option>
-                </select>
-                <button type="submit">Actualizar Grupo</button>
-                <p id="mensaje-cambio-grupo"></p>
-            </form>
-        </section>
-    </main>
-
-    <script type="module" src="perfil.js"></script>
+  <header>
+    <h1>Perfil de Usuario</h1>
+  </header>
+  <main>
+    <section>
+      <p>Bienvenido, <span id="user-name"></span></p>
+      <label for="tipo-grupo">Grupo de Running:</label>
+      <select id="tipo-grupo">
+        <option value="Individual">Individual</option>
+      </select>
+      <button id="guardar-cambios">Guardar Cambios</button>
+      <p id="mensaje"></p>
+      <a href="index.html">Volver al inicio</a>
+    </section>
+  </main>
 </body>
 </html>
