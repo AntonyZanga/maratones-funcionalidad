@@ -101,12 +101,21 @@ async function registrarAtleta() {
       certificadoDiscapacidad: certificadoURL
     });
 
-    mostrarMensaje("Registro exitoso.", "green");
-    document.getElementById("registro-form").reset();
-  } catch (error) {
-    console.error("Error al registrar:", error);
-    mostrarMensaje("Hubo un error al registrar. Inténtalo nuevamente.", "red");
-  }
+    // Mensaje de éxito y redirección al index
+        document.getElementById("mensaje").textContent = "Registro exitoso. Redirigiendo...";
+        setTimeout(() => {
+            window.location.href = "index.html";
+        }, 2000);
+    } catch (error) {
+        console.error("Error al registrar el atleta:", error);
+        document.getElementById("mensaje").textContent = "Hubo un error al registrar. Intenta nuevamente.";
+    }
+    // mostrarMensaje("Registro exitoso.", "green");
+    //document.getElementById("registro-form").reset();
+  //} catch (error) {
+    //console.error("Error al registrar:", error);
+    //mostrarMensaje("Hubo un error al registrar. Inténtalo nuevamente.", "red");
+  //}
 }
 
 // Validación en vivo de la contraseña
