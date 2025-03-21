@@ -10,9 +10,10 @@
   <header>
     <h1>Bienvenido a Maratones de Sudeste</h1>
     <div id="user-info" style="display: none;">
-        <p>Bienvenido, <span id="user-name"></span></p>
-        <button id="logout">Cerrar sesión</button>
-    </div>
+  <p>Bienvenido, <span id="user-name"></span></p>
+  <a href="perfil.html" id="perfil-link">Mi Perfil</a>
+  <button id="logout">Cerrar sesión</button>
+</div>
   </header>
   <main>
     <section id="login-section">
@@ -58,6 +59,30 @@
 </div>
     <button id="btn-inscribirse">Inscribirse</button>
   </main>
+  <script type="module">
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+  const auth = getAuth();
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      const nombreUsuario = sessionStorage.getItem("nombre");
+      document.getElementById("user-name").textContent = nombreUsuario;
+      document.getElementById("user-info").style.display = "block"; // Muestra el usuario logueado
+    } else {
+      document.getElementById("user-info").style.display = "none"; // Oculta si no hay sesión
+    }
+  });
+
+  document.getElementById("logout").addEventListener("click", () => {
+    signOut(auth).then(() => {
+      sessionStorage.clear();
+      window.location.href = "index.html";
+    }).catch((error) => {
+      console.error("Error al cerrar sesión:", error);
+    });
+  });
+</script>
   <script type="module" src="login.js"></script>
   <script src="js/script.js"></script>
 </body>
