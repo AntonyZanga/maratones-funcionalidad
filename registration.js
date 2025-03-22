@@ -132,7 +132,7 @@ function validarPassword() {
   let passwordMatch = document.getElementById("password-match");
 
   if (password.length < 6) {
-    passwordMatch.textContent = "La contraseña debe tener 6 caracteres.";
+    passwordMatch.textContent = "La contraseña debe tener al menos 6 caracteres.";
     passwordMatch.style.color = "red";
     return;
   }
