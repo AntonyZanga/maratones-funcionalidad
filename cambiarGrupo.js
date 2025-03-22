@@ -3,14 +3,14 @@ import { auth, db } from './config.js';
 import { doc, getDoc, updateDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // Función para cargar los grupos de running desde Firebase
-async function cargarGrupos() {
+async function cargarGrupos(grupoActual) {
     const selectGrupo = document.getElementById("nuevo-grupo");
     if (!selectGrupo) {
         console.error("El elemento select de grupos no se encontró en el DOM.");
         return;
     }
 
-    selectGrupo.innerHTML = '<option value="Individual">Individual</option>'; // Opción por defecto
+    selectGrupo.innerHTML = ""; // Limpiar opciones previas
 
     try {
         console.log("Cargando grupos desde Firebase...");
@@ -20,6 +20,12 @@ async function cargarGrupos() {
             console.warn("No se encontraron grupos en la base de datos.");
         }
 
+        // Agregar la opción 'Individual' siempre presente
+        const optionDefault = document.createElement("option");
+        optionDefault.value = "Individual";
+        optionDefault.textContent = "Individual";
+        selectGrupo.appendChild(optionDefault);
+
         querySnapshot.forEach((doc) => {
             const grupo = doc.data().nombre;
             console.log("Grupo encontrado:", grupo);
@@ -28,13 +34,18 @@ async function cargarGrupos() {
             option.textContent = grupo;
             selectGrupo.appendChild(option);
         });
+
+        // Seleccionar automáticamente el grupo actual del usuario
+        if (grupoActual) {
+            selectGrupo.value = grupoActual;
+        }
     } catch (error) {
         console.error("Error al cargar los grupos:", error);
     }
 }
 
-// Función para obtener el usuario logueado
-async function obtenerUsuario() {
+// Función para obtener el usuario logueado y cargar su grupo
+async function cargarPerfilUsuario() {
     const dni = sessionStorage.getItem("usuarioDNI"); // Recuperar DNI desde sesión
 
     if (!dni) {
@@ -51,7 +62,17 @@ async function obtenerUsuario() {
             return null;
         }
 
-        return { dni, ...atletaSnap.data() }; // Retornar los datos del usuario
+        const usuario = { dni, ...atletaSnap.data() };
+        
+        // Mostrar el grupo actual en la página
+        if (usuario.grupoRunning) {
+            document.getElementById("grupo-running").textContent = usuario.grupoRunning;
+        }
+
+        // Cargar los grupos y seleccionar el actual
+        cargarGrupos(usuario.grupoRunning);
+
+        return usuario;
     } catch (error) {
         console.error("Error al obtener datos del usuario:", error);
         mostrarMensaje("Error al obtener datos del usuario.", "red");
@@ -70,10 +91,10 @@ function mostrarMensaje(mensaje, color = "black") {
     }
 }
 
-// Asegurar que el DOM esté cargado antes de ejecutar código
-document.addEventListener("DOMContentLoaded", () => {
+// Cargar perfil del usuario al cargar la página
+document.addEventListener("DOMContentLoaded", async () => {
     console.log("DOM completamente cargado.");
-    cargarGrupos(); // Llamar a la función para cargar grupos
+    await cargarPerfilUsuario();
 });
 
 // Evento para cambiar grupo de running
@@ -119,4 +140,3 @@ document.getElementById("btn-cambiar-grupo").addEventListener("click", async () 
         mostrarMensaje("Error al actualizar el grupo.", "red");
     }
 });
-
