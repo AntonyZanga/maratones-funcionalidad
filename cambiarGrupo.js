@@ -47,30 +47,6 @@ async function obtenerUsuario() {
     }
 }
 
-// Función para actualizar el grupo de running
-async function actualizarGrupo() {
-    const usuario = await obtenerUsuario();
-    if (!usuario) return;
-
-    const nuevoGrupo = document.getElementById("nuevo-grupo").value;
-    if (!nuevoGrupo) {
-        mostrarMensaje("Debe seleccionar un grupo válido.", "red");
-        return;
-    }
-
-    try {
-        const atletaRef = doc(db, "atletas", usuario.dni);
-        await updateDoc(atletaRef, {
-            grupoRunning: nuevoGrupo
-        });
-
-        mostrarMensaje("Grupo actualizado correctamente.", "green");
-    } catch (error) {
-        console.error("Error al actualizar el grupo:", error);
-        mostrarMensaje("Error al actualizar el grupo. Intente nuevamente.", "red");
-    }
-}
-
 // Función para mostrar mensajes de estado
 function mostrarMensaje(mensaje, color = "black") {
     const mensajeElemento = document.getElementById("mensaje");
@@ -81,5 +57,32 @@ function mostrarMensaje(mensaje, color = "black") {
 // Cargar grupos al cargar la página
 document.addEventListener("DOMContentLoaded", cargarGrupos);
 
-// Asignar función al botón de cambio de grupo
-document.getElementById("btn-cambiar-grupo").addEventListener("click", actualizarGrupo);
+document.getElementById("btn-cambiar-grupo").addEventListener("click", async () => {
+    const usuario = JSON.parse(localStorage.getItem("usuario"));
+
+    if (!usuario || !usuario.dni) {
+        console.error("No se encontró el DNI del usuario.");
+        document.getElementById("mensaje").textContent = "Error: No se encontró tu DNI.";
+        return;
+    }
+
+    const dni = String(usuario.dni); // Aseguramos que sea un string
+    const nuevoGrupo = document.getElementById("nuevo-grupo").value;
+
+    if (!nuevoGrupo) {
+        document.getElementById("mensaje").textContent = "Selecciona un grupo.";
+        return;
+    }
+
+    try {
+        const atletaRef = doc(db, "atletas", dni);
+        await updateDoc(atletaRef, { grupo: nuevoGrupo });
+
+        document.getElementById("mensaje").textContent = "Grupo actualizado correctamente.";
+        document.getElementById("grupo-running").textContent = nuevoGrupo; // Actualiza en la página
+    } catch (error) {
+        console.error("Error al actualizar el grupo:", error);
+        document.getElementById("mensaje").textContent = "Error al actualizar el grupo.";
+    }
+});
+
