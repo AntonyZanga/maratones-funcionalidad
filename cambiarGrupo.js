@@ -110,7 +110,7 @@ document.getElementById("btn-cambiar-grupo").addEventListener("click", async () 
 
     try {
         const atletaRef = doc(db, "atletas", dni);
-        await updateDoc(atletaRef, { grupo: nuevoGrupo });
+        await updateDoc(atletaRef, { grupoRunning: nuevoGrupo });
 
         mostrarMensaje("Grupo actualizado correctamente.", "green");
         document.getElementById("grupo-running").textContent = nuevoGrupo; // Actualiza en la página
