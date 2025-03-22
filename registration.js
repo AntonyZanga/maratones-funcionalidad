@@ -61,8 +61,8 @@ async function registrarAtleta() {
     return;
   }
 
-  if (password.length !== 6) {
-    mostrarMensaje("La contraseña debe tener exactamente 6 caracteres.", "red");
+  if (password.length < 6) {
+    mostrarMensaje("La contraseña debe tener al menos 6 caracteres.", "red");
     return;
   }
 
@@ -137,7 +137,7 @@ function validarPassword() {
     return;
   }
 
-  if (password === confirmPassword && password.length === 6) {
+  if (password === confirmPassword && password.length > 5) {
     passwordMatch.textContent = "Las contraseñas coinciden.";
     passwordMatch.style.color = "green";
   } else {
