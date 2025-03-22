@@ -138,9 +138,9 @@ document.getElementById("update-password").addEventListener("click", async funct
     const dni = document.getElementById("dni-recovery").value;
     const newPassword = document.getElementById("new-password").value;
 
-    if (!newPassword.match(/^\d{6}$/)) {
-        document.getElementById("recovery-message").textContent = "La contraseña debe tener 6 dígitos.";
-        return;
+    if (!newPassword.match(/^.{6,}$/)) {
+    document.getElementById("recovery-message").textContent = "La contraseña debe tener al menos 6 caracteres.";
+    return;
     }
 
     try {
