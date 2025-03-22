@@ -1,13 +1,19 @@
 // Cargar datos del usuario desde localStorage
 document.addEventListener("DOMContentLoaded", () => {
-    const usuario = JSON.parse(localStorage.getItem("usuario"));
+    let usuario = JSON.parse(sessionStorage.getItem("usuario"));
 
+    // Si sessionStorage está vacío pero localStorage tiene el usuario, lo restauramos
     if (!usuario) {
-        window.location.href = "index.html"; // Redirigir si no hay usuario logueado
-        return;
+        usuario = JSON.parse(localStorage.getItem("usuario"));
+        if (usuario) {
+            sessionStorage.setItem("usuario", JSON.stringify(usuario));
+        } else {
+            window.location.href = "index.html"; // Si tampoco está en localStorage, redirigir
+            return;
+        }
     }
 
-    // Mostrar los datos en la página
+    // Mostrar los datos en la página de perfil
     document.getElementById("nombre").textContent = usuario.nombre;
     document.getElementById("apellido").textContent = usuario.apellido;
     document.getElementById("dni").textContent = usuario.dni;
