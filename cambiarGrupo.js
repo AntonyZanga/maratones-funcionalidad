@@ -55,18 +55,24 @@ function mostrarMensaje(mensaje, color = "black") {
 }
 
 // Cargar grupos al cargar la página
-document.addEventListener("DOMContentLoaded", cargarGrupos);
-
 document.getElementById("btn-cambiar-grupo").addEventListener("click", async () => {
     const usuario = JSON.parse(localStorage.getItem("usuario"));
 
     if (!usuario || !usuario.dni) {
-        console.error("No se encontró el DNI del usuario.");
+        console.error("No se encontró el DNI del usuario.", usuario);
         document.getElementById("mensaje").textContent = "Error: No se encontró tu DNI.";
         return;
     }
 
-    const dni = String(usuario.dni); // Aseguramos que sea un string
+    const dni = String(usuario.dni).trim(); // Convertimos a string y eliminamos espacios en blanco
+    console.log("DNI obtenido:", dni); // Para depuración
+
+    if (!dni || dni === "undefined" || dni === "null") {
+        console.error("DNI no válido:", dni);
+        document.getElementById("mensaje").textContent = "Error: DNI inválido.";
+        return;
+    }
+
     const nuevoGrupo = document.getElementById("nuevo-grupo").value;
 
     if (!nuevoGrupo) {
@@ -85,4 +91,5 @@ document.getElementById("btn-cambiar-grupo").addEventListener("click", async () 
         document.getElementById("mensaje").textContent = "Error al actualizar el grupo.";
     }
 });
+
 
