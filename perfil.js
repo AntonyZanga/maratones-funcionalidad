@@ -11,6 +11,8 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("nombre").textContent = usuario.nombre;
     document.getElementById("apellido").textContent = usuario.apellido;
     document.getElementById("dni").textContent = usuario.dni;
+    document.getElementById("localidad").textContent = usuario.localidad;
+    document.getElementById("categoria").textContent = usuario.categoria;
 
     // Cargar el grupo desde Firebase
     cargarGrupoDesdeFirebase(usuario.dni);
