@@ -59,20 +59,27 @@ document.getElementById("login-form").addEventListener("submit", async function 
 document.addEventListener("DOMContentLoaded", () => {
     let usuario = JSON.parse(sessionStorage.getItem("usuario"));
 
-    // Si no hay datos en sessionStorage pero sí en localStorage, los copiamos
+    // 🔹 Si sessionStorage está vacío pero hay usuario en localStorage, restauramos los datos
     if (!usuario) {
         usuario = JSON.parse(localStorage.getItem("usuario"));
         if (usuario) {
             sessionStorage.setItem("usuario", JSON.stringify(usuario));
+            sessionStorage.setItem("usuarioDNI", usuario.dni);
+            sessionStorage.setItem("usuarioNombre", usuario.nombre);
+            sessionStorage.setItem("usuarioApellido", usuario.apellido);
         }
     }
 
-    // Ahora mostramos la información en el header si hay usuario
-    if (usuario) {
-        document.getElementById("login-section").style.display = "none";
-        document.getElementById("user-info").style.display = "block";
-        document.getElementById("user-name").textContent = `${usuario.nombre} ${usuario.apellido}`;
+    // 🔹 Si después de esto no hay usuario, significa que nadie ha iniciado sesión
+    if (!usuario) {
+        console.warn("No hay usuario logueado.");
+        return;
     }
+
+    // 🔹 Mostrar información en la página
+    document.getElementById("login-section").style.display = "none";
+    document.getElementById("user-info").style.display = "block";
+    document.getElementById("user-name").textContent = `${usuario.nombre} ${usuario.apellido}`;
 });
 // =========================
 // 🔥 CIERRE DE SESIÓN 🔥
