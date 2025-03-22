@@ -1,4 +1,4 @@
-// Importar los servicios desde config.js
+// Importar Firebase desde config.js
 import { auth, db } from './config.js';
 import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
@@ -39,12 +39,9 @@ document.getElementById("login-form").addEventListener("submit", async function 
             return;
         }
 
-        // Guardar sesión en localStorage y sessionStorage
+        // Guardar sesión en sessionStorage
         const usuarioData = { dni, nombre: atleta.nombre, apellido: atleta.apellido };
-        localStorage.setItem("usuario", JSON.stringify(usuarioData));
-        sessionStorage.setItem("usuarioDNI", dni);
-        sessionStorage.setItem("usuarioNombre", atleta.nombre);
-        sessionStorage.setItem("usuarioApellido", atleta.apellido);
+        sessionStorage.setItem("usuario", JSON.stringify(usuarioData));
 
         // Redirigir al perfil
         window.location.href = "perfil.html";
@@ -58,7 +55,8 @@ document.getElementById("login-form").addEventListener("submit", async function 
 // 🔥 VERIFICAR SESIÓN AL CARGAR LA PÁGINA 🔥
 // =========================
 document.addEventListener("DOMContentLoaded", () => {
-    const usuario = JSON.parse(localStorage.getItem("usuario"));
+    const usuario = JSON.parse(sessionStorage.getItem("usuario"));
+
     if (usuario) {
         document.getElementById("login-section").style.display = "none";
         document.getElementById("user-info").style.display = "block";
@@ -70,7 +68,6 @@ document.addEventListener("DOMContentLoaded", () => {
 // 🔥 CIERRE DE SESIÓN 🔥
 // =========================
 document.getElementById("logout")?.addEventListener("click", () => {
-    localStorage.removeItem("usuario");
     sessionStorage.clear();
     window.location.href = "index.html";
 });
