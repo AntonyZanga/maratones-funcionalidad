@@ -53,19 +53,27 @@ document.getElementById("login-form").addEventListener("submit", async function 
         mostrarMensaje("Error al iniciar sesión.");
     }
 });
-
 // =========================
 // 🔥 VERIFICAR SESIÓN AL CARGAR LA PÁGINA 🔥
 // =========================
 document.addEventListener("DOMContentLoaded", () => {
-    const usuario = JSON.parse(localStorage.getItem("usuario"));
+    let usuario = JSON.parse(sessionStorage.getItem("usuario"));
+
+    // Si no hay datos en sessionStorage pero sí en localStorage, los copiamos
+    if (!usuario) {
+        usuario = JSON.parse(localStorage.getItem("usuario"));
+        if (usuario) {
+            sessionStorage.setItem("usuario", JSON.stringify(usuario));
+        }
+    }
+
+    // Ahora mostramos la información en el header si hay usuario
     if (usuario) {
         document.getElementById("login-section").style.display = "none";
         document.getElementById("user-info").style.display = "block";
         document.getElementById("user-name").textContent = `${usuario.nombre} ${usuario.apellido}`;
     }
 });
-
 // =========================
 // 🔥 CIERRE DE SESIÓN 🔥
 // =========================
