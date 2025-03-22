@@ -1,6 +1,6 @@
 // Cargar datos del usuario desde localStorage
 document.addEventListener("DOMContentLoaded", () => {
-    const usuario = JSON.parse(sessionStorage.getItem("usuario"));
+    const usuario = JSON.parse(localStorage.getItem("usuario"));
 
     if (!usuario) {
         window.location.href = "index.html"; // Redirigir si no hay usuario logueado
