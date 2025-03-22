@@ -2,7 +2,6 @@
 import { auth, db } from './config.js';
 import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-
 // Función para mostrar mensajes de estado
 function mostrarMensaje(mensaje, color = "red") {
     const mensajeElemento = document.getElementById("login-message");
@@ -10,7 +9,9 @@ function mostrarMensaje(mensaje, color = "red") {
     mensajeElemento.style.color = color;
 }
 
-// Manejar inicio de sesión
+// =========================
+// 🔥 INICIO DE SESIÓN 🔥
+// =========================
 document.getElementById("login-form").addEventListener("submit", async function (event) {
     event.preventDefault();
 
@@ -27,29 +28,35 @@ document.getElementById("login-form").addEventListener("submit", async function 
         const atletaSnap = await getDoc(atletaRef);
 
         if (!atletaSnap.exists()) {
-            mostrarMensaje("DNI no encontrado.");
+            mostrarMensaje("DNI no registrado.");
             return;
         }
 
-        const atletaData = atletaSnap.data();
+        const atleta = atletaSnap.data();
 
-        if (atletaData.password !== password) {
+        if (atleta.password !== password) {
             mostrarMensaje("Contraseña incorrecta.");
             return;
         }
 
-        // Guardar sesión en LocalStorage
-        localStorage.setItem("usuario", JSON.stringify({ dni, nombre: atletaData.nombre, apellido: atletaData.apellido }));
+        // Guardar sesión en localStorage y sessionStorage
+        const usuarioData = { dni, nombre: atleta.nombre, apellido: atleta.apellido };
+        localStorage.setItem("usuario", JSON.stringify(usuarioData));
+        sessionStorage.setItem("usuarioDNI", dni);
+        sessionStorage.setItem("usuarioNombre", atleta.nombre);
+        sessionStorage.setItem("usuarioApellido", atleta.apellido);
 
-        // Redirigir o actualizar
-        window.location.reload();
+        // Redirigir al perfil
+        window.location.href = "perfil.html";
     } catch (error) {
-        console.error("Error al iniciar sesión:", error);
+        console.error("Error en el login:", error);
         mostrarMensaje("Error al iniciar sesión.");
     }
 });
 
-// Verificar si hay usuario logueado
+// =========================
+// 🔥 VERIFICAR SESIÓN AL CARGAR LA PÁGINA 🔥
+// =========================
 document.addEventListener("DOMContentLoaded", () => {
     const usuario = JSON.parse(localStorage.getItem("usuario"));
     if (usuario) {
@@ -59,10 +66,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// Cerrar sesión
+// =========================
+// 🔥 CIERRE DE SESIÓN 🔥
+// =========================
 document.getElementById("logout")?.addEventListener("click", () => {
     localStorage.removeItem("usuario");
-    window.location.reload();
+    sessionStorage.clear();
+    window.location.href = "index.html";
 });
 
 // =========================
@@ -85,10 +95,15 @@ document.getElementById("check-dni").addEventListener("click", async function() 
         return;
     }
 
-    const atletaRef = doc(db, "atletas", dni);
-    const atletaSnap = await getDoc(atletaRef);
+    try {
+        const atletaRef = doc(db, "atletas", dni);
+        const atletaSnap = await getDoc(atletaRef);
 
-    if (atletaSnap.exists()) {
+        if (!atletaSnap.exists()) {
+            document.getElementById("recovery-message").textContent = "DNI no encontrado.";
+            return;
+        }
+
         const atletaData = atletaSnap.data();
         
         if (atletaData.fechaNacimiento === fechaNacimiento) {
@@ -97,8 +112,9 @@ document.getElementById("check-dni").addEventListener("click", async function() 
         } else {
             document.getElementById("recovery-message").textContent = "Fecha de nacimiento incorrecta.";
         }
-    } else {
-        document.getElementById("recovery-message").textContent = "DNI no encontrado.";
+    } catch (error) {
+        console.error("Error en la recuperación de contraseña:", error);
+        document.getElementById("recovery-message").textContent = "Error al verificar el DNI.";
     }
 });
 
@@ -112,12 +128,16 @@ document.getElementById("update-password").addEventListener("click", async funct
         return;
     }
 
-    const atletaRef = doc(db, "atletas", dni);
-    
-    await updateDoc(atletaRef, { password: newPassword });
+    try {
+        const atletaRef = doc(db, "atletas", dni);
+        await updateDoc(atletaRef, { password: newPassword });
 
-    document.getElementById("recovery-message").textContent = "Contraseña actualizada con éxito. Redirigiendo...";
-    setTimeout(() => {
-        window.location.href = "index.html";
-    }, 2000);
+        document.getElementById("recovery-message").textContent = "Contraseña actualizada con éxito. Redirigiendo...";
+        setTimeout(() => {
+            window.location.href = "index.html";
+        }, 2000);
+    } catch (error) {
+        console.error("Error al actualizar contraseña:", error);
+        document.getElementById("recovery-message").textContent = "Error al actualizar la contraseña.";
+    }
 });
