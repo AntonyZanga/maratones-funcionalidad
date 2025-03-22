@@ -1,6 +1,3 @@
-// firebase-config.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-
 const firebaseConfig = {
   apiKey: "AIzaSyAFHZcfSELn2Cfgh3I1og2mw3rIL8gqlAM",
   authDomain: "maratonessudeste.firebaseapp.com",
@@ -11,5 +8,10 @@ const firebaseConfig = {
   measurementId: "G-B1GL7QJGSH"
 };
 
-// Inicializar Firebase y exportar la instancia
-export const app = initializeApp(firebaseConfig);
+// Inicializa Firebase una sola vez
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// Exportamos para que otros archivos lo usen
+export { auth, db };
