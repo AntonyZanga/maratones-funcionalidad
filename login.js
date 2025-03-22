@@ -1,6 +1,7 @@
-// Importar Firebase
+// Importar los servicios desde config.js
 import { auth, db } from './config.js';
 import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
 
 // Función para mostrar mensajes de estado
 function mostrarMensaje(mensaje, color = "red") {
