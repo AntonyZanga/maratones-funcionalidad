@@ -8,9 +8,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Mostrar los datos en la página
-    document.getElementById("nombre-atleta").textContent = usuario.nombre;
-    document.getElementById("apellido-atleta").textContent = usuario.apellido;
-    document.getElementById("dni-atleta").textContent = usuario.dni;
+    document.getElementById("nombre").textContent = usuario.nombre;
+    document.getElementById("apellido").textContent = usuario.apellido;
+    document.getElementById("dni").textContent = usuario.dni;
 
     // Cargar el grupo desde Firebase
     cargarGrupoDesdeFirebase(usuario.dni);
@@ -26,7 +26,7 @@ async function cargarGrupoDesdeFirebase(dni) {
         const atletaSnap = await getDoc(atletaRef);
 
         if (atletaSnap.exists()) {
-            document.getElementById("grupo-atleta").textContent = atletaSnap.data().grupo || "Individual";
+            document.getElementById("grupo-running").textContent = atletaSnap.data().grupo || "Individual";
         } else {
             console.error("No se encontró el atleta en la base de datos.");
         }
