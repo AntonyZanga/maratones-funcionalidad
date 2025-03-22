@@ -5,12 +5,24 @@ import { doc, getDoc, updateDoc, collection, getDocs } from "https://www.gstatic
 // Función para cargar los grupos de running desde Firebase
 async function cargarGrupos() {
     const selectGrupo = document.getElementById("nuevo-grupo");
+    if (!selectGrupo) {
+        console.error("El elemento select de grupos no se encontró en el DOM.");
+        return;
+    }
+
     selectGrupo.innerHTML = '<option value="Individual">Individual</option>'; // Opción por defecto
 
     try {
+        console.log("Cargando grupos desde Firebase...");
         const querySnapshot = await getDocs(collection(db, "grupos"));
+
+        if (querySnapshot.empty) {
+            console.warn("No se encontraron grupos en la base de datos.");
+        }
+
         querySnapshot.forEach((doc) => {
             const grupo = doc.data().nombre;
+            console.log("Grupo encontrado:", grupo);
             const option = document.createElement("option");
             option.value = grupo;
             option.textContent = grupo;
@@ -50,33 +62,49 @@ async function obtenerUsuario() {
 // Función para mostrar mensajes de estado
 function mostrarMensaje(mensaje, color = "black") {
     const mensajeElemento = document.getElementById("mensaje");
-    mensajeElemento.textContent = mensaje;
-    mensajeElemento.style.color = color;
+    if (mensajeElemento) {
+        mensajeElemento.textContent = mensaje;
+        mensajeElemento.style.color = color;
+    } else {
+        console.warn("Elemento de mensaje no encontrado en el DOM.");
+    }
 }
 
-// Cargar grupos al cargar la página
+// Asegurar que el DOM esté cargado antes de ejecutar código
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("DOM completamente cargado.");
+    cargarGrupos(); // Llamar a la función para cargar grupos
+});
+
+// Evento para cambiar grupo de running
 document.getElementById("btn-cambiar-grupo").addEventListener("click", async () => {
     const usuario = JSON.parse(localStorage.getItem("usuario"));
 
     if (!usuario || !usuario.dni) {
         console.error("No se encontró el DNI del usuario.", usuario);
-        document.getElementById("mensaje").textContent = "Error: No se encontró tu DNI.";
+        mostrarMensaje("Error: No se encontró tu DNI.", "red");
         return;
     }
 
-    const dni = String(usuario.dni).trim(); // Convertimos a string y eliminamos espacios en blanco
-    console.log("DNI obtenido:", dni); // Para depuración
+    const dni = String(usuario.dni).trim();
+    console.log("DNI obtenido:", dni);
 
     if (!dni || dni === "undefined" || dni === "null") {
         console.error("DNI no válido:", dni);
-        document.getElementById("mensaje").textContent = "Error: DNI inválido.";
+        mostrarMensaje("Error: DNI inválido.", "red");
         return;
     }
 
-    const nuevoGrupo = document.getElementById("nuevo-grupo").value;
+    const selectGrupo = document.getElementById("nuevo-grupo");
+    if (!selectGrupo) {
+        console.error("El selector de grupos no existe en el DOM.");
+        return;
+    }
+
+    const nuevoGrupo = selectGrupo.value;
 
     if (!nuevoGrupo) {
-        document.getElementById("mensaje").textContent = "Selecciona un grupo.";
+        mostrarMensaje("Selecciona un grupo.", "red");
         return;
     }
 
@@ -84,12 +112,11 @@ document.getElementById("btn-cambiar-grupo").addEventListener("click", async () 
         const atletaRef = doc(db, "atletas", dni);
         await updateDoc(atletaRef, { grupo: nuevoGrupo });
 
-        document.getElementById("mensaje").textContent = "Grupo actualizado correctamente.";
+        mostrarMensaje("Grupo actualizado correctamente.", "green");
         document.getElementById("grupo-running").textContent = nuevoGrupo; // Actualiza en la página
     } catch (error) {
         console.error("Error al actualizar el grupo:", error);
-        document.getElementById("mensaje").textContent = "Error al actualizar el grupo.";
+        mostrarMensaje("Error al actualizar el grupo.", "red");
     }
 });
-
 
