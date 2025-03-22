@@ -41,7 +41,7 @@ document.getElementById("login-form").addEventListener("submit", async function 
 
         // Guardar sesión en sessionStorage
         const usuarioData = { dni, nombre: atleta.nombre, apellido: atleta.apellido };
-        sessionStorage.setItem("usuario", JSON.stringify(usuarioData));
+        localStorage.setItem("usuario", JSON.stringify(usuarioData));
 
         // Redirigir al perfil
         window.location.href = "perfil.html";
