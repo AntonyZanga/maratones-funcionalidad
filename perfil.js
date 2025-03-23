@@ -1,6 +1,6 @@
 // Importar Firebase desde config.js
 import { db, storage } from './config.js';
-import { doc, getDoc, updateDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { doc, getDoc, updateDoc, setDoc, deleteDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -19,14 +19,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     sessionStorage.setItem("usuarioDNI", usuario.dni);
 
     // Obtener referencias a los elementos del DOM
-    const nombreElem = document.getElementById("nombre");
-    const apellidoElem = document.getElementById("apellido");
-    const dniElem = document.getElementById("dni");
-
-    // Verificar si los elementos existen antes de asignar valores
-    if (nombreElem) nombreElem.textContent = usuario.nombre;
-    if (apellidoElem) apellidoElem.textContent = usuario.apellido;
-    if (dniElem) dniElem.textContent = usuario.dni;
+    document.getElementById("nombre").value = usuario.nombre || "";
+    document.getElementById("apellido").value = usuario.apellido || "";
+    document.getElementById("dni").value = usuario.dni || "";
 
     await cargarPerfilUsuario();
 });
@@ -52,17 +47,10 @@ async function cargarPerfilUsuario() {
 
         const usuario = atletaSnap.data();
 
-        // Obtener elementos
-        const grupoRunningElem = document.getElementById("grupo-running");
-        const localidadElem = document.getElementById("localidad");
-        const categoriaElem = document.getElementById("categoria");
-        const fechaNacimientoElem = document.getElementById("fecha-nacimiento");
-
-        // Verificar si los elementos existen antes de asignar valores
-        if (grupoRunningElem) grupoRunningElem.textContent = usuario.grupoRunning || "Individual";
-        if (localidadElem) localidadElem.value = usuario.localidad || "";
-        if (categoriaElem) categoriaElem.value = usuario.categoria || "";
-        if (fechaNacimientoElem) fechaNacimientoElem.value = usuario.fechaNacimiento || "";
+        document.getElementById("grupo-running").textContent = usuario.grupoRunning || "Individual";
+        document.getElementById("localidad").value = usuario.localidad || "";
+        document.getElementById("categoria").value = usuario.categoria || "";
+        document.getElementById("fecha-nacimiento").value = usuario.fechaNacimiento || "";
 
         await cargarGrupos(usuario.grupoRunning);
     } catch (error) {
@@ -115,46 +103,57 @@ document.addEventListener("DOMContentLoaded", () => {
             event.preventDefault();
 
             const dniElem = document.getElementById("dni");
+            const nombreElem = document.getElementById("nombre");
+            const apellidoElem = document.getElementById("apellido");
             const localidadElem = document.getElementById("localidad");
             const categoriaElem = document.getElementById("categoria");
             const fechaNacimientoElem = document.getElementById("fecha-nacimiento");
             const selectGrupo = document.getElementById("nuevo-grupo");
             const aptoMedicoFile = document.getElementById("apto-medico").files[0];
 
-            if (!dniElem || !localidadElem || !categoriaElem || !fechaNacimientoElem || !selectGrupo) {
+            if (!dniElem || !nombreElem || !apellidoElem || !localidadElem || !categoriaElem || !fechaNacimientoElem || !selectGrupo) {
                 console.error("Algunos elementos del formulario no se encontraron.");
                 mostrarMensaje("Error: elementos del formulario faltantes.", "red");
                 return;
             }
 
-            const dni = dniElem.textContent.trim();
+            const nuevoDni = dniElem.value.trim();
+            const nombre = nombreElem.value.trim();
+            const apellido = apellidoElem.value.trim();
             const localidad = localidadElem.value.trim();
             const categoria = categoriaElem.value.trim();
             const fechaNacimiento = fechaNacimientoElem.value;
             const grupoRunning = selectGrupo.value;
+            const dniActual = sessionStorage.getItem("usuarioDNI");
 
-            if (!dni || !localidad || !categoria || !fechaNacimiento) {
+            if (!nuevoDni || !nombre || !apellido || !localidad || !categoria || !fechaNacimiento) {
                 mostrarMensaje("Todos los campos son obligatorios.", "red");
                 return;
             }
 
             try {
-                const atletaRef = doc(db, "atletas", dni);
-                let updateData = { localidad, categoria, fechaNacimiento, grupoRunning };
+                let updateData = { nombre, apellido, localidad, categoria, fechaNacimiento, grupoRunning };
 
                 // Subir apto médico si hay archivo seleccionado
                 if (aptoMedicoFile) {
-                    const storageRef = ref(storage, `aptos_medicos/${dni}`);
+                    const storageRef = ref(storage, `aptos_medicos/${nuevoDni}`);
                     await uploadBytes(storageRef, aptoMedicoFile);
                     const aptoMedicoURL = await getDownloadURL(storageRef);
                     updateData.aptoMedico = aptoMedicoURL;
                 }
 
-                await updateDoc(atletaRef, updateData);
-                mostrarMensaje("Perfil actualizado correctamente.", "green");
+                if (nuevoDni !== dniActual) {
+                    // Crear un nuevo documento con el nuevo DNI
+                    await setDoc(doc(db, "atletas", nuevoDni), updateData);
+                    // Eliminar el documento anterior
+                    await deleteDoc(doc(db, "atletas", dniActual));
+                    sessionStorage.setItem("usuarioDNI", nuevoDni);
+                } else {
+                    // Actualizar el documento existente
+                    await updateDoc(doc(db, "atletas", nuevoDni), updateData);
+                }
 
-                const grupoRunningElem = document.getElementById("grupo-running");
-                if (grupoRunningElem) grupoRunningElem.textContent = grupoRunning;
+                mostrarMensaje("Perfil actualizado correctamente.", "green");
             } catch (error) {
                 console.error("Error al actualizar el perfil:", error);
                 mostrarMensaje("Error al guardar los cambios.", "red");
@@ -178,36 +177,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (btnCambiarGrupo) {
         btnCambiarGrupo.addEventListener("click", async () => {
-            const usuario = JSON.parse(sessionStorage.getItem("usuario"));
-
-            if (!usuario || !usuario.dni) {
-                mostrarMensaje("Error: No se encontró tu DNI.", "red");
-                return;
-            }
-
-            const dni = usuario.dni.trim();
+            const dni = sessionStorage.getItem("usuarioDNI");
             const selectGrupo = document.getElementById("nuevo-grupo");
 
-            if (!selectGrupo) {
-                console.error("El selector de grupos no existe.");
+            if (!dni || !selectGrupo) {
+                mostrarMensaje("Error: No se encontró el DNI o selector de grupo.", "red");
                 return;
             }
 
             const nuevoGrupo = selectGrupo.value;
 
-            if (!nuevoGrupo) {
-                mostrarMensaje("Selecciona un grupo.", "red");
-                return;
-            }
-
             try {
-                const atletaRef = doc(db, "atletas", dni);
-                await updateDoc(atletaRef, { grupoRunning: nuevoGrupo });
-
+                await updateDoc(doc(db, "atletas", dni), { grupoRunning: nuevoGrupo });
                 mostrarMensaje("Grupo actualizado correctamente.", "green");
-
-                const grupoRunningElem = document.getElementById("grupo-running");
-                if (grupoRunningElem) grupoRunningElem.textContent = nuevoGrupo;
+                document.getElementById("grupo-running").textContent = nuevoGrupo;
             } catch (error) {
                 console.error("Error al actualizar el grupo:", error);
                 mostrarMensaje("Error al actualizar el grupo.", "red");
