@@ -12,6 +12,7 @@
     </header>
     
     <main>
+        <!-- Sección de Información Personal -->
         <section id="perfil">
             <h2>Información Personal</h2>
             <p><strong>DNI:</strong> <span id="dni"></span></p>
@@ -20,11 +21,27 @@
             <p><strong>Grupo de Running Actual:</strong> <span id="grupo-running"></span></p>
         </section>
 
-        <section id="cambio-grupo">
-            <h2>Cambiar Grupo de Running</h2>
-            <label for="nuevo-grupo">Selecciona un nuevo grupo:</label>
-            <select id="nuevo-grupo"></select>
-            <button id="btn-cambiar-grupo">Actualizar Grupo</button>
+        <!-- Formulario para actualizar datos -->
+        <section id="editar-perfil">
+            <h2>Editar Información</h2>
+            <form id="perfil-form">
+                <label for="localidad">Localidad:</label>
+                <input type="text" id="localidad" required>
+
+                <label for="categoria">Categoría:</label>
+                <input type="text" id="categoria" required>
+
+                <label for="fecha-nacimiento">Fecha de Nacimiento:</label>
+                <input type="date" id="fecha-nacimiento" required>
+
+                <label for="nuevo-grupo">Selecciona un nuevo grupo:</label>
+                <select id="nuevo-grupo"></select>
+
+                <label for="apto-medico">Subir Apto Médico:</label>
+                <input type="file" id="apto-medico" accept="image/*,application/pdf">
+
+                <button type="submit">Guardar Cambios</button>
+            </form>
             <p id="mensaje"></p>
         </section>
 
@@ -33,6 +50,5 @@
 
     <script type="module" src="config.js"></script>
     <script type="module" src="perfil.js"></script>
-    <script type="module" src="cambiarGrupo.js"></script>
 </body>
 </html>
