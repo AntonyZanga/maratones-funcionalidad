@@ -1,6 +1,6 @@
 // Importar Firebase desde config.js
 import { db, storage } from './config.js';
-import { doc, getDoc, updateDoc, setDoc, deleteDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { doc, getDoc, updateDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -106,6 +106,13 @@ async function cargarGrupos(grupoActual) {
     }
 }
 
+// Función para validar DNI
+function esDniValido(dni) {
+    const dniRegex = /^[1-9]\d{6,7}$/;
+    const dniInvalidos = ["00000000", "11111111", "12345678", "99999999"];
+    return dniRegex.test(dni) && !dniInvalidos.includes(dni);
+}
+
 // Guardar cambios en Firebase
 document.addEventListener("DOMContentLoaded", () => {
     const perfilForm = document.getElementById("perfil-form");
@@ -143,6 +150,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
+            if (!esDniValido(nuevoDni)) {
+                mostrarMensaje("DNI inválido. Debe tener entre 7 y 8 dígitos y ser real.", "red");
+                return;
+            }
+
             try {
                 let updateData = { nombre, apellido, localidad, categoria, fechaNacimiento, grupoRunning };
 
@@ -154,27 +166,23 @@ document.addEventListener("DOMContentLoaded", () => {
                     updateData.aptoMedico = aptoMedicoURL;
                 }
 
-                // Validar el DNI antes de actualizarlo
-if (nuevoDni !== dniActual) {
-    if (!esDniValido(nuevoDni)) {
-        mostrarMensaje("DNI inválido. Debe tener entre 7 y 8 dígitos y ser real.", "red");
-        return;
+                // Actualizar el campo "dni" en el mismo documento
+                await updateDoc(doc(db, "atletas", dniActual), { ...updateData, dni: nuevoDni });
+
+                // Actualizar sessionStorage con el nuevo DNI
+                let usuario = JSON.parse(sessionStorage.getItem("usuario"));
+                usuario.dni = nuevoDni;
+                sessionStorage.setItem("usuario", JSON.stringify(usuario));
+                sessionStorage.setItem("usuarioDNI", nuevoDni);
+
+                mostrarMensaje("Perfil actualizado correctamente.", "green");
+            } catch (error) {
+                console.error("Error al actualizar el perfil:", error);
+                mostrarMensaje("Error al guardar los cambios.", "red");
+            }
+        });
     }
-
-    // Actualizar el campo "dni" en el mismo documento
-    await updateDoc(doc(db, "atletas", dniActual), { ...updateData, dni: nuevoDni });
-
-    // Actualizar sessionStorage con el nuevo DNI
-    let usuario = JSON.parse(sessionStorage.getItem("usuario"));
-    usuario.dni = nuevoDni;
-    sessionStorage.setItem("usuario", JSON.stringify(usuario));
-    sessionStorage.setItem("usuarioDNI", nuevoDni);
-
-    mostrarMensaje("DNI actualizado correctamente.", "green");
-} else {
-    // Si el DNI no cambia, actualizar normalmente los demás datos
-    await updateDoc(doc(db, "atletas", dniActual), updateData);
-}
+});
 
 // Función para mostrar mensajes
 function mostrarMensaje(mensaje, color = "black") {
