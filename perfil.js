@@ -41,9 +41,9 @@ async function cargarPerfilUsuario() {
         const atletaSnap = await getDoc(atletaRef);
 
         if (!atletaSnap.exists()) {
-            mostrarMensaje("Usuario no encontrado.", "red");
-            return;
-        }
+            console.warn("El usuario aún no está registrado en Firebase.");
+        return;
+    }
 
         const usuario = atletaSnap.data();
         document.getElementById("nombre").value = usuario.nombre || "";
