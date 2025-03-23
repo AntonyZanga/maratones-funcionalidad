@@ -1,11 +1,11 @@
 // Importar Firebase desde config.js
 import { db, storage } from './config.js';
-import { doc, getDoc, updateDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { doc, getDoc, updateDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
     console.log("Cargando perfil...");
-    
+
     let usuario = JSON.parse(sessionStorage.getItem("usuario")) || JSON.parse(localStorage.getItem("usuario"));
 
     if (!usuario || !usuario.dni) {
@@ -14,28 +14,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
     }
 
-    // Guardar en sessionStorage si solo estaba en localStorage
     sessionStorage.setItem("usuario", JSON.stringify(usuario));
     sessionStorage.setItem("usuarioDNI", usuario.dni);
 
-    // Obtener referencias a los elementos del DOM
     const dniElem = document.getElementById("dni");
-    const nombreElem = document.getElementById("nombre");
-    const apellidoElem = document.getElementById("apellido");
-
     if (dniElem) {
         dniElem.value = usuario.dni || "";
-        dniElem.removeAttribute("readonly"); // Hacer DNI editable
+        dniElem.removeAttribute("readonly");
         dniElem.removeAttribute("disabled");
     }
-
-    if (nombreElem) nombreElem.value = usuario.nombre || "";
-    if (apellidoElem) apellidoElem.value = usuario.apellido || "";
 
     await cargarPerfilUsuario();
 });
 
-// Cargar datos del atleta desde Firebase
 async function cargarPerfilUsuario() {
     const dni = sessionStorage.getItem("usuarioDNI");
 
@@ -55,8 +46,6 @@ async function cargarPerfilUsuario() {
         }
 
         const usuario = atletaSnap.data();
-
-        // Actualizar campos del formulario con los datos de Firebase
         document.getElementById("nombre").value = usuario.nombre || "";
         document.getElementById("apellido").value = usuario.apellido || "";
         document.getElementById("grupo-running").textContent = usuario.grupoRunning || "Individual";
@@ -71,7 +60,6 @@ async function cargarPerfilUsuario() {
     }
 }
 
-// Cargar los grupos de running desde Firebase
 async function cargarGrupos(grupoActual) {
     const selectGrupo = document.getElementById("nuevo-grupo");
 
@@ -106,14 +94,18 @@ async function cargarGrupos(grupoActual) {
     }
 }
 
-// Función para validar DNI
 function esDniValido(dni) {
     const dniRegex = /^[1-9]\d{6,7}$/;
     const dniInvalidos = ["00000000", "11111111", "12345678", "99999999"];
     return dniRegex.test(dni) && !dniInvalidos.includes(dni);
 }
 
-// Guardar cambios en Firebase
+async function dniExiste(dni) {
+    const q = query(collection(db, "atletas"), where("dni", "==", dni));
+    const querySnapshot = await getDocs(q);
+    return !querySnapshot.empty;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     const perfilForm = document.getElementById("perfil-form");
 
@@ -155,10 +147,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            try {
-                let updateData = { nombre, apellido, localidad, categoria, fechaNacimiento, grupoRunning };
+            if (nuevoDni !== dniActual) {
+                const existe = await dniExiste(nuevoDni);
+                if (existe) {
+                    mostrarMensaje("El DNI ingresado ya está registrado. Ingrese otro.", "red");
+                    return;
+                }
+            }
 
-                // Subir apto médico si hay archivo seleccionado
+            try {
+                let updateData = { nombre, apellido, localidad, categoria, fechaNacimiento, grupoRunning, dni: nuevoDni };
+
                 if (aptoMedicoFile) {
                     const storageRef = ref(storage, `aptos_medicos/${nuevoDni}`);
                     await uploadBytes(storageRef, aptoMedicoFile);
@@ -166,10 +165,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     updateData.aptoMedico = aptoMedicoURL;
                 }
 
-                // Actualizar el campo "dni" en el mismo documento
-                await updateDoc(doc(db, "atletas", dniActual), { ...updateData, dni: nuevoDni });
+                await updateDoc(doc(db, "atletas", dniActual), updateData);
 
-                // Actualizar sessionStorage con el nuevo DNI
                 let usuario = JSON.parse(sessionStorage.getItem("usuario"));
                 usuario.dni = nuevoDni;
                 sessionStorage.setItem("usuario", JSON.stringify(usuario));
@@ -184,7 +181,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// Función para mostrar mensajes
 function mostrarMensaje(mensaje, color = "black") {
     const mensajeElemento = document.getElementById("mensaje");
     if (mensajeElemento) {
