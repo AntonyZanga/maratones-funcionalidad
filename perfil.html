@@ -15,10 +15,14 @@
         <!-- Sección de Información Personal -->
         <section id="perfil">
             <h2>Información Personal</h2>
-            <p><strong>DNI:</strong> <span id="dni"></span></p>
-            <p><strong>Nombre:</strong> <span id="nombre"></span></p>
-            <p><strong>Apellido:</strong> <span id="apellido"></span></p>
-            <p><strong>Grupo de Running Actual:</strong> <span id="grupo-running"></span></p>
+            <label for="dni">DNI:</label>
+            <input type="text" id="dni" required>
+
+            <label for="nombre">Nombre:</label>
+            <input type="text" id="nombre" required>
+
+            <label for="apellido">Apellido:</label>
+            <input type="text" id="apellido" required>
         </section>
 
         <!-- Formulario para actualizar datos -->
@@ -29,12 +33,16 @@
                 <input type="text" id="localidad" required>
 
                 <label for="categoria">Categoría:</label>
-                <input type="text" id="categoria" required>
+                <select id="categoria" required>
+                    <option value="Masculino">Masculino</option>
+                    <option value="Femenino">Femenino</option>
+                    <option value="Especial">Especial</option>
+                </select>
 
                 <label for="fecha-nacimiento">Fecha de Nacimiento:</label>
                 <input type="date" id="fecha-nacimiento" required>
 
-                <label for="nuevo-grupo">Selecciona un nuevo grupo:</label>
+                <label for="nuevo-grupo">Grupo de Running:</label>
                 <select id="nuevo-grupo"></select>
 
                 <label for="apto-medico">Subir Apto Médico:</label>
