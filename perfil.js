@@ -154,16 +154,31 @@ document.addEventListener("DOMContentLoaded", () => {
                     updateData.aptoMedico = aptoMedicoURL;
                 }
 
-                if (nuevoDni !== dniActual) {
+                //if (nuevoDni !== dniActual) {
                     // Crear un nuevo documento con el nuevo DNI
-                    await setDoc(doc(db, "atletas", nuevoDni), updateData);
+                    //await setDoc(doc(db, "atletas", nuevoDni), updateData);
                     // Eliminar el documento anterior
-                    await deleteDoc(doc(db, "atletas", dniActual));
-                    sessionStorage.setItem("usuarioDNI", nuevoDni);
-                } else {
+                    //await deleteDoc(doc(db, "atletas", dniActual));
+                    //sessionStorage.setItem("usuarioDNI", nuevoDni);
+                //} else {
                     // Actualizar el documento existente
-                    await updateDoc(doc(db, "atletas", nuevoDni), updateData);
-                }
+                    //await updateDoc(doc(db, "atletas", nuevoDni), updateData);
+                //}
+                if (nuevoDni !== dniActual) {
+    // Actualizar el campo "dni" en el mismo documento
+    await updateDoc(doc(db, "atletas", dniActual), { ...updateData, dni: nuevoDni });
+
+    // Actualizar sessionStorage con el nuevo DNI
+    let usuario = JSON.parse(sessionStorage.getItem("usuario"));
+    usuario.dni = nuevoDni;
+    sessionStorage.setItem("usuario", JSON.stringify(usuario));
+    sessionStorage.setItem("usuarioDNI", nuevoDni);
+
+    mostrarMensaje("DNI actualizado correctamente.", "green");
+} else {
+    // Si el DNI no cambia, actualizar normalmente los demás datos
+    await updateDoc(doc(db, "atletas", dniActual), updateData);
+}
 
                 mostrarMensaje("Perfil actualizado correctamente.", "green");
             } catch (error) {
