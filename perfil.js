@@ -174,7 +174,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 await setDoc(doc(db, "atletas", nuevoDni), updateData);
-                await deleteDoc(atletaRef);
+                if (nuevoDni !== dniActual) {
+                    await deleteDoc(atletaRef);
+                }
 
                 sessionStorage.setItem("usuario", JSON.stringify(updateData));
                 sessionStorage.setItem("usuarioDNI", nuevoDni);
