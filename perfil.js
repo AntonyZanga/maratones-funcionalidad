@@ -5,18 +5,16 @@ import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/fireba
 
 // Cargar datos del usuario desde sessionStorage o localStorage
 document.addEventListener("DOMContentLoaded", async () => {
-    let usuario = JSON.parse(sessionStorage.getItem("usuario"));
+    let usuario = JSON.parse(sessionStorage.getItem("usuario")) || JSON.parse(localStorage.getItem("usuario"));
 
-    // Si sessionStorage está vacío pero localStorage tiene el usuario, lo restauramos
-    if (!usuario) {
-        usuario = JSON.parse(localStorage.getItem("usuario"));
-        if (usuario) {
-            sessionStorage.setItem("usuario", JSON.stringify(usuario));
-        } else {
-            window.location.href = "index.html"; // Redirigir si no hay datos
-            return;
-        }
+    if (!usuario || !usuario.dni) {
+        window.location.href = "index.html"; // Redirigir si no hay datos
+        return;
     }
+
+    // Guardar en sessionStorage si solo estaba en localStorage
+    sessionStorage.setItem("usuario", JSON.stringify(usuario));
+    sessionStorage.setItem("usuarioDNI", usuario.dni);
 
     // Mostrar datos en el perfil
     document.getElementById("nombre").textContent = usuario.nombre;
@@ -52,9 +50,7 @@ async function cargarPerfilUsuario() {
         document.getElementById("categoria").value = usuario.categoria || "";
         document.getElementById("fecha-nacimiento").value = usuario.fechaNacimiento || "";
 
-        cargarGrupos(usuario.grupoRunning);
-
-        return usuario;
+        await cargarGrupos(usuario.grupoRunning);
     } catch (error) {
         console.error("Error al obtener datos del usuario:", error);
         mostrarMensaje("Error al obtener datos.", "red");
@@ -67,7 +63,6 @@ async function cargarGrupos(grupoActual) {
     selectGrupo.innerHTML = "";
 
     try {
-        console.log("Cargando grupos desde Firebase...");
         const querySnapshot = await getDocs(collection(db, "grupos"));
 
         const optionDefault = document.createElement("option");
@@ -77,7 +72,6 @@ async function cargarGrupos(grupoActual) {
 
         querySnapshot.forEach((doc) => {
             const grupo = doc.data().nombre;
-            console.log("Grupo encontrado:", grupo);
             const option = document.createElement("option");
             option.value = grupo;
             option.textContent = grupo;
@@ -96,14 +90,14 @@ async function cargarGrupos(grupoActual) {
 document.getElementById("perfil-form").addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const dni = document.getElementById("dni").textContent;
+    const dni = document.getElementById("dni").textContent.trim();
     const localidad = document.getElementById("localidad").value.trim();
     const categoria = document.getElementById("categoria").value.trim();
     const fechaNacimiento = document.getElementById("fecha-nacimiento").value;
     const grupoRunning = document.getElementById("nuevo-grupo").value;
     const aptoMedicoFile = document.getElementById("apto-medico").files[0];
 
-    if (!localidad || !categoria || !fechaNacimiento) {
+    if (!dni || !localidad || !categoria || !fechaNacimiento) {
         mostrarMensaje("Todos los campos son obligatorios.", "red");
         return;
     }
@@ -139,28 +133,15 @@ function mostrarMensaje(mensaje, color = "black") {
 
 // Evento para cambiar grupo de running
 document.getElementById("btn-cambiar-grupo").addEventListener("click", async () => {
-    const usuario = JSON.parse(localStorage.getItem("usuario"));
+    const usuario = JSON.parse(sessionStorage.getItem("usuario"));
 
     if (!usuario || !usuario.dni) {
-        console.error("No se encontró el DNI del usuario.", usuario);
         mostrarMensaje("Error: No se encontró tu DNI.", "red");
         return;
     }
 
-    const dni = String(usuario.dni).trim();
-
-    if (!dni) {
-        console.error("DNI no válido:", dni);
-        mostrarMensaje("Error: DNI inválido.", "red");
-        return;
-    }
-
+    const dni = usuario.dni.trim();
     const selectGrupo = document.getElementById("nuevo-grupo");
-    if (!selectGrupo) {
-        console.error("El selector de grupos no existe en el DOM.");
-        return;
-    }
-
     const nuevoGrupo = selectGrupo.value;
 
     if (!nuevoGrupo) {
