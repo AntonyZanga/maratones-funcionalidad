@@ -19,9 +19,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     sessionStorage.setItem("usuarioDNI", usuario.dni);
 
     // Obtener referencias a los elementos del DOM
-    document.getElementById("nombre").value = usuario.nombre || "";
-    document.getElementById("apellido").value = usuario.apellido || "";
-    document.getElementById("dni").value = usuario.dni || "";
+    const dniElem = document.getElementById("dni");
+    const nombreElem = document.getElementById("nombre");
+    const apellidoElem = document.getElementById("apellido");
+
+    if (dniElem) {
+        dniElem.value = usuario.dni || "";
+        dniElem.removeAttribute("readonly"); // Hacer DNI editable
+        dniElem.removeAttribute("disabled");
+    }
+
+    if (nombreElem) nombreElem.value = usuario.nombre || "";
+    if (apellidoElem) apellidoElem.value = usuario.apellido || "";
 
     await cargarPerfilUsuario();
 });
@@ -47,6 +56,9 @@ async function cargarPerfilUsuario() {
 
         const usuario = atletaSnap.data();
 
+        // Actualizar campos del formulario con los datos de Firebase
+        document.getElementById("nombre").value = usuario.nombre || "";
+        document.getElementById("apellido").value = usuario.apellido || "";
         document.getElementById("grupo-running").textContent = usuario.grupoRunning || "Individual";
         document.getElementById("localidad").value = usuario.localidad || "";
         document.getElementById("categoria").value = usuario.categoria || "";
@@ -170,31 +182,3 @@ function mostrarMensaje(mensaje, color = "black") {
         mensajeElemento.style.color = color;
     }
 }
-
-// Evento para cambiar grupo de running
-document.addEventListener("DOMContentLoaded", () => {
-    const btnCambiarGrupo = document.getElementById("btn-cambiar-grupo");
-
-    if (btnCambiarGrupo) {
-        btnCambiarGrupo.addEventListener("click", async () => {
-            const dni = sessionStorage.getItem("usuarioDNI");
-            const selectGrupo = document.getElementById("nuevo-grupo");
-
-            if (!dni || !selectGrupo) {
-                mostrarMensaje("Error: No se encontró el DNI o selector de grupo.", "red");
-                return;
-            }
-
-            const nuevoGrupo = selectGrupo.value;
-
-            try {
-                await updateDoc(doc(db, "atletas", dni), { grupoRunning: nuevoGrupo });
-                mostrarMensaje("Grupo actualizado correctamente.", "green");
-                document.getElementById("grupo-running").textContent = nuevoGrupo;
-            } catch (error) {
-                console.error("Error al actualizar el grupo:", error);
-                mostrarMensaje("Error al actualizar el grupo.", "red");
-            }
-        });
-    }
-});
