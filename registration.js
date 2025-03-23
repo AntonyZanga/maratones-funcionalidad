@@ -61,6 +61,12 @@ async function registrarAtleta() {
     return;
   }
 
+  // Nueva validación del DNI antes de registrarlo
+  if (!esDniValido(dni)) {
+      mostrarMensaje("DNI inválido. Debe tener entre 7 y 8 dígitos y ser real.", "red");
+      return;
+  }  
+
   if (password.length < 6) {
     mostrarMensaje("La contraseña debe tener al menos 6 caracteres.", "red");
     return;
@@ -125,6 +131,12 @@ async function registrarAtleta() {
 // Validación en vivo de la contraseña
 document.getElementById("password").addEventListener("input", validarPassword);
 document.getElementById("confirm-password").addEventListener("input", validarPassword);
+
+function esDniValido(dni) {
+    const dniRegex = /^[1-9]\d{6,7}$/;
+    const dniInvalidos = ["00000000", "11111111", "12345678", "99999999"];
+    return dniRegex.test(dni) && !dniInvalidos.includes(dni);
+}
 
 function validarPassword() {
   let password = document.getElementById("password").value;
