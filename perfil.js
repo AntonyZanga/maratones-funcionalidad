@@ -106,12 +106,6 @@ async function cargarGrupos(grupoActual) {
     }
 }
 
-function esDniValido(dni) {
-    const dniRegex = /^[1-9]\d{6,7}$/;
-    const dniInvalidos = ["00000000", "11111111", "12345678", "99999999"];
-    return dniRegex.test(dni) && !dniInvalidos.includes(dni);
-}
-
 // Guardar cambios en Firebase
 document.addEventListener("DOMContentLoaded", () => {
     const perfilForm = document.getElementById("perfil-form");
