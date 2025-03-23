@@ -154,17 +154,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     updateData.aptoMedico = aptoMedicoURL;
                 }
 
-                //if (nuevoDni !== dniActual) {
-                    // Crear un nuevo documento con el nuevo DNI
-                    //await setDoc(doc(db, "atletas", nuevoDni), updateData);
-                    // Eliminar el documento anterior
-                    //await deleteDoc(doc(db, "atletas", dniActual));
-                    //sessionStorage.setItem("usuarioDNI", nuevoDni);
-                //} else {
-                    // Actualizar el documento existente
-                    //await updateDoc(doc(db, "atletas", nuevoDni), updateData);
-                //}
-                if (nuevoDni !== dniActual) {
+                // Validar el DNI antes de actualizarlo
+if (nuevoDni !== dniActual) {
+    if (!esDniValido(nuevoDni)) {
+        mostrarMensaje("DNI inválido. Debe tener entre 7 y 8 dígitos y ser real.", "red");
+        return;
+    }
+
     // Actualizar el campo "dni" en el mismo documento
     await updateDoc(doc(db, "atletas", dniActual), { ...updateData, dni: nuevoDni });
 
@@ -180,15 +176,6 @@ document.addEventListener("DOMContentLoaded", () => {
     await updateDoc(doc(db, "atletas", dniActual), updateData);
 }
 
-                mostrarMensaje("Perfil actualizado correctamente.", "green");
-            } catch (error) {
-                console.error("Error al actualizar el perfil:", error);
-                mostrarMensaje("Error al guardar los cambios.", "red");
-            }
-        });
-    }
-});
-
 // Función para mostrar mensajes
 function mostrarMensaje(mensaje, color = "black") {
     const mensajeElemento = document.getElementById("mensaje");
@@ -196,4 +183,10 @@ function mostrarMensaje(mensaje, color = "black") {
         mensajeElemento.textContent = mensaje;
         mensajeElemento.style.color = color;
     }
+}
+
+function esDniValido(dni) {
+    const dniRegex = /^[1-9]\d{6,7}$/;
+    const dniInvalidos = ["00000000", "11111111", "12345678", "99999999"];
+    return dniRegex.test(dni) && !dniInvalidos.includes(dni);
 }
