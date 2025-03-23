@@ -18,6 +18,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     sessionStorage.setItem("usuarioDNI", usuario.dni);
 
     document.getElementById("dni").value = usuario.dni || "";
+    document.getElementById("dni").removeAttribute("readonly");
+    document.getElementById("dni").removeAttribute("disabled");
     document.getElementById("nombre").value = usuario.nombre || "";
     document.getElementById("apellido").value = usuario.apellido || "";
 
@@ -60,6 +62,12 @@ async function cargarPerfilUsuario() {
 // Cargar los grupos de running desde Firebase
 async function cargarGrupos(grupoActual) {
     const selectGrupo = document.getElementById("nuevo-grupo");
+
+    if (!selectGrupo) {
+        console.error("El selector de grupos no se encontró en el DOM.");
+        return;
+    }
+
     selectGrupo.innerHTML = "";
 
     try {
@@ -161,7 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     updateData.aptoMedico = aptoMedicoURL;
                 }
 
-                // Actualizar los datos en Firebase
+                // Actualizar datos en Firebase
                 await updateDoc(doc(db, "atletas", dniActual), updateData);
 
                 // Si el DNI cambia, actualizar sessionStorage
