@@ -1,6 +1,6 @@
 // Importar Firebase desde config.js
 import { db, storage } from './config.js';
-import { doc, getDoc, updateDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -156,7 +156,15 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             try {
-                let updateData = { nombre, apellido, localidad, categoria, fechaNacimiento, grupoRunning, dni: nuevoDni };
+                const atletaRef = doc(db, "atletas", dniActual);
+                const atletaSnap = await getDoc(atletaRef);
+
+                if (!atletaSnap.exists()) {
+                    mostrarMensaje("No se encontró el atleta.", "red");
+                    return;
+                }
+
+                let updateData = { ...atletaSnap.data(), dni: nuevoDni, nombre, apellido, localidad, categoria, fechaNacimiento, grupoRunning };
 
                 if (aptoMedicoFile) {
                     const storageRef = ref(storage, `aptos_medicos/${nuevoDni}`);
@@ -165,11 +173,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     updateData.aptoMedico = aptoMedicoURL;
                 }
 
-                await updateDoc(doc(db, "atletas", dniActual), updateData);
+                await setDoc(doc(db, "atletas", nuevoDni), updateData);
+                await deleteDoc(atletaRef);
 
-                let usuario = JSON.parse(sessionStorage.getItem("usuario"));
-                usuario.dni = nuevoDni;
-                sessionStorage.setItem("usuario", JSON.stringify(usuario));
+                sessionStorage.setItem("usuario", JSON.stringify(updateData));
                 sessionStorage.setItem("usuarioDNI", nuevoDni);
 
                 mostrarMensaje("Perfil actualizado correctamente.", "green");
