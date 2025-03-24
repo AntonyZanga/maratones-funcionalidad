@@ -42,8 +42,8 @@ async function cargarPerfilUsuario() {
 
         if (!atletaSnap.exists()) {
             console.warn("El usuario aún no está registrado en Firebase.");
-        return;
-    }
+            return;
+        }
 
         const usuario = atletaSnap.data();
         document.getElementById("nombre").value = usuario.nombre || "";
@@ -100,10 +100,22 @@ function esDniValido(dni) {
     return dniRegex.test(dni) && !dniInvalidos.includes(dni);
 }
 
-async function dniExiste(dni) {
+async function dniExiste(dni, dniActual) {
     const q = query(collection(db, "atletas"), where("dni", "==", dni));
     const querySnapshot = await getDocs(q);
-    return !querySnapshot.empty;
+
+    if (querySnapshot.empty) {
+        return false; // No existe en la base
+    }
+
+    // Verificar si el DNI pertenece a otro usuario
+    for (const docSnap of querySnapshot.docs) {
+        if (docSnap.id !== dniActual) {
+            return true; // DNI ya pertenece a otro usuario
+        }
+    }
+    
+    return false;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -147,9 +159,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (nuevoDni !== dniActual) {
-                const existe = await dniExiste(nuevoDni);
+                const existe = await dniExiste(nuevoDni, dniActual);
                 if (existe) {
-                    mostrarMensaje("El DNI ingresado ya está registrado. Ingrese otro.", "red");
+                    mostrarMensaje("El DNI ingresado ya está registrado por otro usuario. Ingrese otro.", "red");
                     return;
                 }
             }
@@ -177,7 +189,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     await deleteDoc(atletaRef);
                 }
 
-                // Limpiar sessionStorage y localStorage
                 localStorage.removeItem("usuario");
                 sessionStorage.clear();
 
@@ -201,4 +212,3 @@ function mostrarMensaje(mensaje, color = "black") {
         mensajeElemento.style.color = color;
     }
 }
-
