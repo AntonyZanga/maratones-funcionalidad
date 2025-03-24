@@ -167,7 +167,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 let updateData = { ...atletaSnap.data(), dni: nuevoDni, nombre, apellido, localidad, categoria, fechaNacimiento, grupoRunning };
 
                 if (aptoMedicoFile) {
-                    const storageRef = ref(storage, aptos_medicos/${nuevoDni});
+                    const storageRef = ref(storage, `aptos_medicos/${nuevoDni}`);
                     await uploadBytes(storageRef, aptoMedicoFile);
                     const aptoMedicoURL = await getDownloadURL(storageRef);
                     updateData.aptoMedico = aptoMedicoURL;
