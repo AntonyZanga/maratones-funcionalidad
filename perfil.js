@@ -123,7 +123,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const aptoMedicoFile = document.getElementById("apto-medico").files[0];
 
             if (!dniElem || !nombreElem || !apellidoElem || !localidadElem || !categoriaElem || !fechaNacimientoElem || !selectGrupo) {
-                console.error("Algunos elementos del formulario no se encontraron.");
                 mostrarMensaje("Error: elementos del formulario faltantes.", "red");
                 return;
             }
@@ -178,10 +177,15 @@ document.addEventListener("DOMContentLoaded", () => {
                     await deleteDoc(atletaRef);
                 }
 
-                sessionStorage.setItem("usuario", JSON.stringify(updateData));
-                sessionStorage.setItem("usuarioDNI", nuevoDni);
+                // Limpiar sessionStorage y localStorage
+                localStorage.removeItem("usuario");
+                sessionStorage.clear();
 
-                mostrarMensaje("Perfil actualizado correctamente.", "green");
+                mostrarMensaje("Perfil actualizado correctamente. Debe volver a iniciar sesión.", "green");
+
+                setTimeout(() => {
+                    window.location.href = "index.html";
+                }, 2000);
             } catch (error) {
                 console.error("Error al actualizar el perfil:", error);
                 mostrarMensaje("Error al guardar los cambios.", "red");
@@ -197,3 +201,4 @@ function mostrarMensaje(mensaje, color = "black") {
         mensajeElemento.style.color = color;
     }
 }
+
