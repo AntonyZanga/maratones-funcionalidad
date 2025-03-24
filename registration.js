@@ -27,104 +27,101 @@ document.addEventListener("DOMContentLoaded", cargarGrupos);
 
 // Función para mostrar mensajes de estado
 function mostrarMensaje(mensaje, color = "black") {
-  const mensajeElemento = document.getElementById("mensaje");
-  mensajeElemento.textContent = mensaje;
-  mensajeElemento.style.color = color;
+    const mensajeElemento = document.getElementById("mensaje");
+    mensajeElemento.textContent = mensaje;
+    mensajeElemento.style.color = color;
 }
 
 // Función para registrar atleta
-async function registrarAtleta() {
-  // Evitar el envío automático del formulario
-  event.preventDefault();
+async function registrarAtleta(event) {
+    event.preventDefault();
 
-  // Obtener valores del formulario
-  let dni = document.getElementById("dni").value.trim();
-  let nombre = document.getElementById("nombre").value.trim();
-  let apellido = document.getElementById("apellido").value.trim();
-  let fechaNacimiento = document.getElementById("fecha-nacimiento").value;
-  let localidad = document.getElementById("localidad").value.trim();
-  let selectGrupo = document.getElementById("tipo-grupo");
-  let tipoGrupo = selectGrupo.value.trim();
-  let nombreGrupo = tipoGrupo ? tipoGrupo : "";
-  if (!tipoGrupo) {
-    tipoGrupo = "Individual";  // Si no elige un grupo, se asigna "Individual"
-  }
-  let categoria = document.querySelector('input[name="categoria"]:checked')?.value;
-  let password = document.getElementById("password").value;
-  let confirmPassword = document.getElementById("confirm-password").value;
-  let aptoMedico = document.getElementById("apto-medico").files[0];
-  let certificadoDiscapacidad = document.getElementById("certificado-discapacidad").files[0];
+    let dni = document.getElementById("dni").value.trim();
+    let nombre = document.getElementById("nombre").value.trim();
+    let apellido = document.getElementById("apellido").value.trim();
+    let fechaNacimiento = document.getElementById("fecha-nacimiento").value;
+    let localidad = document.getElementById("localidad").value.trim();
+    let selectGrupo = document.getElementById("tipo-grupo");
+    let tipoGrupo = selectGrupo.value.trim() || "Individual";
+    let categoria = document.querySelector('input[name="categoria"]:checked')?.value;
+    let password = document.getElementById("password").value;
+    let confirmPassword = document.getElementById("confirm-password").value;
+    let aptoMedico = document.getElementById("apto-medico").files[0];
+    let certificadoDiscapacidad = document.getElementById("certificado-discapacidad").files[0];
 
-  // Validaciones básicas
-  if (!dni || !nombre || !apellido || !fechaNacimiento || !localidad || !categoria || !password || !confirmPassword) {
-    mostrarMensaje("Todos los campos son obligatorios.", "red");
-    return;
-  }
-
-  // Nueva validación del DNI antes de registrarlo
-  if (!esDniValido(dni)) {
-      mostrarMensaje("DNI inválido. Debe tener entre 7 y 8 dígitos y ser real.", "red");
-      return;
-  }  
-
-  if (password.length < 6) {
-    mostrarMensaje("La contraseña debe tener al menos 6 caracteres.", "red");
-    return;
-  }
-
-  if (password !== confirmPassword) {
-    mostrarMensaje("Las contraseñas no coinciden.", "red");
-    return;
-  }
-
-  try {
-    const atletaRef = doc(db, "atletas", dni);
-    const atletaSnap = await getDoc(atletaRef);
-
-    if (atletaSnap.exists()) {
-      mostrarMensaje("Este DNI ya está registrado.", "red");
-      return;
+    // Validaciones
+    if (!dni || !nombre || !apellido || !fechaNacimiento || !localidad || !categoria || !password || !confirmPassword) {
+        mostrarMensaje("Todos los campos son obligatorios.", "red");
+        return;
     }
 
-    let certificadoURL = null;
-    if (categoria === "especial" && certificadoDiscapacidad) {
-      mostrarMensaje("Subiendo certificado de discapacidad...", "blue");
-      const certificadoRef = ref(storage, `certificados/${dni}_certificado.${certificadoDiscapacidad.name.split('.').pop()}`);
-      await uploadBytes(certificadoRef, certificadoDiscapacidad);
-      certificadoURL = await getDownloadURL(certificadoRef);
+    if (!esDniValido(dni)) {
+        mostrarMensaje("DNI inválido. Debe tener entre 7 y 8 dígitos y ser real.", "red");
+        return;
     }
 
-    let aptoMedicoURL = null;
-    if (aptoMedico) {
-      mostrarMensaje("Subiendo apto médico...", "blue");
-      const aptoRef = ref(storage, `aptos_medicos/${dni}_apto.${aptoMedico.name.split('.').pop()}`);
-      await uploadBytes(aptoRef, aptoMedico);
-      aptoMedicoURL = await getDownloadURL(aptoRef);
+    if (password.length < 6) {
+        mostrarMensaje("La contraseña debe tener al menos 6 caracteres.", "red");
+        return;
     }
 
-    // Guardar el atleta en Firestore
-    await setDoc(atletaRef, {
-      nombre,
-      apellido,
-      dni: parseInt(dni),
-      fechaNacimiento,
-      localidad,
-      grupoRunning: tipoGrupo,
-      grupoRunningNombre: nombreGrupo || "",
-      categoria,
-      password, // ⚠️ Debe encriptarse en producción
-      aptoMedico: aptoMedicoURL,
-      certificadoDiscapacidad: certificadoURL
-    });
+    if (password !== confirmPassword) {
+        mostrarMensaje("Las contraseñas no coinciden.", "red");
+        return;
+    }
 
-    // Mensaje de éxito y redirección al index
-        document.getElementById("mensaje").textContent = "Registro exitoso. Redirigiendo...";
+    try {
+        const atletaRef = doc(db, "atletas", dni);
+        const atletaSnap = await getDoc(atletaRef);
+
+        if (atletaSnap.exists()) {
+            mostrarMensaje("Este DNI ya está registrado.", "red");
+            return;
+        }
+
+        let certificadoURL = null;
+        if (categoria === "especial" && certificadoDiscapacidad) {
+            mostrarMensaje("Subiendo certificado de discapacidad...", "blue");
+            const certificadoRef = ref(storage, `certificados/${dni}_certificado.${certificadoDiscapacidad.name.split('.').pop()}`);
+            await uploadBytes(certificadoRef, certificadoDiscapacidad);
+            certificadoURL = await getDownloadURL(certificadoRef);
+        }
+
+        let aptoMedicoURL = null;
+        if (aptoMedico) {
+            mostrarMensaje("Subiendo apto médico...", "blue");
+            const aptoRef = ref(storage, `aptos_medicos/${dni}_apto.${aptoMedico.name.split('.').pop()}`);
+            await uploadBytes(aptoRef, aptoMedico);
+            aptoMedicoURL = await getDownloadURL(aptoRef);
+        }
+
+        // Guardar el atleta en Firestore
+        await setDoc(atletaRef, {
+            nombre,
+            apellido,
+            dni: parseInt(dni),
+            fechaNacimiento,
+            localidad,
+            grupoRunning: tipoGrupo,
+            categoria,
+            password, // ⚠️ Debe encriptarse en producción
+            aptoMedico: aptoMedicoURL,
+            certificadoDiscapacidad: certificadoURL
+        });
+
+        // Limpiar sessionStorage y localStorage
+        sessionStorage.clear();
+        localStorage.clear();
+
+        // Mensaje de éxito y redirección al index
+        mostrarMensaje("Registro exitoso. Redirigiendo...", "green");
+
         setTimeout(() => {
             window.location.href = "index.html";
         }, 2000);
     } catch (error) {
         console.error("Error al registrar el atleta:", error);
-        document.getElementById("mensaje").textContent = "Hubo un error al registrar. Intenta nuevamente.";
+        mostrarMensaje("Hubo un error al registrar. Intenta nuevamente.", "red");
     }
 }
 
@@ -139,23 +136,23 @@ function esDniValido(dni) {
 }
 
 function validarPassword() {
-  let password = document.getElementById("password").value;
-  let confirmPassword = document.getElementById("confirm-password").value;
-  let passwordMatch = document.getElementById("password-match");
+    let password = document.getElementById("password").value;
+    let confirmPassword = document.getElementById("confirm-password").value;
+    let passwordMatch = document.getElementById("password-match");
 
-  if (password.length < 6) {
-    passwordMatch.textContent = "La contraseña debe tener al menos 6 caracteres.";
-    passwordMatch.style.color = "red";
-    return;
-  }
+    if (password.length < 6) {
+        passwordMatch.textContent = "La contraseña debe tener al menos 6 caracteres.";
+        passwordMatch.style.color = "red";
+        return;
+    }
 
-  if (password === confirmPassword && password.length > 5) {
-    passwordMatch.textContent = "Las contraseñas coinciden.";
-    passwordMatch.style.color = "green";
-  } else {
-    passwordMatch.textContent = "Las contraseñas no coinciden.";
-    passwordMatch.style.color = "red";
-  }
+    if (password === confirmPassword && password.length > 5) {
+        passwordMatch.textContent = "Las contraseñas coinciden.";
+        passwordMatch.style.color = "green";
+    } else {
+        passwordMatch.textContent = "Las contraseñas no coinciden.";
+        passwordMatch.style.color = "red";
+    }
 }
 
 // Asignar la función al botón de registro
