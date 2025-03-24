@@ -41,10 +41,8 @@ document.getElementById("login-form").addEventListener("submit", async function 
 
         // Guardar sesión en localStorage y sessionStorage
         const usuarioData = { dni, nombre: atleta.nombre, apellido: atleta.apellido };
-        localStorage.setItem("usuario", JSON.stringify(usuarioData));
-        sessionStorage.setItem("usuarioDNI", dni);
-        sessionStorage.setItem("usuarioNombre", atleta.nombre);
-        sessionStorage.setItem("usuarioApellido", atleta.apellido);
+        localStorage.setItem("usuario", JSON.stringify(usuarioData)); 
+        sessionStorage.setItem("usuario", JSON.stringify(usuarioData)); // 🔹 Guardamos en sessionStorage correctamente
 
         // Redirigir al perfil
         window.location.href = "perfil.html";
