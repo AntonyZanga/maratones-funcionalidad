@@ -59,13 +59,12 @@ document.getElementById("login-form").addEventListener("submit", async function 
 document.addEventListener("DOMContentLoaded", () => {
     // Verificamos si es la primera vez que se abre el index en esta sesión
     if (!sessionStorage.getItem("primeraVisita")) {
-        // Si no existe la marca, significa que es la primera vez
-        sessionStorage.clear();  // Limpiar cualquier sesión previa
-        localStorage.removeItem("usuario"); // Opcional: si quieres forzar que siempre inicie desde cero
-        sessionStorage.setItem("primeraVisita", "true"); // Marcar que ya se abrió una vez
+        sessionStorage.clear();  
+        localStorage.removeItem("usuario");  
+        sessionStorage.setItem("primeraVisita", "true");  
     }
 
-    // Verificamos si hay un usuario logueado
+    // 🔥 CORRECCIÓN: Obtener correctamente el usuario de sessionStorage
     let usuario = JSON.parse(sessionStorage.getItem("usuario"));
 
     if (usuario) {
