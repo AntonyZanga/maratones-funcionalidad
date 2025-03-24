@@ -42,7 +42,7 @@ document.getElementById("login-form").addEventListener("submit", async function 
         // Guardar sesión en localStorage y sessionStorage
         const usuarioData = { dni, nombre: atleta.nombre, apellido: atleta.apellido };
         localStorage.setItem("usuario", JSON.stringify(usuarioData)); 
-        sessionStorage.setItem("usuario", JSON.stringify(usuarioData)); // 🔹 Guardamos en sessionStorage correctamente
+        sessionStorage.setItem("usuario", JSON.stringify(usuarioData)); 
 
         // Redirigir al perfil
         window.location.href = "perfil.html";
@@ -51,18 +51,19 @@ document.getElementById("login-form").addEventListener("submit", async function 
         mostrarMensaje("Error al iniciar sesión.");
     }
 });
+
 // =========================
 // 🔥 VERIFICAR SESIÓN AL CARGAR LA PÁGINA 🔥
 // =========================
 document.addEventListener("DOMContentLoaded", () => {
     // Verificamos si es la primera vez que se abre el index en esta sesión
     if (!sessionStorage.getItem("primeraVisita")) {
-        sessionStorage.clear();  
-        localStorage.removeItem("usuario");  
-        sessionStorage.setItem("primeraVisita", "true");  
+        sessionStorage.clear();
+        localStorage.removeItem("usuario");
+        sessionStorage.setItem("primeraVisita", "true");
     }
 
-    // 🔥 CORRECCIÓN: Obtener correctamente el usuario de sessionStorage
+    // Obtener el usuario de sessionStorage
     let usuario = JSON.parse(sessionStorage.getItem("usuario"));
 
     if (usuario) {
@@ -74,11 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("user-info").style.display = "none";
     }
 });
-    // 🔹 Mostrar información en la página
-    document.getElementById("login-section").style.display = "none";
-    document.getElementById("user-info").style.display = "block";
-    document.getElementById("user-name").textContent = `${usuario.nombre} ${usuario.apellido}`;
-});
+
 // =========================
 // 🔥 CIERRE DE SESIÓN 🔥
 // =========================
@@ -137,8 +134,8 @@ document.getElementById("update-password").addEventListener("click", async funct
     const newPassword = document.getElementById("new-password").value;
 
     if (!newPassword.match(/^.{6,}$/)) {
-    document.getElementById("recovery-message").textContent = "La contraseña debe tener al menos 6 caracteres.";
-    return;
+        document.getElementById("recovery-message").textContent = "La contraseña debe tener al menos 6 caracteres.";
+        return;
     }
 
     try {
