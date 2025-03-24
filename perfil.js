@@ -42,10 +42,8 @@ async function cargarPerfilUsuario() {
 
         if (!atletaSnap.exists()) {
             console.warn("El usuario aún no está registrado en Firebase.");
-            return;
-        }
-
-        console.log("📄 Datos cargados desde Firebase:", atletaSnap.data());
+        return;
+    }
 
         const usuario = atletaSnap.data();
         document.getElementById("nombre").value = usuario.nombre || "";
@@ -169,7 +167,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 let updateData = { ...atletaSnap.data(), dni: nuevoDni, nombre, apellido, localidad, categoria, fechaNacimiento, grupoRunning };
 
                 if (aptoMedicoFile) {
-                    const storageRef = ref(storage, `aptos_medicos/${nuevoDni}`);
+                    const storageRef = ref(storage, aptos_medicos/${nuevoDni});
                     await uploadBytes(storageRef, aptoMedicoFile);
                     const aptoMedicoURL = await getDownloadURL(storageRef);
                     updateData.aptoMedico = aptoMedicoURL;
@@ -191,26 +189,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 });
-
-// ✅ Función para eliminar usuario con logs
-async function eliminarAtleta() {
-    console.log("🔴 Intentando eliminar atleta...");
-
-    const dni = sessionStorage.getItem("usuarioDNI");
-
-    if (!dni) {
-        console.error("⚠️ No hay DNI en sessionStorage.");
-        return;
-    }
-
-    console.log("📌 DNI en sessionStorage:", dni);
-
-    const atletaRef = doc(db, "atletas", dni);
-    await deleteDoc(atletaRef);
-    
-    console.log("✅ Atleta eliminado correctamente.");
-    window.location.href = "index.html";
-}
 
 function mostrarMensaje(mensaje, color = "black") {
     const mensajeElemento = document.getElementById("mensaje");
