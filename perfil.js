@@ -100,22 +100,10 @@ function esDniValido(dni) {
     return dniRegex.test(dni) && !dniInvalidos.includes(dni);
 }
 
-async function dniExiste(dni, dniActual) {
-    const q = query(collection(db, "atletas"), where("dni", "==", dni));
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.empty) {
-        return false; // No existe en la base
-    }
-
-    // Verificar si el DNI pertenece a otro usuario
-    for (const docSnap of querySnapshot.docs) {
-        if (docSnap.id !== dniActual) {
-            return true; // DNI ya pertenece a otro usuario
-        }
-    }
-    
-    return false;
+async function dniExiste(dni) {
+    const atletaRef = doc(db, "atletas", dni);
+    const atletaSnap = await getDoc(atletaRef);
+    return atletaSnap.exists(); 
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -159,7 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (nuevoDni !== dniActual) {
-                const existe = await dniExiste(nuevoDni, dniActual);
+                const existe = await dniExiste(nuevoDni);
                 if (existe) {
                     mostrarMensaje("El DNI ingresado ya está registrado por otro usuario. Ingrese otro.", "red");
                     return;
