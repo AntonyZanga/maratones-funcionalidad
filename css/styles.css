@@ -1,16 +1,19 @@
-/* css/styles.css */
-
 /* Reset básico */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  font-family: 'Poppins', sans-serif;
 }
 
 body {
-  font-family: Arial, sans-serif;
   background-color: #f7f7f7;
-  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
 }
 
 /* Encabezado */
@@ -18,128 +21,112 @@ header h1 {
   text-align: center;
   color: #333;
   margin-bottom: 20px;
-  font-size: 24px;
+  font-size: 26px;
 }
 
-/* Contenido principal */
-main {
-  padding: 10px;
-  text-align: center;
-}
-
-/* Botón principal y del formulario */
-button {
-  padding: 15px;
-  font-size: 18px;
-  background-color: #007bff;
-  border: none;
-  color: white;
-  border-radius: 5px;
+/* Contenedor principal */
+#form-registro {
+  background: white;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
   width: 100%;
-  max-width: 300px;
-  margin: 10px auto;
+}
+
+/* Formularios */
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  font-weight: 600;
+  margin-top: 10px;
   display: block;
+  font-size: 14px;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+button {
+  width: 100%;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 12px;
+  font-size: 16px;
+  border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background 0.3s;
+  margin-top: 15px;
 }
 
 button:hover {
   background-color: #0056b3;
 }
 
-/* Estilos para el formulario de registration.html */
-#form-registro {
-  max-width: 500px;
-  margin: 20px auto;
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 4px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  text-align: left;
-}
-
-#form-registro form {
-  display: flex;
-  flex-direction: column;
-}
-
-/* Etiquetas, inputs y select */
-#form-registro label {
-  margin-bottom: 5px;
-  font-size: 16px;
-}
-
-#form-registro input,
-#form-registro select {
-  margin-bottom: 15px;
-  padding: 10px;
-  font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  width: 100%;
-}
-
-/* Campo para mostrar la categoría calculada */
+/* Categoría */
 #age-category {
-  margin-bottom: 15px;
   font-style: italic;
   color: #555;
+  margin-bottom: 15px;
 }
 
-/* Fieldset para los radio buttons: mostrarlos en línea */
+/* Fieldset para radio buttons */
 fieldset {
   display: flex;
-  flex-direction: row;
-  align-items: center;
+  flex-wrap: wrap;
   gap: 15px;
-  margin-bottom: 15px;
+  margin-top: 10px;
   border: none;
   padding: 0;
 }
 
-/* Leyenda del fieldset: agregar margen inferior */
 fieldset legend {
   font-size: 16px;
   font-weight: bold;
-  margin-bottom: 10px;
 }
 
-/* Estilos para inputs de tipo date */
-input[type="date"] {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: auto;
-}
-
+/* Estilos para el login */
 #login-section {
-    text-align: center;
-    margin-top: 50px;
+  text-align: center;
+  margin-top: 50px;
 }
 
 #login-section h2 {
-    margin-bottom: 20px;
+  margin-bottom: 20px;
 }
 
+/* Estilos para grupos de formularios */
 .form-group {
-    margin-bottom: 15px;
-    text-align: left;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  margin-bottom: 15px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .form-group label {
-    font-weight: bold;
-    margin-bottom: 5px;
+  font-weight: bold;
+  margin-bottom: 5px;
 }
 
 .form-group input {
-    width: 80%;
-    padding: 8px;
-    font-size: 16px;
-    text-align: center;
+  width: 80%;
+  padding: 8px;
+  font-size: 16px;
+  text-align: center;
 }
 
+/* Ocultar elementos dinámicos */
 .hidden {
-    display: none;
+  display: none;
 }
