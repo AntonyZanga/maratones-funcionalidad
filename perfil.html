@@ -24,7 +24,7 @@
             <label for="apellido">Apellido:</label>
             <input type="text" id="apellido" required>
 
-            <p><strong>Grupo de Running Actual:</strong> <span id="grupo-running"></span></p>
+            <p><strong>Grupo de Running Actual:</strong> <span id="grupo-running">Cargando...</span></p>
         </section>
 
         <!-- Formulario para actualizar datos -->
@@ -45,7 +45,9 @@
                 <input type="date" id="fecha-nacimiento" required>
 
                 <label for="nuevo-grupo">Selecciona un nuevo grupo:</label>
-                <select id="nuevo-grupo"></select>
+                <select id="nuevo-grupo">
+                    <option value="Individual">Individual</option>
+                </select>
 
                 <label for="apto-medico">Subir Apto Médico:</label>
                 <input type="file" id="apto-medico" accept="image/*,application/pdf">
