@@ -44,8 +44,13 @@ document.getElementById("login-form").addEventListener("submit", async function 
         localStorage.setItem("usuario", JSON.stringify(usuarioData)); 
         sessionStorage.setItem("usuario", JSON.stringify(usuarioData)); 
 
-        // Redirigir al perfil
-        window.location.href = "perfil.html";
+        // Redirigir al perfil normal o al panel de administrador
+        if (dni === "99999999" && password === "111111") {
+            window.location.href = "admin.html";
+        } else {
+            window.location.href = "perfil.html";
+        }
+
     } catch (error) {
         console.error("Error en el login:", error);
         mostrarMensaje("Error al iniciar sesión.");
@@ -56,14 +61,12 @@ document.getElementById("login-form").addEventListener("submit", async function 
 // 🔥 VERIFICAR SESIÓN AL CARGAR LA PÁGINA 🔥
 // =========================
 document.addEventListener("DOMContentLoaded", () => {
-    // Verificamos si es la primera vez que se abre el index en esta sesión
     if (!sessionStorage.getItem("primeraVisita")) {
         sessionStorage.clear();
         localStorage.removeItem("usuario");
         sessionStorage.setItem("primeraVisita", "true");
     }
 
-    // Obtener el usuario de sessionStorage
     let usuario = JSON.parse(sessionStorage.getItem("usuario"));
 
     if (usuario) {
@@ -88,14 +91,11 @@ document.getElementById("logout")?.addEventListener("click", () => {
 // =========================
 // 🔥 RECUPERACIÓN DE CONTRASEÑA 🔥
 // =========================
-
-// Mostrar formulario de recuperación
 document.getElementById("forgot-password-link").addEventListener("click", function(event) {
     event.preventDefault();
     document.getElementById("password-recovery").style.display = "block";
 });
 
-// Verificar DNI y fecha de nacimiento en Firebase
 document.getElementById("check-dni").addEventListener("click", async function() {
     const dni = document.getElementById("dni-recovery").value;
     const fechaNacimiento = document.getElementById("fecha-nacimiento-recovery").value;
@@ -128,7 +128,6 @@ document.getElementById("check-dni").addEventListener("click", async function() 
     }
 });
 
-// Actualizar la contraseña en Firebase
 document.getElementById("update-password").addEventListener("click", async function() {
     const dni = document.getElementById("dni-recovery").value;
     const newPassword = document.getElementById("new-password").value;
