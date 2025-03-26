@@ -136,3 +136,7 @@ tr:hover {
     font-size: 18px;
   }
 }
+
+.hidden {
+    display: none;
+}
