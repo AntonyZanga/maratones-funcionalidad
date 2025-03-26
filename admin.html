@@ -1,41 +1,40 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Administrador</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Administración</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <header>
-        <h1>Panel de Administración</h1>
-        <button id="logout">Cerrar Sesión</button>
-    </header>
+  <header class="header">
+    <div class="container header-container">
+      <h1>Panel de Administración</h1>
+      <button id="logout" class="btn btn-secondary">Cerrar Sesión</button>
+    </div>
+  </header>
 
-    <main>
-        <!-- Sección para cargar resultados -->
-        <section>
-            <h2>Cargar Resultados de Carrera</h2>
-            <input type="file" id="file-input" accept=".xlsx, .xls">
-            <button id="upload-results">Subir Resultados</button>
-            <p id="upload-message"></p>
-        </section>
+  <main class="container">
+    <section class="card">
+      <h2>Cargar Resultados de Carrera</h2>
+      <input type="file" id="file-input" accept=".xlsx, .xls">
+      <button id="upload-results" class="btn">Subir Resultados</button>
+      <p id="upload-message"></p>
+    </section>
 
-        <!-- Sección para mostrar el ranking -->
-        <section>
-            <h2>Ranking de Corredores</h2>
-            <button id="reset-history">Resetear Historial</button> <!-- Botón agregado -->
-            <div class="ranking-container" id="ranking-container">
-                <!-- Aquí se generarán dinámicamente las tablas de ranking por categoría -->
-            </div>
-        </section>
-    </main>
+    <section class="card">
+      <h2>Ranking de Corredores</h2>
+      <button id="reset-history" class="btn btn-warning">Resetear Historial</button>
+      <div class="ranking-container" id="ranking-container">
+        <!-- Las tablas de ranking se generarán aquí dinámicamente -->
+      </div>
+    </section>
+  </main>
 
-    <!-- Scripts necesarios -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script type="module" src="admin.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script type="module" src="admin.js"></script>
 </body>
 </html>
