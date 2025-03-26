@@ -1,139 +1,122 @@
+/* Variables de color y tipografía */
+:root {
+  --color-primario: #2c3e50;
+  --color-secundario: #18bc9c;
+  --color-acento: #f39c12;
+  --color-fondo: #ecf0f1;
+  --color-blanco: #ffffff;
+  --font-family: 'Poppins', sans-serif;
+}
+
 /* Reset básico */
 * {
-  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Poppins', sans-serif;
+  box-sizing: border-box;
 }
 
 body {
-  background-color: #f7f7f7;
+  font-family: var(--font-family);
+  background-color: var(--color-fondo);
+  color: var(--color-primario);
+  line-height: 1.6;
+}
+
+/* Contenedores generales */
+.container {
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* Header */
+.header {
+  background-color: var(--color-primario);
+  color: var(--color-blanco);
+  padding: 1rem 0;
+}
+.header-container {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 20px;
 }
 
-/* Encabezado */
-header {
-  width: 100%;
-  max-width: 1200px;
-  text-align: center;
-  padding: 15px;
-  background-color: #007bff;
-  color: white;
-  border-radius: 10px;
-  margin-bottom: 20px;
-}
-
-header h1 {
-  font-size: 26px;
-  font-weight: 600;
-}
-
-/* Contenedor principal */
-main {
-  width: 100%;
-  max-width: 1200px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-/* Secciones */
-section {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-/* Botón */
-button {
-  background-color: #007bff;
-  color: white;
+/* Botones */
+.btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  margin-top: 0.5rem;
   border: none;
-  padding: 12px;
-  font-size: 16px;
-  border-radius: 5px;
+  border-radius: 4px;
+  background-color: var(--color-secundario);
+  color: var(--color-blanco);
   cursor: pointer;
-  transition: background 0.3s;
-  margin-top: 10px;
+  transition: background-color 0.3s ease;
+  text-decoration: none;
+}
+.btn:hover {
+  background-color: var(--color-acento);
+}
+.btn-secondary {
+  background-color: #c0392b;
+}
+.btn-secondary:hover {
+  background-color: #e74c3c;
+}
+.btn-warning {
+  background-color: var(--color-acento);
 }
 
-button:hover {
-  background-color: #0056b3;
-}
-
-/* Ranking */
-.ranking-container {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-}
-
-.ranking-category {
-  background: white;
-  padding: 20px;
+/* Tarjetas / secciones */
+.card {
+  background-color: var(--color-blanco);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
   border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.ranking-category h2 {
-  font-size: 20px;
-  text-align: center;
-  margin-bottom: 15px;
-  color: #333;
+/* Formularios */
+.form-group {
+  margin-bottom: 1rem;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
   font-weight: 600;
 }
-
-/* Tablas */
-table {
+.form-group input,
+.form-group select {
   width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
+  padding: 0.5rem;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
 }
 
-th, td {
-  padding: 12px;
-  border: 1px solid #ddd;
-  text-align: center;
-  font-size: 14px;
+/* Pequeños textos de ayuda */
+.small-text {
+  font-size: 0.875rem;
+  color: #7f8c8d;
 }
 
-th {
-  background-color: #007bff;
-  color: white;
-  font-weight: 600;
+/* Ocultar elementos */
+.hidden {
+  display: none;
 }
 
-tr:nth-child(even) {
-  background-color: #f2f2f2;
-}
-
-tr:hover {
-  background-color: #ddd;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  body {
-    padding: 10px;
+/* Responsive: Ajustes para dispositivos móviles */
+@media (min-width: 768px) {
+  .header-container {
+    flex-direction: row;
   }
-
-  header {
-    font-size: 22px;
+  main {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
   }
-
-  th, td {
-    padding: 8px;
-    font-size: 12px;
-  }
-
-  .ranking-category h2 {
-    font-size: 18px;
+  .card {
+    flex: 1 1 45%;
   }
 }
 
