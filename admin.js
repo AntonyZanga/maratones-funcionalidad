@@ -59,6 +59,15 @@ document.getElementById("upload-results").addEventListener("click", async () => 
 });
 
 // =========================
+// 🔥 OBTENER CATEGORÍA SEGÚN EDAD Y GÉNERO 🔥
+// =========================
+function obtenerCategoria(fechaNacimiento, genero) {
+    let edad = calcularEdad(fechaNacimiento);
+    let categoriaEdad = determinarCategoriaEdad(edad);
+    return `${genero} - ${categoriaEdad}`;
+}
+
+// =========================
 // 🔥 PROCESAR RESULTADOS Y ACTUALIZAR RANKING 🔥
 // =========================
 async function procesarResultados(results) {
