@@ -181,11 +181,15 @@ async function actualizarRanking() {
 
     let categoriaActual = "";
     let table = null;
+    let posicionCategoria = 0;
+
     atletas.forEach((atleta, index) => {
         if (atleta.categoria !== categoriaActual) {
             if (table) rankingContainer.appendChild(table);
 
             categoriaActual = atleta.categoria;
+            posicionCategoria = 0; // Reiniciar la posición para la nueva categoría
+
             let section = document.createElement("section");
             let title = document.createElement("h3");
             title.textContent = categoriaActual;
@@ -210,9 +214,11 @@ async function actualizarRanking() {
             rankingContainer.appendChild(section);
         }
 
+        posicionCategoria++; // Incrementar la posición dentro de la categoría
+
         let row = document.createElement("tr");
         row.innerHTML = `
-            <td>${index + 1}</td>
+            <td>${posicionCategoria}</td> <!-- Aquí ahora muestra la posición relativa a la categoría -->
             <td>${atleta.nombre}</td>
             <td>${atleta.localidad}</td>
             <td>${atleta.puntos}</td>
