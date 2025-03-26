@@ -243,20 +243,9 @@ async function actualizarRanking() {
 // 🔥 FUNCIONES AUXILIARES 🔥
 // =========================
 function calcularEdad(fechaNacimiento) {
-    let fechaNac = new Date(fechaNacimiento);
-    let hoy = new Date();
-    let edad = hoy.getFullYear() - fechaNac.getFullYear();
-    return edad;
+    return new Date().getFullYear() - new Date(fechaNacimiento).getFullYear();
 }
 
 function determinarCategoriaEdad(edad) {
-    const categorias = [
-        [0, 19], [20, 24], [25, 29], [30, 34], [35, 39], [40, 44],
-        [45, 49], [50, 54], [55, 59], [60, 64], [65, 69], [70, 74],
-        [75, 79], [80, 84], [85, 89]
-    ];
-    for (let [min, max] of categorias) {
-        if (edad >= min && edad <= max) return `${min} - ${max}`;
-    }
-    return "90+";
+    return edad >= 90 ? "90+" : `${Math.floor(edad / 5) * 5} - ${Math.floor(edad / 5) * 5 + 4}`;
 }
