@@ -227,6 +227,41 @@ async function actualizarRanking() {
 }
 
 // =========================
+// 🔥 Resetear Historial 🔥
+// =========================
+
+document.getElementById("reset-history").addEventListener("click", async () => {
+    const confirmReset = confirm("⚠️ ¿Estás seguro de que quieres reiniciar el historial de todos los atletas? Esta acción no se puede deshacer.");
+    
+    if (!confirmReset) return;
+
+    try {
+        const atletasRef = collection(db, "atletas");
+        const snapshot = await getDocs(atletasRef);
+
+        let batchUpdates = [];
+
+        snapshot.forEach((docSnap) => {
+            const atletaRef = doc(db, "atletas", docSnap.id);
+            batchUpdates.push(updateDoc(atletaRef, {
+                historial: [],
+                puntos: 0,
+                asistencias: 0,
+                faltas: 0
+            }));
+        });
+
+        await Promise.all(batchUpdates);
+
+        alert("✅ Historial reseteado correctamente.");
+        actualizarRanking();
+    } catch (error) {
+        console.error("❌ Error al resetear el historial:", error);
+        alert("❌ Ocurrió un error al resetear el historial. Revisa la consola para más detalles.");
+    }
+});
+
+// =========================
 // 🔥 FUNCIONES AUXILIARES 🔥
 // =========================
 function calcularEdad(fechaNacimiento) {
