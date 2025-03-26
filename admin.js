@@ -68,6 +68,29 @@ function obtenerCategoria(fechaNacimiento, genero) {
 }
 
 // =========================
+// 🔥 CÁLCULO DE BONOS POR CARRERAS CONSECUTIVAS 🔥
+// =========================
+function calcularBonus(historial) {
+    let consecutivas = 0;
+    let bonus = 0;
+    let bonusArray = [0, 2, 6, 12, 20, 30]; // Bonus acumulativos
+
+    // Contar carreras consecutivas desde el final hacia atrás
+    for (let i = historial.length - 1; i >= 0; i--) {
+        if (historial[i].faltas) break; // Si faltó a una, se corta la racha
+        consecutivas++;
+    }
+
+    if (consecutivas > 1 && consecutivas <= 6) {
+        bonus = bonusArray[consecutivas - 1];
+    } else if (consecutivas > 6) {
+        bonus = 30; // Máximo 30 puntos extra
+    }
+
+    return bonus;
+}
+
+// =========================
 // 🔥 PROCESAR RESULTADOS Y ACTUALIZAR RANKING 🔥
 // =========================
 async function procesarResultados(results) {
@@ -78,13 +101,13 @@ async function procesarResultados(results) {
         return;
     }
 
-    const puntosBase = [12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
-    let categorias = {};
+    let categorias = {}; // Objeto para clasificar atletas por categoría
 
+    // Organizar atletas en sus categorías correspondientes
     for (let i = 1; i < results.length; i++) {
-        const [posicion, dni] = results[i];
+        const [posicion, dni, fechaMaraton] = results[i];
 
-        if (!dni || isNaN(dni)) continue;
+        if (!dni || isNaN(dni) || !fechaMaraton) continue;
 
         const atletaRef = doc(db, "atletas", String(dni).trim());
         const atletaSnap = await getDoc(atletaRef);
@@ -92,39 +115,38 @@ async function procesarResultados(results) {
         if (!atletaSnap.exists()) continue;
 
         let atleta = atletaSnap.data();
-        let categoria = obtenerCategoria(atleta.fechaNacimiento, atleta.categoria);
+        let categoria = obtenerCategoria(atleta.fechaNacimiento, atleta.genero);
 
         if (!categorias[categoria]) {
             categorias[categoria] = [];
         }
-
-        categorias[categoria].push({ dni, posicion, atletaRef, atleta });
+        categorias[categoria].push({ dni, posicion });
     }
 
+    // Calcular puntos y actualizar datos en la base
     for (let categoria in categorias) {
-        let atletasCategoria = categorias[categoria];
+        categorias[categoria].sort((a, b) => a.posicion - b.posicion); // Ordenar por posición
 
-        atletasCategoria.sort((a, b) => a.posicion - b.posicion);
+        for (let i = 0; i < categorias[categoria].length; i++) {
+            let { dni, posicion } = categorias[categoria][i];
+            let atletaRef = doc(db, "atletas", String(dni).trim());
+            let atletaSnap = await getDoc(atletaRef);
+            let atleta = atletaSnap.data();
 
-        for (let i = 0; i < atletasCategoria.length; i++) {
-            let { dni, posicion, atletaRef, atleta } = atletasCategoria[i];
-
-            let nuevoPuntaje = puntosBase[i] !== undefined ? puntosBase[i] : 1;
-
+            let nuevoPuntaje = (12 - i) + (atleta.puntos || 0); // Puntos según la posición
             let historial = atleta.historial || [];
             let asistencias = (atleta.asistencias || 0) + 1;
             let faltas = atleta.faltas || 0;
-            let totalPuntos = (atleta.puntos || 0) + nuevoPuntaje;
+            
+            historial.push({ fechaMaraton, posicion, puntos: nuevoPuntaje });
 
-            historial.push({ posicion, puntos: nuevoPuntaje });
-
-            let bonus = calcularBonus(asistencias);
+            let bonus = calcularBonus(historial); // Calcular bonus por carreras consecutivas
 
             await updateDoc(atletaRef, {
-                puntos: totalPuntos + bonus,
-                asistencias: asistencias,
-                faltas: faltas,
-                historial: historial
+                puntos: nuevoPuntaje + bonus,
+                asistencias,
+                faltas,
+                historial
             });
         }
     }
@@ -134,15 +156,7 @@ async function procesarResultados(results) {
 }
 
 // =========================
-// 🔥 CÁLCULO DE BONOS POR ASISTENCIA 🔥
-// =========================
-function calcularBonus(asistencias) {
-    const bonus = [0, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 25, 30]; // Máx. 30 puntos extra
-    return bonus[Math.min(asistencias, bonus.length - 1)];
-}
-
-// =========================
-// 🔥 ACTUALIZAR TABLA DE RANKING 🔥
+// 🔥 ACTUALIZAR TABLA DE RANKING POR CATEGORÍA 🔥
 // =========================
 async function actualizarRanking() {
     const rankingContainer = document.getElementById("ranking-container");
@@ -150,80 +164,70 @@ async function actualizarRanking() {
 
     const atletasRef = collection(db, "atletas");
     const snapshot = await getDocs(atletasRef);
-    let atletas = [];
+    let categorias = {};
 
     snapshot.forEach(doc => {
         let data = doc.data();
         if (data.puntos > 0) {
-            let edad = calcularEdad(data.fechaNacimiento);
-            let categoriaEdad = determinarCategoriaEdad(edad);
-            let categoria = data.categoria || "Especial";
+            let categoria = obtenerCategoria(data.fechaNacimiento, data.genero);
 
-            atletas.push({
+            if (!categorias[categoria]) {
+                categorias[categoria] = [];
+            }
+
+            categorias[categoria].push({
                 nombre: `${data.nombre} ${data.apellido}`,
                 localidad: data.localidad || "Desconocida",
                 puntos: data.puntos || 0,
                 asistencias: data.asistencias || 0,
                 faltas: data.faltas || 0,
-                historial: data.historial || [],
-                categoria: `${categoria} - ${categoriaEdad}`,
-                edad: edad
+                historial: data.historial || []
             });
         }
     });
 
-    atletas.sort((a, b) => {
-        if (a.categoria === b.categoria) {
-            return b.puntos - a.puntos;
-        }
-        return a.categoria.localeCompare(b.categoria);
-    });
+    // Mostrar ranking por categoría
+    for (let categoria in categorias) {
+        let section = document.createElement("section");
+        let title = document.createElement("h3");
+        title.textContent = categoria;
+        section.appendChild(title);
 
-    let categoriaActual = "";
-    let table = null;
-    atletas.forEach((atleta, index) => {
-        if (atleta.categoria !== categoriaActual) {
-            if (table) rankingContainer.appendChild(table);
-
-            categoriaActual = atleta.categoria;
-            let section = document.createElement("section");
-            let title = document.createElement("h3");
-            title.textContent = categoriaActual;
-            section.appendChild(title);
-
-            table = document.createElement("table");
-            table.innerHTML = `
-                <thead>
-                    <tr>
-                        <th>Puesto</th>
-                        <th>Nombre</th>
-                        <th>Localidad</th>
-                        <th>Puntos</th>
-                        <th>Asistencias</th>
-                        <th>Faltas</th>
-                        <th>Historial</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            `;
-            section.appendChild(table);
-            rankingContainer.appendChild(section);
-        }
-
-        let row = document.createElement("tr");
-        row.innerHTML = `
-            <td>${index + 1}</td>
-            <td>${atleta.nombre}</td>
-            <td>${atleta.localidad}</td>
-            <td>${atleta.puntos}</td>
-            <td>${atleta.asistencias}</td>
-            <td>${atleta.faltas}</td>
-            <td>${atleta.historial.map(h => `#${h.posicion} (${h.puntos} pts)`).join(", ")}</td>
+        let table = document.createElement("table");
+        table.innerHTML = `
+            <thead>
+                <tr>
+                    <th>Puesto</th>
+                    <th>Nombre</th>
+                    <th>Localidad</th>
+                    <th>Puntos</th>
+                    <th>Asistencias</th>
+                    <th>Faltas</th>
+                    <th>Historial</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
         `;
-        table.querySelector("tbody").appendChild(row);
-    });
+        section.appendChild(table);
+        rankingContainer.appendChild(section);
 
-    if (table) rankingContainer.appendChild(table);
+        categorias[categoria].sort((a, b) => b.puntos - a.puntos);
+
+        let tbody = table.querySelector("tbody");
+        categorias[categoria].forEach((atleta, index) => {
+            let row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${atleta.nombre}</td>
+                <td>${atleta.localidad}</td>
+                <td>${atleta.puntos}</td>
+                <td>${atleta.asistencias}</td>
+                <td>${atleta.faltas}</td>
+                <td>${atleta.historial.map(h => `#${h.posicion} (${h.puntos} pts)`).join(", ")}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
 }
 
 // =========================
