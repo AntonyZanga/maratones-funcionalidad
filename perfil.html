@@ -1,66 +1,77 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perfil del Atleta</title>
-    <link rel="stylesheet" href="css/styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perfil del Atleta</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <header>
-        <h1>Perfil del Atleta</h1>
-    </header>
-    
-    <main>
-        <!-- Sección de Información Personal -->
-        <section id="perfil">
-            <h2>Información Personal</h2>
-            <label for="dni">DNI:</label>
-            <input type="text" id="dni" readonly>
+  <header class="header">
+    <div class="container header-container">
+      <h1>Perfil del Atleta</h1>
+    </div>
+  </header>
+  
+  <main class="container">
+    <section id="perfil" class="card">
+      <h2>Información Personal</h2>
+      <div class="form-group">
+        <label for="dni">DNI:</label>
+        <input type="text" id="dni" readonly>
+      </div>
+      <div class="form-group">
+        <label for="nombre">Nombre:</label>
+        <input type="text" id="nombre" required>
+      </div>
+      <div class="form-group">
+        <label for="apellido">Apellido:</label>
+        <input type="text" id="apellido" required>
+      </div>
+      <p><strong>Grupo de Running Actual:</strong> <span id="grupo-running">Cargando...</span></p>
+    </section>
 
-            <label for="nombre">Nombre:</label>
-            <input type="text" id="nombre" required>
+    <section id="editar-perfil" class="card">
+      <h2>Editar Información</h2>
+      <form id="perfil-form">
+        <div class="form-group">
+          <label for="localidad">Localidad:</label>
+          <input type="text" id="localidad" required>
+        </div>
+        <div class="form-group">
+          <label for="categoria">Categoría:</label>
+          <select id="categoria" required>
+            <option value="Masculino">Masculino</option>
+            <option value="Femenino">Femenino</option>
+            <option value="Especial">Especial</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="fecha-nacimiento">Fecha de Nacimiento:</label>
+          <input type="date" id="fecha-nacimiento" required>
+        </div>
+        <div class="form-group">
+          <label for="nuevo-grupo">Selecciona un nuevo grupo:</label>
+          <select id="nuevo-grupo">
+            <option value="Individual">Individual</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="apto-medico">Subir Apto Médico:</label>
+          <input type="file" id="apto-medico" accept="image/*,application/pdf">
+        </div>
+        <button type="submit" class="btn">Guardar Cambios</button>
+      </form>
+      <p id="mensaje"></p>
+    </section>
 
-            <label for="apellido">Apellido:</label>
-            <input type="text" id="apellido" required>
+    <a href="index.html" class="btn btn-link">Volver al inicio</a>
+  </main>
 
-            <p><strong>Grupo de Running Actual:</strong> <span id="grupo-running">Cargando...</span></p>
-        </section>
-
-        <!-- Formulario para actualizar datos -->
-        <section id="editar-perfil">
-            <h2>Editar Información</h2>
-            <form id="perfil-form">
-                <label for="localidad">Localidad:</label>
-                <input type="text" id="localidad" required>
-
-                <label for="categoria">Categoría:</label>
-                <select id="categoria" required>
-                    <option value="Masculino">Masculino</option>
-                    <option value="Femenino">Femenino</option>
-                    <option value="Especial">Especial</option>
-                </select>
-
-                <label for="fecha-nacimiento">Fecha de Nacimiento:</label>
-                <input type="date" id="fecha-nacimiento" required>
-
-                <label for="nuevo-grupo">Selecciona un nuevo grupo:</label>
-                <select id="nuevo-grupo">
-                    <option value="Individual">Individual</option>
-                </select>
-
-                <label for="apto-medico">Subir Apto Médico:</label>
-                <input type="file" id="apto-medico" accept="image/*,application/pdf">
-
-                <button type="submit">Guardar Cambios</button>
-            </form>
-            <p id="mensaje"></p>
-        </section>
-
-        <a href="index.html">Volver al inicio</a>
-    </main>
-
-    <script type="module" src="config.js"></script>
-    <script type="module" src="perfil.js"></script>
+  <script type="module" src="config.js"></script>
+  <script type="module" src="perfil.js"></script>
 </body>
 </html>
