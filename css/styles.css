@@ -17,47 +17,41 @@ body {
 }
 
 /* Encabezado */
-header h1 {
+header {
+  width: 100%;
+  max-width: 1200px;
   text-align: center;
-  color: #333;
+  padding: 15px;
+  background-color: #007bff;
+  color: white;
+  border-radius: 10px;
   margin-bottom: 20px;
+}
+
+header h1 {
   font-size: 26px;
+  font-weight: 600;
 }
 
 /* Contenedor principal */
-#form-registro {
-  background: white;
-  padding: 25px;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  max-width: 500px;
+main {
   width: 100%;
-}
-
-/* Formularios */
-form {
+  max-width: 1200px;
   display: flex;
   flex-direction: column;
+  gap: 20px;
 }
 
-label {
-  font-weight: 600;
-  margin-top: 10px;
-  display: block;
-  font-size: 14px;
+/* Secciones */
+section {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-input, select {
-  width: 100%;
-  padding: 10px;
-  margin-top: 5px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  font-size: 16px;
-}
-
+/* Botón */
 button {
-  width: 100%;
   background-color: #007bff;
   color: white;
   border: none;
@@ -66,67 +60,79 @@ button {
   border-radius: 5px;
   cursor: pointer;
   transition: background 0.3s;
-  margin-top: 15px;
+  margin-top: 10px;
 }
 
 button:hover {
   background-color: #0056b3;
 }
 
-/* Categoría */
-#age-category {
-  font-style: italic;
-  color: #555;
-  margin-bottom: 15px;
-}
-
-/* Fieldset para radio buttons */
-fieldset {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  margin-top: 10px;
-  border: none;
-  padding: 0;
-}
-
-fieldset legend {
-  font-size: 16px;
-  font-weight: bold;
-}
-
-/* Estilos para el login */
-#login-section {
-  text-align: center;
-  margin-top: 50px;
-}
-
-#login-section h2 {
-  margin-bottom: 20px;
-}
-
-/* Estilos para grupos de formularios */
-.form-group {
-  margin-bottom: 15px;
-  text-align: left;
+/* Ranking */
+.ranking-container {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  gap: 30px;
 }
 
-.form-group label {
-  font-weight: bold;
-  margin-bottom: 5px;
+.ranking-category {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-.form-group input {
-  width: 80%;
-  padding: 8px;
-  font-size: 16px;
+.ranking-category h2 {
+  font-size: 20px;
   text-align: center;
+  margin-bottom: 15px;
+  color: #333;
+  font-weight: 600;
 }
 
-/* Ocultar elementos dinámicos */
-.hidden {
-  display: none;
+/* Tablas */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+th, td {
+  padding: 12px;
+  border: 1px solid #ddd;
+  text-align: center;
+  font-size: 14px;
+}
+
+th {
+  background-color: #007bff;
+  color: white;
+  font-weight: 600;
+}
+
+tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+tr:hover {
+  background-color: #ddd;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  body {
+    padding: 10px;
+  }
+
+  header {
+    font-size: 22px;
+  }
+
+  th, td {
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  .ranking-category h2 {
+    font-size: 18px;
+  }
 }
