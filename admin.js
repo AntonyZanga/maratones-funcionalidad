@@ -73,7 +73,7 @@ async function procesarResultados(results) {
 
         if (!dni || isNaN(dni)) continue;
 
-        const atletaRef = doc(db, "atletas", String(dni));
+        const atletaRef = doc(db, "atletas", String(dni).trim());
         const atletaSnap = await getDoc(atletaRef);
 
         if (!atletaSnap.exists()) continue;
