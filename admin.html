@@ -16,6 +16,7 @@
     </header>
 
     <main>
+        <!-- Sección para cargar resultados -->
         <section>
             <h2>Cargar Resultados de Carrera</h2>
             <input type="file" id="file-input" accept=".xlsx, .xls">
@@ -23,24 +24,16 @@
             <p id="upload-message"></p>
         </section>
 
+        <!-- Sección para mostrar el ranking -->
         <section>
             <h2>Ranking de Corredores</h2>
-            <table border="1">
-                <thead>
-                    <tr>
-                        <th>Puesto</th>
-                        <th>Nombre</th>
-                        <th>Localidad</th>
-                        <th>Puntos</th>
-                        <th>Asistencias</th>
-                        <th>Faltas</th>
-                        <th>Historial</th>
-                    </tr>
-                </thead>
-                <tbody id="ranking-table"></tbody>
-            </table>
+            <div class="ranking-container" id="ranking-container">
+                <!-- Aquí se generarán dinámicamente las tablas de ranking por categoría -->
+            </div>
         </section>
     </main>
+
+    <!-- Scripts necesarios -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script type="module" src="admin.js"></script>
 </body>
