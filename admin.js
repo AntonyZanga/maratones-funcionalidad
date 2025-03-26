@@ -69,12 +69,13 @@ async function procesarResultados(results) {
         return;
     }
 
-    const puntos = [12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+    const puntosBase = [12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+    let categorias = {};
 
     for (let i = 1; i < results.length; i++) {
-        const [posicion, dni, fechaMaraton] = results[i];
+        const [posicion, dni] = results[i];
 
-        if (!dni || isNaN(dni) || !fechaMaraton) continue;
+        if (!dni || isNaN(dni)) continue;
 
         const atletaRef = doc(db, "atletas", String(dni).trim());
         const atletaSnap = await getDoc(atletaRef);
@@ -82,24 +83,41 @@ async function procesarResultados(results) {
         if (!atletaSnap.exists()) continue;
 
         let atleta = atletaSnap.data();
-        let nuevoPuntaje = puntos[posicion - 1] || 1;
+        let categoria = obtenerCategoria(atleta.fechaNacimiento, atleta.categoria);
 
-        let historial = atleta.historial || [];
-        let asistencias = (atleta.asistencias || 0) + 1;
-        let faltas = (atleta.faltas || 0);
-        let totalPuntos = (atleta.puntos || 0) + nuevoPuntaje;
+        if (!categorias[categoria]) {
+            categorias[categoria] = [];
+        }
 
-        historial.push({ posicion, puntos: nuevoPuntaje });
+        categorias[categoria].push({ dni, posicion, atletaRef, atleta });
+    }
 
-        // Verificar carreras consecutivas para bonus
-        let bonus = calcularBonus(asistencias);
+    for (let categoria in categorias) {
+        let atletasCategoria = categorias[categoria];
 
-        await updateDoc(atletaRef, {
-            puntos: totalPuntos + bonus,
-            asistencias: asistencias,
-            faltas: faltas,
-            historial: historial
-        });
+        atletasCategoria.sort((a, b) => a.posicion - b.posicion);
+
+        for (let i = 0; i < atletasCategoria.length; i++) {
+            let { dni, posicion, atletaRef, atleta } = atletasCategoria[i];
+
+            let nuevoPuntaje = puntosBase[i] !== undefined ? puntosBase[i] : 1;
+
+            let historial = atleta.historial || [];
+            let asistencias = (atleta.asistencias || 0) + 1;
+            let faltas = atleta.faltas || 0;
+            let totalPuntos = (atleta.puntos || 0) + nuevoPuntaje;
+
+            historial.push({ posicion, puntos: nuevoPuntaje });
+
+            let bonus = calcularBonus(asistencias);
+
+            await updateDoc(atletaRef, {
+                puntos: totalPuntos + bonus,
+                asistencias: asistencias,
+                faltas: faltas,
+                historial: historial
+            });
+        }
     }
 
     uploadMessage.textContent = "Resultados cargados correctamente.";
@@ -110,7 +128,7 @@ async function procesarResultados(results) {
 // 🔥 CÁLCULO DE BONOS POR ASISTENCIA 🔥
 // =========================
 function calcularBonus(asistencias) {
-    const bonus = [0, 0, 2, 4, 6, 8, 10]; // Máximo 30 puntos extra
+    const bonus = [0, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 25, 30]; // Máx. 30 puntos extra
     return bonus[Math.min(asistencias, bonus.length - 1)];
 }
 
@@ -145,7 +163,6 @@ async function actualizarRanking() {
         }
     });
 
-    // Ordenar por categoría y puntos
     atletas.sort((a, b) => {
         if (a.categoria === b.categoria) {
             return b.puntos - a.puntos;
@@ -153,7 +170,6 @@ async function actualizarRanking() {
         return a.categoria.localeCompare(b.categoria);
     });
 
-    // Agrupar y mostrar por categoría
     let categoriaActual = "";
     let table = null;
     atletas.forEach((atleta, index) => {
@@ -217,7 +233,6 @@ function determinarCategoriaEdad(edad) {
         [45, 49], [50, 54], [55, 59], [60, 64], [65, 69], [70, 74],
         [75, 79], [80, 84], [85, 89]
     ];
-
     for (let [min, max] of categorias) {
         if (edad >= min && edad <= max) return `${min} - ${max}`;
     }
