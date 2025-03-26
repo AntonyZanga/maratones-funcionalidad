@@ -48,7 +48,9 @@ document.getElementById("login-form").addEventListener("submit", async function 
         if (dni === "99999999" && password === "111111") {
             window.location.href = "admin.html";
         } else {
-            window.location.href = "perfil.html";
+            setTimeout(() => {
+            window.location.assign("perfil.html");
+        }, 500);
         }
 
     } catch (error) {
