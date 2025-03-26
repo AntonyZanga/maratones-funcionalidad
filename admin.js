@@ -61,10 +61,12 @@ document.getElementById("upload-results").addEventListener("click", async () => 
 // =========================
 // 🔥 OBTENER CATEGORÍA SEGÚN EDAD Y GÉNERO 🔥
 // =========================
-function obtenerCategoria(fechaNacimiento, genero) {
+function obtenerCategoria(fechaNacimiento, genero, esEspecial) {
+    if (esEspecial) return "Especial";
+
     let edad = calcularEdad(fechaNacimiento);
     let categoriaEdad = determinarCategoriaEdad(edad);
-    return `${genero} - ${categoriaEdad}`;
+    return `${genero} ${categoriaEdad}`;
 }
 
 // =========================
@@ -75,16 +77,15 @@ function calcularBonus(historial) {
     let bonus = 0;
     let bonusArray = [0, 2, 6, 12, 20, 30]; // Bonus acumulativos
 
-    // Contar carreras consecutivas desde el final hacia atrás
     for (let i = historial.length - 1; i >= 0; i--) {
-        if (historial[i].faltas) break; // Si faltó a una, se corta la racha
+        if (historial[i].faltas) break;
         consecutivas++;
     }
 
     if (consecutivas > 1 && consecutivas <= 6) {
         bonus = bonusArray[consecutivas - 1];
     } else if (consecutivas > 6) {
-        bonus = 30; // Máximo 30 puntos extra
+        bonus = 30;
     }
 
     return bonus;
@@ -101,9 +102,8 @@ async function procesarResultados(results) {
         return;
     }
 
-    let categorias = {}; // Objeto para clasificar atletas por categoría
+    let categorias = {};
 
-    // Organizar atletas en sus categorías correspondientes
     for (let i = 1; i < results.length; i++) {
         const [posicion, dni, fechaMaraton] = results[i];
 
@@ -115,7 +115,7 @@ async function procesarResultados(results) {
         if (!atletaSnap.exists()) continue;
 
         let atleta = atletaSnap.data();
-        let categoria = obtenerCategoria(atleta.fechaNacimiento, atleta.genero);
+        let categoria = obtenerCategoria(atleta.fechaNacimiento, atleta.genero, atleta.esEspecial);
 
         if (!categorias[categoria]) {
             categorias[categoria] = [];
@@ -123,9 +123,8 @@ async function procesarResultados(results) {
         categorias[categoria].push({ dni, posicion });
     }
 
-    // Calcular puntos y actualizar datos en la base
     for (let categoria in categorias) {
-        categorias[categoria].sort((a, b) => a.posicion - b.posicion); // Ordenar por posición
+        categorias[categoria].sort((a, b) => a.posicion - b.posicion);
 
         for (let i = 0; i < categorias[categoria].length; i++) {
             let { dni, posicion } = categorias[categoria][i];
@@ -133,14 +132,14 @@ async function procesarResultados(results) {
             let atletaSnap = await getDoc(atletaRef);
             let atleta = atletaSnap.data();
 
-            let nuevoPuntaje = (12 - i) + (atleta.puntos || 0); // Puntos según la posición
+            let nuevoPuntaje = (12 - i) + (atleta.puntos || 0);
             let historial = atleta.historial || [];
             let asistencias = (atleta.asistencias || 0) + 1;
             let faltas = atleta.faltas || 0;
             
             historial.push({ fechaMaraton, posicion, puntos: nuevoPuntaje });
 
-            let bonus = calcularBonus(historial); // Calcular bonus por carreras consecutivas
+            let bonus = calcularBonus(historial);
 
             await updateDoc(atletaRef, {
                 puntos: nuevoPuntaje + bonus,
@@ -169,7 +168,7 @@ async function actualizarRanking() {
     snapshot.forEach(doc => {
         let data = doc.data();
         if (data.puntos > 0) {
-            let categoria = obtenerCategoria(data.fechaNacimiento, data.genero);
+            let categoria = obtenerCategoria(data.fechaNacimiento, data.genero, data.esEspecial);
 
             if (!categorias[categoria]) {
                 categorias[categoria] = [];
@@ -186,8 +185,18 @@ async function actualizarRanking() {
         }
     });
 
-    // Mostrar ranking por categoría
-    for (let categoria in categorias) {
+    let categoriasOrdenadas = Object.keys(categorias).sort((a, b) => {
+        if (a === "Especial") return 1;
+        if (b === "Especial") return -1;
+
+        let [genA, edadA] = a.split(" ");
+        let [genB, edadB] = b.split(" ");
+
+        if (genA !== genB) return genA.localeCompare(genB);
+        return parseInt(edadA) - parseInt(edadB);
+    });
+
+    categoriasOrdenadas.forEach(categoria => {
         let section = document.createElement("section");
         let title = document.createElement("h3");
         title.textContent = categoria;
@@ -227,7 +236,7 @@ async function actualizarRanking() {
             `;
             tbody.appendChild(row);
         });
-    }
+    });
 }
 
 // =========================
