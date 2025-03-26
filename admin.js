@@ -7,6 +7,7 @@ if (typeof XLSX === "undefined") {
 } else {
     console.log("✅ XLSX cargado correctamente.");
 }
+
 // =========================
 // 🔥 VERIFICACIÓN DE ADMINISTRADOR 🔥
 // =========================
@@ -17,6 +18,8 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("Acceso denegado. Debes ser administrador.");
         window.location.href = "index.html";
     }
+
+    actualizarRanking();
 });
 
 // =========================
@@ -69,9 +72,9 @@ async function procesarResultados(results) {
     const puntos = [12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 
     for (let i = 1; i < results.length; i++) {
-        const [posicion, dni] = results[i];
+        const [posicion, dni, fechaMaraton] = results[i];
 
-        if (!dni || isNaN(dni)) continue;
+        if (!dni || isNaN(dni) || !fechaMaraton) continue;
 
         const atletaRef = doc(db, "atletas", String(dni).trim());
         const atletaSnap = await getDoc(atletaRef);
@@ -88,8 +91,11 @@ async function procesarResultados(results) {
 
         historial.push({ posicion, puntos: nuevoPuntaje });
 
+        // Verificar carreras consecutivas para bonus
+        let bonus = calcularBonus(asistencias);
+
         await updateDoc(atletaRef, {
-            puntos: totalPuntos,
+            puntos: totalPuntos + bonus,
             asistencias: asistencias,
             faltas: faltas,
             historial: historial
@@ -101,11 +107,19 @@ async function procesarResultados(results) {
 }
 
 // =========================
+// 🔥 CÁLCULO DE BONOS POR ASISTENCIA 🔥
+// =========================
+function calcularBonus(asistencias) {
+    const bonus = [0, 0, 2, 4, 6, 8, 10]; // Máximo 30 puntos extra
+    return bonus[Math.min(asistencias, bonus.length - 1)];
+}
+
+// =========================
 // 🔥 ACTUALIZAR TABLA DE RANKING 🔥
 // =========================
 async function actualizarRanking() {
-    const rankingTable = document.getElementById("ranking-table");
-    rankingTable.innerHTML = "";
+    const rankingContainer = document.getElementById("ranking-container");
+    rankingContainer.innerHTML = "";
 
     const atletasRef = collection(db, "atletas");
     const snapshot = await getDocs(atletasRef);
@@ -114,21 +128,64 @@ async function actualizarRanking() {
     snapshot.forEach(doc => {
         let data = doc.data();
         if (data.puntos > 0) {
+            let edad = calcularEdad(data.fechaNacimiento);
+            let categoriaEdad = determinarCategoriaEdad(edad);
+            let categoria = data.categoria || "Especial";
+
             atletas.push({
                 nombre: `${data.nombre} ${data.apellido}`,
                 localidad: data.localidad || "Desconocida",
                 puntos: data.puntos || 0,
                 asistencias: data.asistencias || 0,
                 faltas: data.faltas || 0,
-                historial: data.historial || []
+                historial: data.historial || [],
+                categoria: `${categoria} - ${categoriaEdad}`,
+                edad: edad
             });
         }
     });
 
-    atletas.sort((a, b) => b.puntos - a.puntos);
+    // Ordenar por categoría y puntos
+    atletas.sort((a, b) => {
+        if (a.categoria === b.categoria) {
+            return b.puntos - a.puntos;
+        }
+        return a.categoria.localeCompare(b.categoria);
+    });
 
+    // Agrupar y mostrar por categoría
+    let categoriaActual = "";
+    let table = null;
     atletas.forEach((atleta, index) => {
-        const row = document.createElement("tr");
+        if (atleta.categoria !== categoriaActual) {
+            if (table) rankingContainer.appendChild(table);
+
+            categoriaActual = atleta.categoria;
+            let section = document.createElement("section");
+            let title = document.createElement("h3");
+            title.textContent = categoriaActual;
+            section.appendChild(title);
+
+            table = document.createElement("table");
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Puesto</th>
+                        <th>Nombre</th>
+                        <th>Localidad</th>
+                        <th>Puntos</th>
+                        <th>Asistencias</th>
+                        <th>Faltas</th>
+                        <th>Historial</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            `;
+            section.appendChild(table);
+            rankingContainer.appendChild(section);
+        }
+
+        let row = document.createElement("tr");
         row.innerHTML = `
             <td>${index + 1}</td>
             <td>${atleta.nombre}</td>
@@ -138,9 +195,31 @@ async function actualizarRanking() {
             <td>${atleta.faltas}</td>
             <td>${atleta.historial.map(h => `#${h.posicion} (${h.puntos} pts)`).join(", ")}</td>
         `;
-        rankingTable.appendChild(row);
+        table.querySelector("tbody").appendChild(row);
     });
+
+    if (table) rankingContainer.appendChild(table);
 }
 
-// Llamar a la función para cargar el ranking al abrir la página
-document.addEventListener("DOMContentLoaded", actualizarRanking);
+// =========================
+// 🔥 FUNCIONES AUXILIARES 🔥
+// =========================
+function calcularEdad(fechaNacimiento) {
+    let fechaNac = new Date(fechaNacimiento);
+    let hoy = new Date();
+    let edad = hoy.getFullYear() - fechaNac.getFullYear();
+    return edad;
+}
+
+function determinarCategoriaEdad(edad) {
+    const categorias = [
+        [0, 19], [20, 24], [25, 29], [30, 34], [35, 39], [40, 44],
+        [45, 49], [50, 54], [55, 59], [60, 64], [65, 69], [70, 74],
+        [75, 79], [80, 84], [85, 89]
+    ];
+
+    for (let [min, max] of categorias) {
+        if (edad >= min && edad <= max) return `${min} - ${max}`;
+    }
+    return "90+";
+}
