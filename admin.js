@@ -240,6 +240,41 @@ async function actualizarRanking() {
 }
 
 // =========================
+// 🔥 Resetear Historial 🔥
+// =========================
+
+document.getElementById("reset-history").addEventListener("click", async () => {
+    if (!confirm("¿Estás seguro de que quieres resetear el historial? Esta acción no se puede deshacer.")) {
+        return;
+    }
+
+    try {
+        const atletasRef = collection(db, "atletas");
+        const snapshot = await getDocs(atletasRef);
+
+        let batchUpdates = [];
+
+        snapshot.forEach((docSnap) => {
+            let atletaRef = doc(db, "atletas", docSnap.id);
+            batchUpdates.push(updateDoc(atletaRef, {
+                puntos: 0,
+                asistencias: 0,
+                faltas: 0,
+                historial: []
+            }));
+        });
+
+        await Promise.all(batchUpdates);
+
+        alert("Historial reseteado con éxito.");
+        actualizarRanking();
+    } catch (error) {
+        console.error("Error al resetear historial:", error);
+        alert("Hubo un error al resetear el historial.");
+    }
+});
+
+// =========================
 // 🔥 FUNCIONES AUXILIARES 🔥
 // =========================
 function calcularEdad(fechaNacimiento) {
