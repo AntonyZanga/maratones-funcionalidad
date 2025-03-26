@@ -128,25 +128,46 @@ document.getElementById("check-dni").addEventListener("click", async function() 
     }
 });
 
-document.getElementById("update-password").addEventListener("click", async function() {
-    const dni = document.getElementById("dni-recovery").value;
-    const newPassword = document.getElementById("new-password").value;
+document.getElementById("update-password").addEventListener("click", async function(event) {
+    event.preventDefault(); // Evitar que el botón recargue la página
 
-    if (!newPassword.match(/^.{6,}$/)) {
-        document.getElementById("recovery-message").textContent = "La contraseña debe tener al menos 6 caracteres.";
+    const dni = document.getElementById("dni-recovery").value.trim();
+    const newPassword = document.getElementById("new-password").value.trim();
+    const recoveryMessage = document.getElementById("recovery-message");
+
+    // Validar que la nueva contraseña tenga al menos 6 caracteres
+    if (newPassword.length < 6) {
+        recoveryMessage.textContent = "La contraseña debe tener al menos 6 caracteres.";
+        recoveryMessage.style.color = "red";
         return;
     }
 
     try {
+        // Obtener referencia del documento en Firestore
         const atletaRef = doc(db, "atletas", dni);
+        const atletaSnap = await getDoc(atletaRef);
+
+        if (!atletaSnap.exists()) {
+            recoveryMessage.textContent = "DNI no encontrado.";
+            recoveryMessage.style.color = "red";
+            return;
+        }
+
+        // Actualizar la contraseña en Firestore
         await updateDoc(atletaRef, { password: newPassword });
 
-        document.getElementById("recovery-message").textContent = "Contraseña actualizada con éxito. Redirigiendo...";
+        recoveryMessage.textContent = "Contraseña actualizada con éxito. Redirigiendo...";
+        recoveryMessage.style.color = "green";
+
+        // Redirigir después de 2 segundos
         setTimeout(() => {
             window.location.href = "index.html";
         }, 2000);
+
     } catch (error) {
-        console.error("Error al actualizar contraseña:", error);
-        document.getElementById("recovery-message").textContent = "Error al actualizar la contraseña.";
+        console.error("Error al actualizar la contraseña:", error);
+        recoveryMessage.textContent = "Error al actualizar la contraseña.";
+        recoveryMessage.style.color = "red";
     }
 });
+
