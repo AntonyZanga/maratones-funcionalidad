@@ -5,59 +5,73 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Registro de Atleta - Maratones de Sudeste</title>
   <link rel="stylesheet" href="css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-  <header>
-    <h1>Registro de Nuevo Atleta</h1>
+  <header class="header">
+    <div class="container header-container">
+      <h1>Registro de Nuevo Atleta</h1>
+    </div>
   </header>
-  <main>
-    <section id="form-registro">
+  <main class="container">
+    <section id="form-registro" class="card">
       <form id="registro-form">
-        <label for="nombre">Nombre:</label>
-        <input type="text" id="nombre" name="nombre" required>
-
-        <label for="apellido">Apellido:</label>
-        <input type="text" id="apellido" name="apellido" required>
-
-        <label for="password">Contraseña (mínimo 6 dígitos):</label>
-        <input type="password" id="password" name="password" minlength="6" required>
-
-        <label for="confirm-password">Confirmar contraseña:</label>
-        <input type="password" id="confirm-password" name="confirm-password" minlength="6" required>
-        <span id="password-match"></span>
-
-        <label for="dni">DNI:</label>
-        <input type="text" id="dni" name="dni" required>
-
-        <label for="fecha-nacimiento">Fecha de Nacimiento:</label>
-        <input type="date" id="fecha-nacimiento" name="fecha-nacimiento" required>
-        <p id="age-category"></p>
-
-        <label for="localidad">Localidad:</label>
-        <input type="text" id="localidad" name="localidad" required>
-
-        <label for="tipo-grupo">Grupo de Running:</label>
-        <select id="tipo-grupo" name="tipo-grupo">
-          <option value="">Seleccione un grupo...</option>
-        </select>
-        <p id="grupo-ayuda">Si su grupo de running no está en la lista, envíe un correo a <strong>maratonsudeste@gmail.com</strong> solicitando su inclusión.</p>
-
-        <label for="apto-medico">Apto Médico:</label>
-        <input type="file" id="apto-medico" name="apto-medico" accept=".pdf,.jpg,.png">
-
-        <fieldset>
+        <div class="form-group">
+          <label for="nombre">Nombre:</label>
+          <input type="text" id="nombre" name="nombre" required>
+        </div>
+        <div class="form-group">
+          <label for="apellido">Apellido:</label>
+          <input type="text" id="apellido" name="apellido" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Contraseña (mínimo 6 dígitos):</label>
+          <input type="password" id="password" name="password" minlength="6" required>
+        </div>
+        <div class="form-group">
+          <label for="confirm-password">Confirmar contraseña:</label>
+          <input type="password" id="confirm-password" name="confirm-password" minlength="6" required>
+          <span id="password-match"></span>
+        </div>
+        <div class="form-group">
+          <label for="dni">DNI:</label>
+          <input type="text" id="dni" name="dni" required>
+        </div>
+        <div class="form-group">
+          <label for="fecha-nacimiento">Fecha de Nacimiento:</label>
+          <input type="date" id="fecha-nacimiento" name="fecha-nacimiento" required>
+          <p id="age-category"></p>
+        </div>
+        <div class="form-group">
+          <label for="localidad">Localidad:</label>
+          <input type="text" id="localidad" name="localidad" required>
+        </div>
+        <div class="form-group">
+          <label for="tipo-grupo">Grupo de Running:</label>
+          <select id="tipo-grupo" name="tipo-grupo" required>
+            <option value="">Seleccione un grupo...</option>
+          </select>
+          <p id="grupo-ayuda" class="small-text">
+            Si su grupo de running no está en la lista, envíe un correo a <strong>maratonsudeste@gmail.com</strong> solicitando su inclusión.
+          </p>
+        </div>
+        <div class="form-group">
+          <label for="apto-medico">Apto Médico:</label>
+          <input type="file" id="apto-medico" name="apto-medico" accept=".pdf,.jpg,.png">
+        </div>
+        <fieldset class="form-group">
           <legend>Categoría</legend>
-          <label><input type="radio" name="categoria" value="Masculino" required>Masculino</label>
-          <label><input type="radio" name="categoria" value="Femenino">Femenino</label>
-          <label><input type="radio" name="categoria" value="Especial">Especial</label>
+          <label><input type="radio" name="categoria" value="Masculino" required> Masculino</label>
+          <label><input type="radio" name="categoria" value="Femenino"> Femenino</label>
+          <label><input type="radio" name="categoria" value="Especial"> Especial</label>
         </fieldset>
-        <div id="certificado-container" class="hidden">
+        <div id="certificado-container" class="form-group hidden">
           <label for="certificado-discapacidad">Certificado de Discapacidad:</label>
           <input type="file" id="certificado-discapacidad" name="certificado-discapacidad" accept=".pdf,.jpg,.png">
         </div>
-
-        <button type="submit" id="btn-registrar">Registrar Atleta</button>
+        <button type="submit" id="btn-registrar" class="btn">Registrar Atleta</button>
         <p id="mensaje"></p>
       </form>
     </section>
