@@ -82,12 +82,13 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center; /* Centra los elementos dentro de la tarjeta */
+  width: 100%;
 }
 
 /* Formularios */
 .form-group {
   margin-bottom: 1rem;
-  width: 100%; /* Asegura que los inputs tengan el mismo ancho */
+  width: 100%;
 }
 
 .form-group label {
@@ -117,13 +118,72 @@ body {
 
 /* 🔹 Alineación del botón Inscribirse */
 .btn-inscribirse {
-  width: 100%; /* Para que tome el ancho del contenedor */
-  max-width: 200px; /* Limita el tamaño del botón */
-  margin-top: 1rem; /* Espaciado uniforme */
-  align-self: center; /* Asegura que el botón se alinee correctamente */
+  width: 100%;
+  max-width: 200px;
+  margin-top: 1rem;
+  align-self: center;
+}
+
+/* 🔹 Ajustes para la tabla de ranking */
+.ranking-container {
+  width: 100%;
+  overflow-x: auto; /* Permite desplazamiento horizontal en móviles */
+  background-color: var(--color-blanco);
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilo de la tabla */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+/* Encabezado de la tabla */
+table th {
+  background-color: var(--color-secundario);
+  color: var(--color-blanco);
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+}
+
+/* Filas de la tabla */
+table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+
+/* Alternar color en filas para mejorar legibilidad */
+table tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+/* Resaltar filas al pasar el mouse */
+table tr:hover {
+  background-color: #e0e0e0;
 }
 
 /* Responsive: Ajustes para dispositivos móviles */
+@media (max-width: 768px) {
+  .ranking-container {
+    overflow-x: auto; /* Permite desplazamiento lateral en pantallas pequeñas */
+    display: block;
+    width: 100%;
+  }
+  
+  table {
+    min-width: 600px; /* Evita que la tabla se colapse en móviles */
+  }
+
+  table th, table td {
+    font-size: 14px;
+  }
+}
+
 @media (min-width: 768px) {
   .header-container {
     flex-direction: row;
