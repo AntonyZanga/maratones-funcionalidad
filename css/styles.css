@@ -158,25 +158,24 @@ body {
 }
 
 /* Estilo de la tabla */
-table {
+#ranking-table {
   width: 100%;
-  min-width: unset; /* Elimina el mínimo de 600px que estaba en el @media */
+  table-layout: auto; /* Permite que las columnas se ajusten al contenido */
+  border-collapse: collapse;
+}
+
+table th, table td {
+  white-space: nowrap; /* Evita que el contenido se divida en varias líneas */
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
 }
 
 /* Encabezado de la tabla */
 table th {
   background-color: var(--color-secundario);
   color: var(--color-blanco);
-  padding: 0.75rem;
-  text-align: left;
   font-weight: 600;
-}
-
-/* Filas de la tabla */
-table td {
-  padding: 0.75rem;
-  border-bottom: 1px solid #ddd;
-  text-align: left;
 }
 
 /* Alternar color en filas para mejorar legibilidad */
@@ -225,52 +224,31 @@ table tr:hover {
   background-color: #c0392b;
 }
 
-@media (max-width: 768px) {
-  .card {
-    width: 100vw; /* Ocupa todo el ancho de la pantalla */
-    max-width: 100vw; /* Asegura que no tenga márgenes laterales */
-    border-radius: 0; /* Opcional: elimina los bordes redondeados para que se vea como un bloque completo */
-    padding: 1rem; /* Ajusta el padding para aprovechar mejor el espacio */
-  }
-}
-
+/* Ajustes responsivos */
 @media (max-width: 768px) {
   .container {
-    width: 100vw; /* Usa todo el ancho disponible */
-    max-width: 100vw; /* Evita márgenes no deseados */
-    padding: 0; /* Elimina el padding lateral */
+    width: 100vw;
+    max-width: 100vw;
+    padding: 0;
   }
 
-/* Responsive: Ajustes para dispositivos móviles */
-@media (max-width: 768px) {
+  .card {
+    width: 100vw;
+    max-width: 100vw;
+    border-radius: 0;
+    padding: 1rem;
+  }
+
   .ranking-container {
     overflow-x: auto;
     display: block;
     width: 100%;
   }
 
-  @media (max-width: 768px) {
   table th, table td {
-    font-size: 12px; /* Reduce el tamaño de la fuente para aprovechar mejor el espacio */
+    font-size: 12px;
     padding: 0.5rem;
   }
-}
-
-  #ranking-table {
-  width: 100%;
-  table-layout: auto; /* Permite que las columnas se ajusten al contenido */
-  border-collapse: collapse;
-}
-  
-  table {
-    min-width: 600px;
-  }
-
-  table th, table td {
-  white-space: nowrap; /* Evita que el contenido se divida en varias líneas */
-  padding: 0.75rem;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
 }
 
 @media (min-width: 768px) {
