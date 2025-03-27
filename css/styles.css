@@ -152,18 +152,22 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow-x: auto;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
 }
 
 .ranking-table-wrapper {
   width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  display: block;
 }
 
-/* Estilo de la tabla */
+/* 🔹 Estilo de la tabla */
 #ranking-table {
   width: 100%;
   max-width: 100%;
-  table-layout: fixed; /* Asegura que las columnas ocupen todo el ancho */
+  table-layout: auto; /* Permite que las columnas se ajusten automáticamente */
   border-collapse: collapse;
 }
 
@@ -272,12 +276,13 @@ table tr:hover {
 
   /* Permitir que la tabla ocupe todo el ancho disponible si hay espacio */
   .ranking-container {
-    display: block;
     width: 100%;
+    max-width: 100%;
   }
 
   .ranking-table-wrapper {
     width: 100%;
+    max-width: 100%;
   }
 
   #ranking-table {
