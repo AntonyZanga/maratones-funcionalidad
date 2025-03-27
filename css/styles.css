@@ -54,16 +54,20 @@ body {
   cursor: pointer;
   transition: background-color 0.3s ease;
   text-decoration: none;
+  text-align: center;
 }
+
 .btn:hover {
   background-color: var(--color-acento);
 }
+
 .btn-secondary {
   background-color: #c0392b;
 }
 .btn-secondary:hover {
   background-color: #e74c3c;
 }
+
 .btn-warning {
   background-color: var(--color-acento);
 }
@@ -75,17 +79,23 @@ body {
   margin-bottom: 1.5rem;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Centra los elementos dentro de la tarjeta */
 }
 
 /* Formularios */
 .form-group {
   margin-bottom: 1rem;
+  width: 100%; /* Asegura que los inputs tengan el mismo ancho */
 }
+
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 600;
 }
+
 .form-group input,
 .form-group select {
   width: 100%;
@@ -105,6 +115,14 @@ body {
   display: none;
 }
 
+/* 🔹 Alineación del botón Inscribirse */
+.btn-inscribirse {
+  width: 100%; /* Para que tome el ancho del contenedor */
+  max-width: 200px; /* Limita el tamaño del botón */
+  margin-top: 1rem; /* Espaciado uniforme */
+  align-self: center; /* Asegura que el botón se alinee correctamente */
+}
+
 /* Responsive: Ajustes para dispositivos móviles */
 @media (min-width: 768px) {
   .header-container {
@@ -118,8 +136,4 @@ body {
   .card {
     flex: 1 1 45%;
   }
-}
-
-.hidden {
-    display: none;
 }
