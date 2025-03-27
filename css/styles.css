@@ -5,6 +5,7 @@
   --color-acento: #f39c12;
   --color-fondo: #ecf0f1;
   --color-blanco: #ffffff;
+  --color-error: #e74c3c;
   --font-family: 'Poppins', sans-serif;
 }
 
@@ -36,6 +37,7 @@ body {
   color: var(--color-blanco);
   padding: 1rem 0;
 }
+
 .header-container {
   display: flex;
   justify-content: space-between;
@@ -64,12 +66,21 @@ body {
 .btn-secondary {
   background-color: #c0392b;
 }
+
 .btn-secondary:hover {
   background-color: #e74c3c;
 }
 
 .btn-warning {
   background-color: var(--color-acento);
+}
+
+.btn-error {
+  background-color: var(--color-error);
+}
+
+.btn-error:hover {
+  background-color: #c0392b;
 }
 
 /* Tarjetas / secciones */
@@ -81,7 +92,7 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  align-items: center; /* Centra los elementos dentro de la tarjeta */
+  align-items: center;
   width: 100%;
 }
 
@@ -98,11 +109,19 @@ body {
 }
 
 .form-group input,
-.form-group select {
+.form-group select,
+.form-group textarea {
   width: 100%;
   padding: 0.5rem;
   border: 1px solid #bdc3c7;
   border-radius: 4px;
+}
+
+/* Mensajes de error */
+.error-message {
+  color: var(--color-error);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
 }
 
 /* Pequeños textos de ayuda */
@@ -127,7 +146,7 @@ body {
 /* 🔹 Ajustes para la tabla de ranking */
 .ranking-container {
   width: 100%;
-  overflow-x: auto; /* Permite desplazamiento horizontal en móviles */
+  overflow-x: auto;
   background-color: var(--color-blanco);
   padding: 1rem;
   border-radius: 8px;
@@ -167,16 +186,52 @@ table tr:hover {
   background-color: #e0e0e0;
 }
 
+/* Ranking de corredores */
+.ranking-header {
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+/* Estilos de usuario logueado */
+.user-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--color-primario);
+  color: var(--color-blanco);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.user-info span {
+  font-size: 1rem;
+}
+
+.logout-btn {
+  background-color: var(--color-error);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  text-decoration: none;
+  color: var(--color-blanco);
+}
+
+.logout-btn:hover {
+  background-color: #c0392b;
+}
+
 /* Responsive: Ajustes para dispositivos móviles */
 @media (max-width: 768px) {
   .ranking-container {
-    overflow-x: auto; /* Permite desplazamiento lateral en pantallas pequeñas */
+    overflow-x: auto;
     display: block;
     width: 100%;
   }
-  
+
   table {
-    min-width: 600px; /* Evita que la tabla se colapse en móviles */
+    min-width: 600px;
   }
 
   table th, table td {
@@ -188,11 +243,13 @@ table tr:hover {
   .header-container {
     flex-direction: row;
   }
+
   main {
     display: flex;
     flex-wrap: wrap;
     gap: 1.5rem;
   }
+
   .card {
     flex: 1 1 45%;
   }
