@@ -3,48 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prueba de almacenamiento</title>
+    <title>Prueba de Almacenamiento</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        #resultado { margin-top: 20px; font-size: 18px; white-space: pre-line; }
+    </style>
 </head>
 <body>
-    <h1>Prueba de Almacenamiento en Brave</h1>
-    <button onclick="guardarDatos()">Guardar Datos</button>
-    <button onclick="mostrarDatos()">Mostrar Datos</button>
-    <button onclick="borrarDatos()">Borrar Datos</button>
-    <p id="resultado"></p>
+
+    <h2>🔍 Prueba de Almacenamiento en Brave</h2>
+    <p>Verificando localStorage, sessionStorage y Cookies...</p>
+    
+    <div id="resultado">Cargando...</div>
 
     <script>
-        function guardarDatos() {
-            const usuarioData = JSON.stringify({ dni: "12345678", nombre: "Juan", apellido: "Pérez" });
+        let resultado = "📢 Resultados:\n";
 
-            localStorage.setItem("usuario", usuarioData);
-            sessionStorage.setItem("usuario", usuarioData);
-            document.cookie = `usuario=${encodeURIComponent(usuarioData)}; path=/;`;
-
-            console.log("Datos guardados.");
-            document.getElementById("resultado").textContent = "Datos guardados.";
+        // Probar localStorage
+        try {
+            localStorage.setItem("test", "ok");
+            resultado += `✅ localStorage funciona: ${localStorage.getItem("test")}\n`;
+            localStorage.removeItem("test");
+        } catch (e) {
+            resultado += `❌ localStorage no funciona: ${e}\n`;
         }
 
-        function mostrarDatos() {
-            const local = localStorage.getItem("usuario");
-            const session = sessionStorage.getItem("usuario");
-            const cookies = document.cookie;
-
-            console.log("📌 localStorage:", local);
-            console.log("📌 sessionStorage:", session);
-            console.log("📌 Cookies:", cookies);
-
-            document.getElementById("resultado").textContent =
-                `localStorage: ${local}\nsessionStorage: ${session}\nCookies: ${cookies}`;
+        // Probar sessionStorage
+        try {
+            sessionStorage.setItem("test", "ok");
+            resultado += `✅ sessionStorage funciona: ${sessionStorage.getItem("test")}\n`;
+            sessionStorage.removeItem("test");
+        } catch (e) {
+            resultado += `❌ sessionStorage no funciona: ${e}\n`;
         }
 
-        function borrarDatos() {
-            localStorage.removeItem("usuario");
-            sessionStorage.removeItem("usuario");
-            document.cookie = "usuario=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        // Probar document.cookie
+        document.cookie = "test=ok; path=/;";
+        resultado += `✅ Cookies funcionan: ${document.cookie.includes("test=ok") ? "Sí" : "No"}\n`;
 
-            console.log("Datos borrados.");
-            document.getElementById("resultado").textContent = "Datos borrados.";
-        }
+        // Mostrar resultados en pantalla
+        document.getElementById("resultado").textContent = resultado;
     </script>
+
 </body>
 </html>
