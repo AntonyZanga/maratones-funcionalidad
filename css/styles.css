@@ -258,7 +258,8 @@ table tr:hover {
 
   #ranking-table {
   width: 100%;
-  table-layout: auto;
+  table-layout: auto; /* Permite que las columnas se ajusten al contenido */
+  border-collapse: collapse;
 }
   
   table {
@@ -266,8 +267,10 @@ table tr:hover {
   }
 
   table th, table td {
-    font-size: 14px;
-  }
+  white-space: nowrap; /* Evita que el contenido se divida en varias líneas */
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
 }
 
 @media (min-width: 768px) {
