@@ -146,18 +146,21 @@ body {
 /* 🔹 Ajustes para la tabla de ranking */
 .ranking-container {
   width: 100%;
-  overflow-x: auto;
-  background-color: var(--color-blanco);
+  max-width: 100%;
   padding: 1rem;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
+}
+
+.ranking-table-wrapper {
+  width: 100%;
 }
 
 /* Estilo de la tabla */
 table {
   width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
+  min-width: unset; /* Elimina el mínimo de 600px que estaba en el @media */
 }
 
 /* Encabezado de la tabla */
@@ -230,6 +233,13 @@ table tr:hover {
     width: 100%;
   }
 
+  @media (max-width: 768px) {
+  table th, table td {
+    font-size: 12px; /* Reduce el tamaño de la fuente para aprovechar mejor el espacio */
+    padding: 0.5rem;
+  }
+}
+  
   table {
     min-width: 600px;
   }
