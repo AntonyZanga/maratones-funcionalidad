@@ -160,7 +160,8 @@ body {
 /* Estilo de la tabla */
 #ranking-table {
   width: 100%;
-  table-layout: auto; /* Permite que las columnas se ajusten al contenido */
+  max-width: unset; /* Permite que la tabla use todo el ancho disponible */
+  table-layout: auto; /* Las columnas se ajustan automáticamente */
   border-collapse: collapse;
 }
 
@@ -251,6 +252,7 @@ table tr:hover {
   }
 }
 
+/* Para pantallas grandes, asegurar que los elementos aprovechen el espacio */
 @media (min-width: 768px) {
   .header-container {
     flex-direction: row;
@@ -264,5 +266,16 @@ table tr:hover {
 
   .card {
     flex: 1 1 45%;
+  }
+
+  /* Permitir que la tabla ocupe todo el ancho disponible si hay espacio */
+  .ranking-container {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  #ranking-table {
+    width: 100%;
+    max-width: unset;
   }
 }
