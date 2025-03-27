@@ -44,7 +44,10 @@ document.getElementById("login-form").addEventListener("submit", async function 
         localStorage.setItem("usuario", JSON.stringify(usuarioData)); 
         sessionStorage.setItem("usuario", JSON.stringify(usuarioData)); 
 
-        // Redirigir al perfil normal o al panel de administrador
+        console.log("✅ Usuario guardado en localStorage:", localStorage.getItem("usuario"));
+        console.log("✅ Usuario guardado en sessionStorage:", sessionStorage.getItem("usuario"));
+
+        // Redirigir
         if (dni === "99999999" && password === "111111") {
             window.location.href = "admin.html";
         } else {
@@ -52,7 +55,7 @@ document.getElementById("login-form").addEventListener("submit", async function 
         }
 
     } catch (error) {
-        console.error("Error en el login:", error);
+        console.error("❌ Error en el login:", error);
         mostrarMensaje("Error al iniciar sesión.");
     }
 });
@@ -61,19 +64,23 @@ document.getElementById("login-form").addEventListener("submit", async function 
 // 🔥 VERIFICAR SESIÓN AL CARGAR LA PÁGINA 🔥
 // =========================
 document.addEventListener("DOMContentLoaded", () => {
-    if (!sessionStorage.getItem("primeraVisita")) {
-        sessionStorage.clear();
-        localStorage.removeItem("usuario");
-        sessionStorage.setItem("primeraVisita", "true");
-    }
+    console.log("🔍 Verificando sesión al cargar la página...");
 
-    let usuario = JSON.parse(sessionStorage.getItem("usuario"));
+    let usuarioLocal = localStorage.getItem("usuario");
+    let usuarioSession = sessionStorage.getItem("usuario");
+
+    console.log("📦 Datos en localStorage:", usuarioLocal);
+    console.log("📦 Datos en sessionStorage:", usuarioSession);
+
+    let usuario = JSON.parse(usuarioSession);
 
     if (usuario) {
+        console.log("✅ Usuario detectado en sessionStorage:", usuario);
         document.getElementById("login-section").style.display = "none";
         document.getElementById("user-info").style.display = "block";
         document.getElementById("user-name").textContent = `${usuario.nombre} ${usuario.apellido}`;
     } else {
+        console.log("❌ No se encontró usuario en sessionStorage. Se muestra login.");
         document.getElementById("login-section").style.display = "block";
         document.getElementById("user-info").style.display = "none";
     }
