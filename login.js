@@ -97,6 +97,7 @@ document.getElementById("forgot-password-link").addEventListener("click", functi
 });
 
 document.getElementById("check-dni").addEventListener("click", async function() {
+    event.preventDefault(); // Evitar que el botón recargue la página
     const dni = document.getElementById("dni-recovery").value;
     const fechaNacimiento = document.getElementById("fecha-nacimiento-recovery").value;
 
