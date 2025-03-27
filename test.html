@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de almacenamiento en Brave</title>
+</head>
+<body>
+    <h2>Prueba de localStorage, sessionStorage y Cookies</h2>
+    <p id="result"></p>
+
+    <script>
+        function probarAlmacenamiento() {
+            let mensaje = "";
+
+            // 1️⃣ Probar localStorage
+            try {
+                localStorage.setItem("prueba", "Funciona");
+                mensaje += "✅ localStorage funciona: " + localStorage.getItem("prueba") + "<br>";
+            } catch (error) {
+                mensaje += "❌ Error en localStorage: " + error + "<br>";
+            }
+
+            // 2️⃣ Probar sessionStorage
+            try {
+                sessionStorage.setItem("prueba", "Funciona");
+                mensaje += "✅ sessionStorage funciona: " + sessionStorage.getItem("prueba") + "<br>";
+            } catch (error) {
+                mensaje += "❌ Error en sessionStorage: " + error + "<br>";
+            }
+
+            // 3️⃣ Probar cookies
+            try {
+                document.cookie = "prueba=Funciona; path=/";
+                mensaje += "🍪 Cookies actuales: " + document.cookie + "<br>";
+            } catch (error) {
+                mensaje += "❌ Error en cookies: " + error + "<br>";
+            }
+
+            // Mostrar resultados en la página
+            document.getElementById("result").innerHTML = mensaje;
+
+            // También mostrar en la consola
+            console.log(mensaje);
+        }
+
+        // Ejecutar prueba al cargar la página
+        probarAlmacenamiento();
+    </script>
+</body>
+</html>
