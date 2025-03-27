@@ -234,6 +234,13 @@ table tr:hover {
   }
 }
 
+@media (max-width: 768px) {
+  .container {
+    width: 100vw; /* Usa todo el ancho disponible */
+    max-width: 100vw; /* Evita márgenes no deseados */
+    padding: 0; /* Elimina el padding lateral */
+  }
+
 /* Responsive: Ajustes para dispositivos móviles */
 @media (max-width: 768px) {
   .ranking-container {
