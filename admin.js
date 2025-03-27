@@ -199,12 +199,12 @@ async function actualizarRanking() {
             table.innerHTML = `
                 <thead>
                     <tr>
-                        <th>Puesto</th>
+                        <th>P°</th>
                         <th>Nombre</th>
                         <th>Localidad</th>
-                        <th>Puntos</th>
-                        <th>Asistencias</th>
-                        <th>Faltas</th>
+                        <th>Pts</th>
+                        <th>Asis</th>
+                        <th>Falt</th>
                         <th>Historial</th>
                     </tr>
                 </thead>
