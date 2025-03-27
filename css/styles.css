@@ -255,6 +255,11 @@ table tr:hover {
     padding: 0.5rem;
   }
 }
+
+  #ranking-table {
+  width: 100%;
+  table-layout: auto;
+}
   
   table {
     min-width: 600px;
