@@ -3,49 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prueba de almacenamiento en Brave</title>
+    <title>Prueba de almacenamiento</title>
 </head>
 <body>
-    <h2>Prueba de localStorage, sessionStorage y Cookies</h2>
-    <p id="result"></p>
+    <h1>Prueba de Almacenamiento en Brave</h1>
+    <button onclick="guardarDatos()">Guardar Datos</button>
+    <button onclick="mostrarDatos()">Mostrar Datos</button>
+    <button onclick="borrarDatos()">Borrar Datos</button>
+    <p id="resultado"></p>
 
     <script>
-        function probarAlmacenamiento() {
-            let mensaje = "";
+        function guardarDatos() {
+            const usuarioData = JSON.stringify({ dni: "12345678", nombre: "Juan", apellido: "Pérez" });
 
-            // 1️⃣ Probar localStorage
-            try {
-                localStorage.setItem("prueba", "Funciona");
-                mensaje += "✅ localStorage funciona: " + localStorage.getItem("prueba") + "<br>";
-            } catch (error) {
-                mensaje += "❌ Error en localStorage: " + error + "<br>";
-            }
+            localStorage.setItem("usuario", usuarioData);
+            sessionStorage.setItem("usuario", usuarioData);
+            document.cookie = `usuario=${encodeURIComponent(usuarioData)}; path=/;`;
 
-            // 2️⃣ Probar sessionStorage
-            try {
-                sessionStorage.setItem("prueba", "Funciona");
-                mensaje += "✅ sessionStorage funciona: " + sessionStorage.getItem("prueba") + "<br>";
-            } catch (error) {
-                mensaje += "❌ Error en sessionStorage: " + error + "<br>";
-            }
-
-            // 3️⃣ Probar cookies
-            try {
-                document.cookie = "prueba=Funciona; path=/";
-                mensaje += "🍪 Cookies actuales: " + document.cookie + "<br>";
-            } catch (error) {
-                mensaje += "❌ Error en cookies: " + error + "<br>";
-            }
-
-            // Mostrar resultados en la página
-            document.getElementById("result").innerHTML = mensaje;
-
-            // También mostrar en la consola
-            console.log(mensaje);
+            console.log("Datos guardados.");
+            document.getElementById("resultado").textContent = "Datos guardados.";
         }
 
-        // Ejecutar prueba al cargar la página
-        probarAlmacenamiento();
+        function mostrarDatos() {
+            const local = localStorage.getItem("usuario");
+            const session = sessionStorage.getItem("usuario");
+            const cookies = document.cookie;
+
+            console.log("📌 localStorage:", local);
+            console.log("📌 sessionStorage:", session);
+            console.log("📌 Cookies:", cookies);
+
+            document.getElementById("resultado").textContent =
+                `localStorage: ${local}\nsessionStorage: ${session}\nCookies: ${cookies}`;
+        }
+
+        function borrarDatos() {
+            localStorage.removeItem("usuario");
+            sessionStorage.removeItem("usuario");
+            document.cookie = "usuario=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
+            console.log("Datos borrados.");
+            document.getElementById("resultado").textContent = "Datos borrados.";
+        }
     </script>
 </body>
 </html>
