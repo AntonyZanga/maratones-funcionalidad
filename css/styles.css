@@ -225,6 +225,15 @@ table tr:hover {
   background-color: #c0392b;
 }
 
+@media (max-width: 768px) {
+  .card {
+    width: 100vw; /* Ocupa todo el ancho de la pantalla */
+    max-width: 100vw; /* Asegura que no tenga márgenes laterales */
+    border-radius: 0; /* Opcional: elimina los bordes redondeados para que se vea como un bloque completo */
+    padding: 1rem; /* Ajusta el padding para aprovechar mejor el espacio */
+  }
+}
+
 /* Responsive: Ajustes para dispositivos móviles */
 @media (max-width: 768px) {
   .ranking-container {
