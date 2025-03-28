@@ -218,7 +218,7 @@ async function actualizarRanking() {
             <td>${atleta.puntos}</td>
             <td>${atleta.asistencias}</td>
             <td>${atleta.faltas}</td>
-            <td>${atleta.historial.map(h => #${h.posicion} (${h.puntos} pts)).join(", ")}</td>
+            <td>${atleta.historial.map(h => `#${h.posicion} (${h.puntos} pts)`).join(", ")}</td>
         `;
         table.querySelector("tbody").appendChild(row);
     });
