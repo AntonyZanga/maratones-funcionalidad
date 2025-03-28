@@ -31,16 +31,14 @@ document.getElementById("logout").addEventListener("click", () => {
 document.getElementById("upload-results").addEventListener("click", async () => {
     const fileInput = document.getElementById("file-input");
     const uploadMessage = document.getElementById("upload-message");
-    const uploadButton = document.getElementById("upload-results");
-
+    
     if (fileInput.files.length === 0) {
         uploadMessage.textContent = "Selecciona un archivo Excel.";
         return;
     }
 
-    // 🔹 Deshabilitar elementos mientras se procesan los resultados
-    uploadButton.disabled = true;
-    fileInput.disabled = true;
+    // 🔹 Deshabilitar TODOS los botones y entradas
+    deshabilitarInterfaz(true);
     uploadMessage.textContent = "⏳ Procesando resultados... Por favor, espera.";
 
     const file = fileInput.files[0];
@@ -59,14 +57,21 @@ document.getElementById("upload-results").addEventListener("click", async () => 
             console.error("Error al procesar el archivo:", error);
             uploadMessage.textContent = "❌ Error al procesar los resultados.";
         } finally {
-            // 🔹 Habilitar nuevamente los elementos
-            uploadButton.disabled = false;
-            fileInput.disabled = false;
+            // 🔹 Habilitar nuevamente la interfaz
+            deshabilitarInterfaz(false);
         }
     };
 
     reader.readAsArrayBuffer(file);
 });
+
+function deshabilitarInterfaz(deshabilitar) {
+    const elementos = document.querySelectorAll("button, input, select, textarea");
+
+    elementos.forEach(elemento => {
+        elemento.disabled = deshabilitar;
+    });
+}
 
 // =========================
 // 🔥 OBTENER CATEGORÍA SEGÚN EDAD Y GÉNERO 🔥
