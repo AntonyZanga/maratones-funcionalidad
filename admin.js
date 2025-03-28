@@ -154,13 +154,13 @@ async function actualizarRanking() {
             let categoria = data.categoria || "Especial";
 
             atletas.push({
-                nombre: ${data.nombre} ${data.apellido},
+                nombre: `${data.nombre} ${data.apellido}`,
                 localidad: data.localidad || "Desconocida",
                 puntos: data.puntos || 0,
                 asistencias: data.asistencias || 0,
                 faltas: data.faltas || 0,
                 historial: data.historial || [],
-                categoria: ${categoria} - ${categoriaEdad},
+                categoria: `${categoria} - ${categoriaEdad}`,
                 edad: edad
             });
         }
