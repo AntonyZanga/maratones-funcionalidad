@@ -31,22 +31,38 @@ document.getElementById("logout").addEventListener("click", () => {
 document.getElementById("upload-results").addEventListener("click", async () => {
     const fileInput = document.getElementById("file-input");
     const uploadMessage = document.getElementById("upload-message");
+    const uploadButton = document.getElementById("upload-results");
 
     if (fileInput.files.length === 0) {
         uploadMessage.textContent = "Selecciona un archivo Excel.";
         return;
     }
 
+    // 🔹 Deshabilitar elementos mientras se procesan los resultados
+    uploadButton.disabled = true;
+    fileInput.disabled = true;
+    uploadMessage.textContent = "⏳ Procesando resultados... Por favor, espera.";
+
     const file = fileInput.files[0];
     const reader = new FileReader();
 
     reader.onload = async function (event) {
-        const data = new Uint8Array(event.target.result);
-        const workbook = XLSX.read(data, { type: "array" });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const results = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        try {
+            const data = new Uint8Array(event.target.result);
+            const workbook = XLSX.read(data, { type: "array" });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const results = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-        await procesarResultados(results);
+            await procesarResultados(results);
+            uploadMessage.textContent = "✅ Resultados cargados correctamente.";
+        } catch (error) {
+            console.error("Error al procesar el archivo:", error);
+            uploadMessage.textContent = "❌ Error al procesar los resultados.";
+        } finally {
+            // 🔹 Habilitar nuevamente los elementos
+            uploadButton.disabled = false;
+            fileInput.disabled = false;
+        }
     };
 
     reader.readAsArrayBuffer(file);
