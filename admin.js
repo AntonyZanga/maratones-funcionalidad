@@ -1,6 +1,6 @@
 // Importar servicios desde config.js
 import { db } from './config.js';
-import { collection, getDocs, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { collection, getDocs, doc, setDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // =========================
 // 🔥 VERIFICACIÓN DE ADMINISTRADOR 🔥
@@ -53,6 +53,15 @@ document.getElementById("upload-results").addEventListener("click", async () => 
 });
 
 // =========================
+// 🔥 OBTENER CATEGORÍA SEGÚN EDAD Y GÉNERO 🔥
+// =========================
+function obtenerCategoria(fechaNacimiento, genero) {
+    let edad = calcularEdad(fechaNacimiento);
+    let categoriaEdad = determinarCategoriaEdad(edad);
+    return ${genero} - ${categoriaEdad};
+}
+
+// =========================
 // 🔥 PROCESAR RESULTADOS Y ACTUALIZAR RANKING 🔥
 // =========================
 async function procesarResultados(results) {
@@ -77,7 +86,7 @@ async function procesarResultados(results) {
         if (!atletaSnap.exists()) continue;
 
         let atleta = atletaSnap.data();
-        let categoria = obtenerCategoria(atleta.fechaNacimiento, atleta.genero);
+        let categoria = obtenerCategoria(atleta.fechaNacimiento, atleta.categoria);
 
         if (!categorias[categoria]) {
             categorias[categoria] = [];
@@ -142,16 +151,16 @@ async function actualizarRanking() {
         if (data.puntos > 0) {
             let edad = calcularEdad(data.fechaNacimiento);
             let categoriaEdad = determinarCategoriaEdad(edad);
-            let categoria = data.genero || "Especial";
+            let categoria = data.categoria || "Especial";
 
             atletas.push({
-                nombre: `${data.nombre} ${data.apellido}`,
+                nombre: ${data.nombre} ${data.apellido},
                 localidad: data.localidad || "Desconocida",
                 puntos: data.puntos || 0,
                 asistencias: data.asistencias || 0,
                 faltas: data.faltas || 0,
                 historial: data.historial || [],
-                categoria: `${categoria} - ${categoriaEdad}`,
+                categoria: ${categoria} - ${categoriaEdad},
                 edad: edad
             });
         }
@@ -168,12 +177,12 @@ async function actualizarRanking() {
     let table = null;
     let posicionCategoria = 0;
 
-    atletas.forEach((atleta) => {
+    atletas.forEach((atleta, index) => {
         if (atleta.categoria !== categoriaActual) {
             if (table) rankingContainer.appendChild(table);
 
             categoriaActual = atleta.categoria;
-            posicionCategoria = 0;
+            posicionCategoria = 0; // Reiniciar la posición para la nueva categoría
 
             let section = document.createElement("section");
             let title = document.createElement("h3");
@@ -181,7 +190,7 @@ async function actualizarRanking() {
             section.appendChild(title);
 
             table = document.createElement("table");
-            table.innerHTML = `
+            table.innerHTML = 
                 <thead>
                     <tr>
                         <th>P°</th>
@@ -194,23 +203,23 @@ async function actualizarRanking() {
                     </tr>
                 </thead>
                 <tbody></tbody>
-            `;
+            ;
             section.appendChild(table);
             rankingContainer.appendChild(section);
         }
 
-        posicionCategoria++;
+        posicionCategoria++; // Incrementar la posición dentro de la categoría
 
         let row = document.createElement("tr");
-        row.innerHTML = `
-            <td>${posicionCategoria}</td>
+        row.innerHTML = 
+            <td>${posicionCategoria}</td> <!-- Aquí ahora muestra la posición relativa a la categoría -->
             <td>${atleta.nombre}</td>
             <td>${atleta.localidad}</td>
             <td>${atleta.puntos}</td>
             <td>${atleta.asistencias}</td>
             <td>${atleta.faltas}</td>
-            <td>${atleta.historial.map(h => `#${h.posicion} (${h.puntos} pts)`).join(", ")}</td>
-        `;
+            <td>${atleta.historial.map(h => #${h.posicion} (${h.puntos} pts)).join(", ")}</td>
+        ;
         table.querySelector("tbody").appendChild(row);
     });
 
@@ -218,12 +227,48 @@ async function actualizarRanking() {
 }
 
 // =========================
+// 🔥 Resetear Historial 🔥
+// =========================
+
+document.getElementById("reset-history").addEventListener("click", async () => {
+    const confirmReset = confirm("⚠️ ¿Estás seguro de que quieres reiniciar el historial de todos los atletas? Esta acción no se puede deshacer.");
+    
+    if (!confirmReset) return;
+
+    try {
+        const atletasRef = collection(db, "atletas");
+        const snapshot = await getDocs(atletasRef);
+
+        let batchUpdates = [];
+
+        snapshot.forEach((docSnap) => {
+            const atletaRef = doc(db, "atletas", docSnap.id);
+            batchUpdates.push(updateDoc(atletaRef, {
+                historial: [],
+                puntos: 0,
+                asistencias: 0,
+                faltas: 0
+            }));
+        });
+
+        await Promise.all(batchUpdates);
+
+        alert("✅ Historial reseteado correctamente.");
+        actualizarRanking();
+    } catch (error) {
+        console.error("❌ Error al resetear el historial:", error);
+        alert("❌ Ocurrió un error al resetear el historial. Revisa la consola para más detalles.");
+    }
+});
+
+// =========================
 // 🔥 FUNCIONES AUXILIARES 🔥
 // =========================
 function calcularEdad(fechaNacimiento) {
     let fechaNac = new Date(fechaNacimiento);
     let hoy = new Date();
-    return hoy.getFullYear() - fechaNac.getFullYear();
+    let edad = hoy.getFullYear() - fechaNac.getFullYear();
+    return edad;
 }
 
 function determinarCategoriaEdad(edad) {
@@ -233,7 +278,7 @@ function determinarCategoriaEdad(edad) {
         [75, 79], [80, 84], [85, 89]
     ];
     for (let [min, max] of categorias) {
-        if (edad >= min && edad <= max) return `${min} - ${max}`;
+        if (edad >= min && edad <= max) return ${min} - ${max};
     }
     return "90+";
 }
