@@ -190,7 +190,7 @@ async function actualizarRanking() {
             section.appendChild(title);
 
             table = document.createElement("table");
-            table.innerHTML = 
+            table.innerHTML = `
                 <thead>
                     <tr>
                         <th>P°</th>
@@ -203,7 +203,7 @@ async function actualizarRanking() {
                     </tr>
                 </thead>
                 <tbody></tbody>
-            ;
+            `;
             section.appendChild(table);
             rankingContainer.appendChild(section);
         }
@@ -211,7 +211,7 @@ async function actualizarRanking() {
         posicionCategoria++; // Incrementar la posición dentro de la categoría
 
         let row = document.createElement("tr");
-        row.innerHTML = 
+        row.innerHTML = `
             <td>${posicionCategoria}</td> <!-- Aquí ahora muestra la posición relativa a la categoría -->
             <td>${atleta.nombre}</td>
             <td>${atleta.localidad}</td>
@@ -219,7 +219,7 @@ async function actualizarRanking() {
             <td>${atleta.asistencias}</td>
             <td>${atleta.faltas}</td>
             <td>${atleta.historial.map(h => #${h.posicion} (${h.puntos} pts)).join(", ")}</td>
-        ;
+        `;
         table.querySelector("tbody").appendChild(row);
     });
 
@@ -278,7 +278,7 @@ function determinarCategoriaEdad(edad) {
         [75, 79], [80, 84], [85, 89]
     ];
     for (let [min, max] of categorias) {
-        if (edad >= min && edad <= max) return ${min} - ${max};
+        if (edad >= min && edad <= max) return `${min} - ${max}`;
     }
     return "90+";
 }
