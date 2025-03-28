@@ -1,12 +1,6 @@
 // Importar servicios desde config.js
 import { db } from './config.js';
-import { collection, getDocs, doc, setDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-
-if (typeof XLSX === "undefined") {
-    console.error("❌ Error: La librería XLSX no está definida. Verifica que esté cargada en admin.html.");
-} else {
-    console.log("✅ XLSX cargado correctamente.");
-}
+import { collection, getDocs, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // =========================
 // 🔥 VERIFICACIÓN DE ADMINISTRADOR 🔥
@@ -59,15 +53,6 @@ document.getElementById("upload-results").addEventListener("click", async () => 
 });
 
 // =========================
-// 🔥 OBTENER CATEGORÍA SEGÚN EDAD Y GÉNERO 🔥
-// =========================
-function obtenerCategoria(fechaNacimiento, genero) {
-    let edad = calcularEdad(fechaNacimiento);
-    let categoriaEdad = determinarCategoriaEdad(edad);
-    return `${genero} - ${categoriaEdad}`;
-}
-
-// =========================
 // 🔥 PROCESAR RESULTADOS Y ACTUALIZAR RANKING 🔥
 // =========================
 async function procesarResultados(results) {
@@ -92,7 +77,7 @@ async function procesarResultados(results) {
         if (!atletaSnap.exists()) continue;
 
         let atleta = atletaSnap.data();
-        let categoria = obtenerCategoria(atleta.fechaNacimiento, atleta.categoria);
+        let categoria = obtenerCategoria(atleta.fechaNacimiento, atleta.genero);
 
         if (!categorias[categoria]) {
             categorias[categoria] = [];
@@ -157,7 +142,7 @@ async function actualizarRanking() {
         if (data.puntos > 0) {
             let edad = calcularEdad(data.fechaNacimiento);
             let categoriaEdad = determinarCategoriaEdad(edad);
-            let categoria = data.categoria || "Especial";
+            let categoria = data.genero || "Especial";
 
             atletas.push({
                 nombre: `${data.nombre} ${data.apellido}`,
@@ -183,12 +168,12 @@ async function actualizarRanking() {
     let table = null;
     let posicionCategoria = 0;
 
-    atletas.forEach((atleta, index) => {
+    atletas.forEach((atleta) => {
         if (atleta.categoria !== categoriaActual) {
             if (table) rankingContainer.appendChild(table);
 
             categoriaActual = atleta.categoria;
-            posicionCategoria = 0; // Reiniciar la posición para la nueva categoría
+            posicionCategoria = 0;
 
             let section = document.createElement("section");
             let title = document.createElement("h3");
@@ -214,11 +199,11 @@ async function actualizarRanking() {
             rankingContainer.appendChild(section);
         }
 
-        posicionCategoria++; // Incrementar la posición dentro de la categoría
+        posicionCategoria++;
 
         let row = document.createElement("tr");
         row.innerHTML = `
-            <td>${posicionCategoria}</td> <!-- Aquí ahora muestra la posición relativa a la categoría -->
+            <td>${posicionCategoria}</td>
             <td>${atleta.nombre}</td>
             <td>${atleta.localidad}</td>
             <td>${atleta.puntos}</td>
@@ -233,48 +218,12 @@ async function actualizarRanking() {
 }
 
 // =========================
-// 🔥 Resetear Historial 🔥
-// =========================
-
-document.getElementById("reset-history").addEventListener("click", async () => {
-    const confirmReset = confirm("⚠️ ¿Estás seguro de que quieres reiniciar el historial de todos los atletas? Esta acción no se puede deshacer.");
-    
-    if (!confirmReset) return;
-
-    try {
-        const atletasRef = collection(db, "atletas");
-        const snapshot = await getDocs(atletasRef);
-
-        let batchUpdates = [];
-
-        snapshot.forEach((docSnap) => {
-            const atletaRef = doc(db, "atletas", docSnap.id);
-            batchUpdates.push(updateDoc(atletaRef, {
-                historial: [],
-                puntos: 0,
-                asistencias: 0,
-                faltas: 0
-            }));
-        });
-
-        await Promise.all(batchUpdates);
-
-        alert("✅ Historial reseteado correctamente.");
-        actualizarRanking();
-    } catch (error) {
-        console.error("❌ Error al resetear el historial:", error);
-        alert("❌ Ocurrió un error al resetear el historial. Revisa la consola para más detalles.");
-    }
-});
-
-// =========================
 // 🔥 FUNCIONES AUXILIARES 🔥
 // =========================
 function calcularEdad(fechaNacimiento) {
     let fechaNac = new Date(fechaNacimiento);
     let hoy = new Date();
-    let edad = hoy.getFullYear() - fechaNac.getFullYear();
-    return edad;
+    return hoy.getFullYear() - fechaNac.getFullYear();
 }
 
 function determinarCategoriaEdad(edad) {
