@@ -2,12 +2,6 @@
 import { db } from './config.js';
 import { collection, getDocs, doc, setDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-if (typeof XLSX === "undefined") {
-    console.error("❌ Error: La librería XLSX no está definida. Verifica que esté cargada en admin.html.");
-} else {
-    console.log("✅ XLSX cargado correctamente.");
-}
-
 // =========================
 // 🔥 VERIFICACIÓN DE ADMINISTRADOR 🔥
 // =========================
@@ -64,7 +58,7 @@ document.getElementById("upload-results").addEventListener("click", async () => 
 function obtenerCategoria(fechaNacimiento, genero) {
     let edad = calcularEdad(fechaNacimiento);
     let categoriaEdad = determinarCategoriaEdad(edad);
-    return ${genero} - ${categoriaEdad};
+    return `${genero} - ${categoriaEdad}`;
 }
 
 // =========================
