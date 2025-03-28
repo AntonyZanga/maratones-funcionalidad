@@ -97,6 +97,18 @@ async function procesarResultados(results) {
     let categorias = {};
     let atletasParticipantes = new Set();
 
+    // Obtener la cantidad de carreras registradas para asignar la nueva columna de fecha
+    const atletasRef = collection(db, "atletas");
+    const snapshot = await getDocs(atletasRef);
+    let numeroFecha = 1;
+
+    if (!snapshot.empty) {
+        let primerAtleta = snapshot.docs[0].data();
+        if (primerAtleta.historialCarreras) {
+            numeroFecha = Object.keys(primerAtleta.historialCarreras).length + 1;
+        }
+    }
+
     for (let i = 1; i < results.length; i++) {
         const [posicion, dni] = results[i];
 
@@ -119,10 +131,6 @@ async function procesarResultados(results) {
         categorias[categoria].push({ dni, posicion, atletaRef, atleta });
     }
 
-    // 🔹 Obtener todos los atletas de la base de datos
-    const atletasRef = collection(db, "atletas");
-    const snapshot = await getDocs(atletasRef);
-    
     let batchUpdates = [];
 
     // 🔹 Procesar atletas que no participaron
@@ -130,13 +138,13 @@ async function procesarResultados(results) {
         let atleta = docSnap.data();
         let dni = docSnap.id;
 
-        if (!atletasParticipantes.has(dni)) { // Si el atleta no está en la lista de participantes
+        if (!atletasParticipantes.has(dni)) {
             let atletaRef = doc(db, "atletas", dni);
             let nuevasFaltas = (atleta.faltas || 0) + 1;
 
             batchUpdates.push(updateDoc(atletaRef, {
                 faltas: nuevasFaltas,
-                asistenciasConsecutivas: 0 // 🔹 Solo este contador se reinicia para el bonus
+                asistenciasConsecutivas: 0
             }));
         }
     });
@@ -151,28 +159,25 @@ async function procesarResultados(results) {
             let { dni, posicion, atletaRef, atleta } = atletasCategoria[i];
 
             let nuevoPuntaje = puntosBase[i] !== undefined ? puntosBase[i] : 1;
-
-            let historial = atleta.historial || [];
-            let asistencias = (atleta.asistencias || 0) + 1; // 🔹 Se mantiene en el ranking
-            let asistenciasConsecutivas = (atleta.asistenciasConsecutivas || 0) + 1; // 🔹 Para el bonus
+            let asistencias = (atleta.asistencias || 0) + 1;
+            let asistenciasConsecutivas = (atleta.asistenciasConsecutivas || 0) + 1;
             let totalPuntos = (atleta.puntos || 0) + nuevoPuntaje;
-
-            historial.push({ posicion, puntos: nuevoPuntaje });
-
             let bonus = calcularBonus(asistenciasConsecutivas);
+            let historialCarreras = atleta.historialCarreras || {};
+
+            // 🔹 Agregar nueva fecha con puesto y puntos
+            historialCarreras[`Fecha ${numeroFecha}`] = { puesto: posicion, puntos: nuevoPuntaje + bonus };
 
             batchUpdates.push(updateDoc(atletaRef, {
                 puntos: totalPuntos + bonus,
-                asistencias: asistencias, // 🔹 Se mantiene
-                asistenciasConsecutivas: asistenciasConsecutivas, // 🔹 Se usa solo para el bonus
-                historial: historial
+                asistencias: asistencias,
+                asistenciasConsecutivas: asistenciasConsecutivas,
+                historialCarreras: historialCarreras
             }));
         }
     }
 
-    // 🔥 Ejecutar todas las actualizaciones en Firebase
     await Promise.all(batchUpdates);
-
     uploadMessage.textContent = "✅ Resultados cargados correctamente.";
     actualizarRanking();
 }
@@ -195,6 +200,7 @@ async function actualizarRanking() {
     const atletasRef = collection(db, "atletas");
     const snapshot = await getDocs(atletasRef);
     let atletas = [];
+    let fechasDisponibles = new Set();
 
     snapshot.forEach(doc => {
         let data = doc.data();
@@ -203,18 +209,23 @@ async function actualizarRanking() {
             let categoriaEdad = determinarCategoriaEdad(edad);
             let categoria = data.categoria || "Especial";
 
+            let historialCarreras = data.historialCarreras || {};
+            Object.keys(historialCarreras).forEach(fecha => fechasDisponibles.add(fecha));
+
             atletas.push({
                 nombre: `${data.nombre} ${data.apellido}`,
                 localidad: data.localidad || "Desconocida",
                 puntos: data.puntos || 0,
                 asistencias: data.asistencias || 0,
                 faltas: data.faltas || 0,
-                historial: data.historial || [],
+                historialCarreras: historialCarreras,
                 categoria: `${categoria} - ${categoriaEdad}`,
                 edad: edad
             });
         }
     });
+
+    fechasDisponibles = [...fechasDisponibles].sort();
 
     atletas.sort((a, b) => {
         if (a.categoria === b.categoria) {
@@ -232,7 +243,7 @@ async function actualizarRanking() {
             if (table) rankingContainer.appendChild(table);
 
             categoriaActual = atleta.categoria;
-            posicionCategoria = 0; // Reiniciar la posición para la nueva categoría
+            posicionCategoria = 0;
 
             let section = document.createElement("section");
             let title = document.createElement("h3");
@@ -240,36 +251,49 @@ async function actualizarRanking() {
             section.appendChild(title);
 
             table = document.createElement("table");
-            table.innerHTML = `
-                <thead>
-                    <tr>
-                        <th>P°</th>
-                        <th>Nombre</th>
-                        <th>Localidad</th>
-                        <th>Pts</th>
-                        <th>Asis</th>
-                        <th>Falt</th>
-                        <th>Historial</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
+            let thead = document.createElement("thead");
+            let headerRow1 = document.createElement("tr");
+            let headerRow2 = document.createElement("tr");
+
+            headerRow1.innerHTML = `
+                <th rowspan="2">P°</th>
+                <th rowspan="2">Nombre</th>
+                <th rowspan="2">Localidad</th>
+                <th rowspan="2">Pts</th>
+                <th rowspan="2">Asis</th>
+                <th rowspan="2">Falt</th>
             `;
+
+            fechasDisponibles.forEach(fecha => {
+                headerRow1.innerHTML += `<th colspan="2">${fecha}</th>`;
+                headerRow2.innerHTML += `<th>P°</th><th>Pts</th>`;
+            });
+
+            thead.appendChild(headerRow1);
+            thead.appendChild(headerRow2);
+            table.appendChild(thead);
+            table.appendChild(document.createElement("tbody"));
             section.appendChild(table);
             rankingContainer.appendChild(section);
         }
 
-        posicionCategoria++; // Incrementar la posición dentro de la categoría
+        posicionCategoria++;
 
         let row = document.createElement("tr");
         row.innerHTML = `
-            <td>${posicionCategoria}</td> <!-- Aquí ahora muestra la posición relativa a la categoría -->
+            <td>${posicionCategoria}</td>
             <td>${atleta.nombre}</td>
             <td>${atleta.localidad}</td>
             <td>${atleta.puntos}</td>
             <td>${atleta.asistencias}</td>
             <td>${atleta.faltas}</td>
-            <td>${atleta.historial.map(h => `#${h.posicion} (${h.puntos} pts)`).join(", ")}</td>
         `;
+
+        fechasDisponibles.forEach(fecha => {
+            let resultado = atleta.historialCarreras[fecha] || { puesto: "-", puntos: "-" };
+            row.innerHTML += `<td>${resultado.puesto}</td><td>${resultado.puntos}</td>`;
+        });
+
         table.querySelector("tbody").appendChild(row);
     });
 
