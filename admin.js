@@ -95,11 +95,14 @@ async function procesarResultados(results) {
 
     const puntosBase = [12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
     let categorias = {};
+    let atletasParticipantes = new Set();
 
     for (let i = 1; i < results.length; i++) {
         const [posicion, dni] = results[i];
 
         if (!dni || isNaN(dni)) continue;
+
+        atletasParticipantes.add(String(dni).trim());
 
         const atletaRef = doc(db, "atletas", String(dni).trim());
         const atletaSnap = await getDoc(atletaRef);
@@ -116,6 +119,29 @@ async function procesarResultados(results) {
         categorias[categoria].push({ dni, posicion, atletaRef, atleta });
     }
 
+    // 🔹 Obtener todos los atletas de la base de datos
+    const atletasRef = collection(db, "atletas");
+    const snapshot = await getDocs(atletasRef);
+    
+    let batchUpdates = [];
+
+    // 🔹 Procesar atletas que no participaron
+    snapshot.forEach((docSnap) => {
+        let atleta = docSnap.data();
+        let dni = docSnap.id;
+
+        if (!atletasParticipantes.has(dni)) { // Si el atleta no está en la lista de participantes
+            let atletaRef = doc(db, "atletas", dni);
+            let nuevasFaltas = (atleta.faltas || 0) + 1;
+
+            batchUpdates.push(updateDoc(atletaRef, {
+                faltas: nuevasFaltas,
+                asistenciasConsecutivas: 0 // 🔹 Solo este contador se reinicia para el bonus
+            }));
+        }
+    });
+
+    // 🔹 Procesar atletas que sí participaron
     for (let categoria in categorias) {
         let atletasCategoria = categorias[categoria];
 
@@ -127,24 +153,27 @@ async function procesarResultados(results) {
             let nuevoPuntaje = puntosBase[i] !== undefined ? puntosBase[i] : 1;
 
             let historial = atleta.historial || [];
-            let asistencias = (atleta.asistencias || 0) + 1;
-            let faltas = atleta.faltas || 0;
+            let asistencias = (atleta.asistencias || 0) + 1; // 🔹 Se mantiene en el ranking
+            let asistenciasConsecutivas = (atleta.asistenciasConsecutivas || 0) + 1; // 🔹 Para el bonus
             let totalPuntos = (atleta.puntos || 0) + nuevoPuntaje;
 
             historial.push({ posicion, puntos: nuevoPuntaje });
 
-            let bonus = calcularBonus(asistencias);
+            let bonus = calcularBonus(asistenciasConsecutivas);
 
-            await updateDoc(atletaRef, {
+            batchUpdates.push(updateDoc(atletaRef, {
                 puntos: totalPuntos + bonus,
-                asistencias: asistencias,
-                faltas: faltas,
+                asistencias: asistencias, // 🔹 Se mantiene
+                asistenciasConsecutivas: asistenciasConsecutivas, // 🔹 Se usa solo para el bonus
                 historial: historial
-            });
+            }));
         }
     }
 
-    uploadMessage.textContent = "Resultados cargados correctamente.";
+    // 🔥 Ejecutar todas las actualizaciones en Firebase
+    await Promise.all(batchUpdates);
+
+    uploadMessage.textContent = "✅ Resultados cargados correctamente.";
     actualizarRanking();
 }
 
