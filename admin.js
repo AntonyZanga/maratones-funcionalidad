@@ -202,27 +202,31 @@ async function actualizarRanking() {
 
     // Obtener atletas y registrar la cantidad total de fechas
     snapshot.forEach(doc => {
-        let data = doc.data();
-        let edad = calcularEdad(data.fechaNacimiento);
-        let categoriaEdad = determinarCategoriaEdad(edad);
-        let categoria = data.categoria || "Especial";
-        let categoriaCompleta = `${categoria} - ${categoriaEdad}`;
+    let data = doc.data();
+    
+    // 🔥 NO MOSTRAR ATLETAS SIN PARTICIPACIONES 🔥
+    if (!data.historial || data.historial.length === 0) return; 
 
-        if (!atletasPorCategoria[categoriaCompleta]) {
-            atletasPorCategoria[categoriaCompleta] = [];
-        }
+    let edad = calcularEdad(data.fechaNacimiento);
+    let categoriaEdad = determinarCategoriaEdad(edad);
+    let categoria = data.categoria || "Especial";
+    let categoriaCompleta = `${categoria} - ${categoriaEdad}`;
 
-        totalFechas = Math.max(totalFechas, data.historial.length);
+    if (!atletasPorCategoria[categoriaCompleta]) {
+        atletasPorCategoria[categoriaCompleta] = [];
+    }
 
-        atletasPorCategoria[categoriaCompleta].push({
-            nombre: `${data.nombre} ${data.apellido}`,
-            localidad: data.localidad || "Desconocida",
-            puntos: data.puntos || 0,
-            asistencias: data.asistencias || 0,
-            faltas: data.faltas || 0,
-            historial: data.historial || []
-        });
+    totalFechas = Math.max(totalFechas, data.historial.length);
+
+    atletasPorCategoria[categoriaCompleta].push({
+        nombre: `${data.nombre} ${data.apellido}`,
+        localidad: data.localidad || "Desconocida",
+        puntos: data.puntos || 0,
+        asistencias: data.asistencias || 0,
+        faltas: data.faltas || 0,
+        historial: data.historial || []
     });
+});
 
     // Asegurar que todos los atletas tengan la misma cantidad de fechas
     Object.keys(atletasPorCategoria).forEach(categoria => {
