@@ -194,7 +194,7 @@ async function actualizarRanking() {
 
     const atletasRef = collection(db, "atletas");
     const snapshot = await getDocs(atletasRef);
-    let atletas = [];
+    let atletasPorCategoria = {};
 
     snapshot.forEach(doc => {
         let data = doc.data();
@@ -202,93 +202,92 @@ async function actualizarRanking() {
             let edad = calcularEdad(data.fechaNacimiento);
             let categoriaEdad = determinarCategoriaEdad(edad);
             let categoria = data.categoria || "Especial";
+            let categoriaCompleta = `${categoria} - ${categoriaEdad}`;
 
-            atletas.push({
+            if (!atletasPorCategoria[categoriaCompleta]) {
+                atletasPorCategoria[categoriaCompleta] = [];
+            }
+
+            atletasPorCategoria[categoriaCompleta].push({
                 nombre: `${data.nombre} ${data.apellido}`,
                 localidad: data.localidad || "Desconocida",
                 puntos: data.puntos || 0,
                 asistencias: data.asistencias || 0,
                 faltas: data.faltas || 0,
-                historial: data.historial || [], // 🔥 Aseguramos que historial es un array
-                categoria: `${categoria} - ${categoriaEdad}`,
+                historial: data.historial || [], // 🔥 Se asegura que historial siempre sea un array
+                categoria: categoriaCompleta,
                 edad: edad
             });
         }
     });
 
-    // Ordenar atletas por categoría y puntos
-    atletas.sort((a, b) => {
-        if (a.categoria === b.categoria) {
-            return b.puntos - a.puntos;
+    Object.keys(atletasPorCategoria).sort().forEach(categoria => {
+        let atletas = atletasPorCategoria[categoria];
+
+        // Ordenar atletas por puntos
+        atletas.sort((a, b) => b.puntos - a.puntos);
+
+        // Determinar número máximo de fechas
+        let maxFechas = atletas.reduce((max, atleta) => Math.max(max, atleta.historial.length), 0);
+
+        let section = document.createElement("section");
+        let title = document.createElement("h3");
+        title.textContent = categoria;
+        section.appendChild(title);
+
+        let table = document.createElement("table");
+
+        // Construir cabecera
+        let theadHTML = `<thead>`;
+        theadHTML += `<tr>
+            <th>P°</th>
+            <th>Nombre</th>
+            <th>Localidad</th>
+            <th>Pts</th>
+            <th>Asis</th>
+            <th>Falt</th>`;
+        for (let i = 1; i <= maxFechas; i++) {
+            theadHTML += `<th colspan="2">Fecha ${i}</th>`;
         }
-        return a.categoria.localeCompare(b.categoria);
-    });
+        theadHTML += `</tr>`;
+        theadHTML += `<tr>
+            <th colspan="6"></th>`;
+        for (let i = 1; i <= maxFechas; i++) {
+            theadHTML += `<th>P°</th><th>Pts</th>`;
+        }
+        theadHTML += `</tr></thead>`;
 
-    // Determinar el número máximo de fechas registradas
-    let maxFechas = atletas.reduce((max, atleta) => Math.max(max, atleta.historial.length), 0);
+        table.innerHTML = theadHTML + `<tbody></tbody>`;
+        section.appendChild(table);
+        rankingContainer.appendChild(section);
 
-    let categoriaActual = "";
-    let table = null;
-    let posicionCategoria = 0;
+        let tbody = table.querySelector("tbody");
 
-    atletas.forEach((atleta) => {
-        if (atleta.categoria !== categoriaActual) {
-            if (table) rankingContainer.appendChild(table);
+        // Asignar la posición real en el ranking de la categoría
+        atletas.forEach((atleta, index) => {
+            let posicionCategoria = index + 1; // 🔥 Posición en el ranking de la categoría
 
-            categoriaActual = atleta.categoria;
-            posicionCategoria = 0;
+            let row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${posicionCategoria}</td> <!-- 🔥 P° en ranking de la categoría -->
+                <td>${atleta.nombre}</td>
+                <td>${atleta.localidad}</td>
+                <td>${atleta.puntos}</td>
+                <td>${atleta.asistencias}</td>
+                <td>${atleta.faltas}</td>
+            `;
 
-            let section = document.createElement("section");
-            let title = document.createElement("h3");
-            title.textContent = categoriaActual;
-            section.appendChild(title);
-
-            table = document.createElement("table");
-
-            // Construir la cabecera con dos filas
-            let theadHTML = `<thead>`;
-            theadHTML += `<tr>
-                <th>P°</th>
-                <th>Nombre</th>
-                <th>Localidad</th>
-                <th>Pts</th>
-                <th>Asis</th>
-                <th>Falt</th>`;
-            for (let i = 1; i <= maxFechas; i++) {
-                theadHTML += `<th colspan="2">Fecha ${i}</th>`;
+            // Agregar datos de cada fecha con la misma P° del ranking
+            for (let i = 0; i < maxFechas; i++) {
+                let dato = atleta.historial[i] || { posicion: posicionCategoria, puntos: "-" };
+                row.innerHTML += `<td>${posicionCategoria}</td><td>${dato.puntos}</td>`; // 🔥 P° de cada fecha igual a la P° en la tabla
             }
-            theadHTML += `</tr>`;
-            theadHTML += `<tr>
-                <th colspan="6"></th>`;
-            for (let i = 1; i <= maxFechas; i++) {
-                theadHTML += `<th>P°</th><th>Pts</th>`;
-            }
-            theadHTML += `</tr></thead>`;
 
-            table.innerHTML = theadHTML + `<tbody></tbody>`;
-            section.appendChild(table);
-            rankingContainer.appendChild(section);
-        }
+            tbody.appendChild(row);
+        });
 
-        posicionCategoria++;
-        let row = document.createElement("tr");
-        row.innerHTML = `
-            <td>${posicionCategoria}</td> <!-- 🔹 Posición en el ranking de su categoría -->
-            <td>${atleta.nombre}</td>
-            <td>${atleta.localidad}</td>
-            <td>${atleta.puntos}</td>
-            <td>${atleta.asistencias}</td>
-            <td>${atleta.faltas}</td>
-        `;
-        // Agregar datos para cada fecha con la posición real que obtuvo
-        for (let i = 0; i < maxFechas; i++) {
-            let dato = atleta.historial[i] || { posicion: "-", puntos: "-" };
-            row.innerHTML += `<td>${dato.posicion}</td><td>${dato.puntos}</td>`;
-        }
-        table.querySelector("tbody").appendChild(row);
+        rankingContainer.appendChild(table);
     });
-
-    if (table) rankingContainer.appendChild(table);
 }
 
 // =========================
