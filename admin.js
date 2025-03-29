@@ -214,9 +214,7 @@ async function actualizarRanking() {
                 puntos: data.puntos || 0,
                 asistencias: data.asistencias || 0,
                 faltas: data.faltas || 0,
-                historial: data.historial || [], // 🔥 Asegurar que siempre haya historial
-                categoria: categoriaCompleta,
-                edad: edad
+                historial: data.historial || [] // 🔥 Asegurar que siempre haya historial
             });
         }
     });
@@ -265,11 +263,11 @@ async function actualizarRanking() {
 
         // Asignar la posición real en el ranking de la categoría
         atletas.forEach((atleta, index) => {
-            let posicionCategoria = index + 1; // 🔥 P° en ranking de la categoría
+            let posicionRanking = index + 1; // 🔥 Mantener P° en ranking general de la categoría
 
             let row = document.createElement("tr");
             row.innerHTML = `
-                <td>${posicionCategoria}</td> <!-- 🔥 P° en ranking de la categoría -->
+                <td>${posicionRanking}</td> <!-- 🔥 Mantener P° en ranking de la categoría -->
                 <td>${atleta.nombre}</td>
                 <td>${atleta.localidad}</td>
                 <td>${atleta.puntos}</td>
@@ -277,10 +275,11 @@ async function actualizarRanking() {
                 <td>${atleta.faltas}</td>
             `;
 
-            // Agregar datos de cada fecha con la misma P° del ranking
+            // Agregar datos de cada fecha con los puntos correctamente sumados
             for (let i = 0; i < maxFechas; i++) {
-                let dato = atleta.historial[i] || { posicion: posicionCategoria, puntos: 0, bonus: 0 };
-                let puntosConBonus = dato.puntos + dato.bonus; // 🔥 Asegurar que sume puntos + bonus correctamente
+                let dato = atleta.historial[i] || { posicion: "-", puntos: 0, bonus: 0 };
+                let puntosConBonus = (dato.puntos || 0) + (dato.bonus || 0); // 🔥 Evitar NaN asegurando valores numéricos
+                
                 row.innerHTML += `<td>${dato.posicion}</td><td>${puntosConBonus}</td>`; 
             }
 
