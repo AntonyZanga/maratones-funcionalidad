@@ -221,7 +221,10 @@ async function actualizarRanking() {
 
     Object.keys(atletasPorCategoria).sort().forEach(categoria => {
         let atletas = atletasPorCategoria[categoria];
+
+        // Ordenar por puntos de mayor a menor
         atletas.sort((a, b) => b.puntos - a.puntos);
+
         let maxFechas = atletas.reduce((max, atleta) => Math.max(max, atleta.historial.length), 0);
 
         let section = document.createElement("section");
@@ -263,7 +266,7 @@ async function actualizarRanking() {
                 <td>${atleta.faltas}</td>`;
 
             for (let i = 0; i < maxFechas; i++) {
-                let dato = atleta.historial[i] || { posicion: "-", puntos: 0 };
+                let dato = atleta.historial[i] || { posicion: "-", puntos: "-" };
                 row.innerHTML += `<td>${dato.posicion}</td><td>${dato.puntos}</td>`;
             }
 
