@@ -200,7 +200,7 @@ async function actualizarRanking() {
     let atletasPorCategoria = {};
     let totalFechas = 0;
 
-    // 1. Obtener atletas y registrar la cantidad total de fechas
+    // Obtener atletas y registrar la cantidad total de fechas
     snapshot.forEach(doc => {
         let data = doc.data();
         let edad = calcularEdad(data.fechaNacimiento);
@@ -224,20 +224,20 @@ async function actualizarRanking() {
         });
     });
 
-    // 2. Asegurar que todos los atletas tengan la misma cantidad de fechas
-Object.keys(atletasPorCategoria).forEach(categoria => {
-    atletasPorCategoria[categoria].forEach(atleta => {
-        while (atleta.historial.length < totalFechas) {
-            atleta.historial.push({ posicion: "-", puntos: "-" });
-        }
+    // Asegurar que todos los atletas tengan la misma cantidad de fechas
+    Object.keys(atletasPorCategoria).forEach(categoria => {
+        atletasPorCategoria[categoria].forEach(atleta => {
+            while (atleta.historial.length < totalFechas) {
+                atleta.historial.push({ posicion: "-", puntos: "-" });
+            }
+        });
     });
-});
 
-    // 3. Renderizar el ranking en la tabla
+    // Renderizar el ranking en la tabla
     Object.keys(atletasPorCategoria).sort().forEach(categoria => {
         let atletas = atletasPorCategoria[categoria];
 
-        // Ordenar por puntos, primeros puestos y posición promedio
+        // Ordenar por puntos
         atletas.sort((a, b) => b.puntos - a.puntos);
 
         let section = document.createElement("section");
@@ -253,6 +253,13 @@ Object.keys(atletasPorCategoria).forEach(categoria => {
 
         for (let i = 1; i <= totalFechas; i++) {
             theadHTML += `<th colspan="2">Fecha ${i}</th>`;
+        }
+        theadHTML += `</tr><tr>
+                <th></th><th></th><th></th><th></th>
+                <th></th><th></th>`;
+
+        for (let i = 1; i <= totalFechas; i++) {
+            theadHTML += `<th>P°</th><th>Pts</th>`;
         }
         theadHTML += `</tr></thead>`;
 
@@ -280,7 +287,6 @@ Object.keys(atletasPorCategoria).forEach(categoria => {
         });
     });
 }
-
 // =========================
 // 🔥 Resetear Historial 🔥
 // =========================
