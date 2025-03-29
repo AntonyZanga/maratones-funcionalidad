@@ -85,95 +85,94 @@ function obtenerCategoria(fechaNacimiento, genero) {
 // =========================
 // 🔥 PROCESAR RESULTADOS Y ACTUALIZAR RANKING 🔥
 // =========================
-async function procesarResultados(results) {
-    const uploadMessage = document.getElementById("upload-message");
+async function procesarArchivoExcel(file, fechaMaraton) {
+    const reader = new FileReader();
+    reader.onload = async function (e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-    if (results.length < 2) {
-        uploadMessage.textContent = "El archivo no tiene datos válidos.";
-        return;
-    }
-
-    const puntosBase = [12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
-    let categorias = {};
-    let atletasParticipantes = new Set();
-
-    for (let i = 1; i < results.length; i++) {
-        const [posicion, dni] = results[i];
-
-        if (!dni || isNaN(dni)) continue;
-
-        atletasParticipantes.add(String(dni).trim());
-
-        const atletaRef = doc(db, "atletas", String(dni).trim());
-        const atletaSnap = await getDoc(atletaRef);
-
-        if (!atletaSnap.exists()) continue;
-
-        let atleta = atletaSnap.data();
-        let categoria = obtenerCategoria(atleta.fechaNacimiento, atleta.categoria);
-
-        if (!categorias[categoria]) {
-            categorias[categoria] = [];
+        if (rows.length < 2) {
+            alert("El archivo Excel debe contener al menos dos filas (encabezado y datos).");
+            return;
         }
 
-        categorias[categoria].push({ dni, posicion, atletaRef, atleta });
-    }
+        const fechaId = `Fecha_${fechaMaraton}`;
+        const atletasRef = collection(db, "atletas");
+        const snapshot = await getDocs(atletasRef);
 
-    const atletasRef = collection(db, "atletas");
-    const snapshot = await getDocs(atletasRef);
-    
-    let batchUpdates = [];
+        let atletasData = {};
+        let maxFechas = 0;
 
-    // 🔹 Procesar atletas que no participaron
-    snapshot.forEach((docSnap) => {
-        let atleta = docSnap.data();
-        let dni = docSnap.id;
-
-        if (!atletasParticipantes.has(dni)) { 
-            let atletaRef = doc(db, "atletas", dni);
-            let nuevasFaltas = (atleta.faltas || 0) + 1;
-
-            batchUpdates.push(updateDoc(atletaRef, {
-                faltas: nuevasFaltas,
-                asistenciasConsecutivas: 0
-            }));
-        }
-    });
-
-    // 🔹 Procesar atletas que sí participaron
-    for (let categoria in categorias) {
-        let atletasCategoria = categorias[categoria];
-
-        atletasCategoria.sort((a, b) => a.posicion - b.posicion);
-
-        for (let i = 0; i < atletasCategoria.length; i++) {
-            let { dni, posicion, atletaRef, atleta } = atletasCategoria[i];
-
-            let nuevoPuntaje = puntosBase[i] !== undefined ? puntosBase[i] : 1;
-
-            let historial = atleta.historial || [];
-            let asistencias = (atleta.asistencias || 0) + 1;
-            let asistenciasConsecutivas = (atleta.asistenciasConsecutivas || 0) + 1;
-            let totalPuntos = (atleta.puntos || 0) + nuevoPuntaje;
-
-            // 🔹 Asegurar que la posición quede bien asignada
-            historial.push({ posicion: i + 1, puntos: nuevoPuntaje });
-
-            let bonus = calcularBonus(asistenciasConsecutivas);
-
-            batchUpdates.push(updateDoc(atletaRef, {
-                puntos: totalPuntos + bonus,
-                asistencias: asistencias,
-                asistenciasConsecutivas: asistenciasConsecutivas,
+        // 1️⃣ Leer todos los atletas actuales y contar el total de fechas
+        snapshot.forEach(doc => {
+            let data = doc.data();
+            let historial = data.historial || [];
+            atletasData[data.dni] = {
+                ref: doc.ref,
+                nombre: data.nombre,
+                apellido: data.apellido,
                 historial: historial
-            }));
-        }
-    }
+            };
+            maxFechas = Math.max(maxFechas, historial.length);
+        });
 
-    await Promise.all(batchUpdates);
+        // 2️⃣ Procesar el archivo Excel y actualizar Firestore
+        let updates = [];
+        rows.slice(1).forEach(([posicion, dni], index) => {
+            if (!dni) return;
 
-    uploadMessage.textContent = "✅ Resultados cargados correctamente.";
-    actualizarRanking();
+            let puntos = calcularPuntos(posicion);
+            let atleta = atletasData[dni];
+
+            if (!atleta) {
+                // Si el atleta no está en la BD, crearlo con faltas previas
+                let historial = Array(maxFechas).fill({ posicion: "-", puntos: "-" });
+                historial.push({ posicion, puntos });
+
+                updates.push(setDoc(doc(atletasRef, dni), {
+                    dni,
+                    nombre: "Desconocido",
+                    apellido: "Desconocido",
+                    historial: historial,
+                    puntos: puntos,
+                    asistencias: 1,
+                    faltas: maxFechas
+                }, { merge: true }));
+            } else {
+                // Si ya existía, asegurarse de que el historial tenga el tamaño correcto
+                while (atleta.historial.length < maxFechas) {
+                    atleta.historial.push({ posicion: "-", puntos: "-" });
+                }
+                atleta.historial.push({ posicion, puntos });
+
+                updates.push(updateDoc(atleta.ref, {
+                    historial: atleta.historial,
+                    puntos: (atleta.puntos || 0) + puntos,
+                    asistencias: (atleta.asistencias || 0) + 1
+                }));
+            }
+        });
+
+        // 3️⃣ Marcar faltas para atletas que no participaron en esta fecha
+        Object.values(atletasData).forEach(atleta => {
+            if (atleta.historial.length < maxFechas + 1) {
+                atleta.historial.push({ posicion: "-", puntos: "-" });
+
+                updates.push(updateDoc(atleta.ref, {
+                    historial: atleta.historial,
+                    faltas: (atleta.faltas || 0) + 1
+                }));
+            }
+        });
+
+        await Promise.all(updates);
+        alert("Ranking actualizado correctamente.");
+        actualizarRanking();
+    };
+
+    reader.readAsArrayBuffer(file);
 }
 // =========================
 // 🔥 CÁLCULO DE BONOS POR ASISTENCIA 🔥
