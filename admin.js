@@ -119,7 +119,6 @@ async function procesarResultados(results) {
         categorias[categoria].push({ dni, posicion, atletaRef, atleta });
     }
 
-    // 🔹 Obtener todos los atletas de la base de datos
     const atletasRef = collection(db, "atletas");
     const snapshot = await getDocs(atletasRef);
     
@@ -130,13 +129,13 @@ async function procesarResultados(results) {
         let atleta = docSnap.data();
         let dni = docSnap.id;
 
-        if (!atletasParticipantes.has(dni)) { // Si el atleta no está en la lista de participantes
+        if (!atletasParticipantes.has(dni)) { 
             let atletaRef = doc(db, "atletas", dni);
             let nuevasFaltas = (atleta.faltas || 0) + 1;
 
             batchUpdates.push(updateDoc(atletaRef, {
                 faltas: nuevasFaltas,
-                asistenciasConsecutivas: 0 // 🔹 Solo este contador se reinicia para el bonus
+                asistenciasConsecutivas: 0
             }));
         }
     });
@@ -153,30 +152,29 @@ async function procesarResultados(results) {
             let nuevoPuntaje = puntosBase[i] !== undefined ? puntosBase[i] : 1;
 
             let historial = atleta.historial || [];
-            let asistencias = (atleta.asistencias || 0) + 1; // 🔹 Se mantiene en el ranking
-            let asistenciasConsecutivas = (atleta.asistenciasConsecutivas || 0) + 1; // 🔹 Para el bonus
+            let asistencias = (atleta.asistencias || 0) + 1;
+            let asistenciasConsecutivas = (atleta.asistenciasConsecutivas || 0) + 1;
             let totalPuntos = (atleta.puntos || 0) + nuevoPuntaje;
 
-            historial.push({ posicion, puntos: nuevoPuntaje });
+            // 🔹 Asegurar que la posición quede bien asignada
+            historial.push({ posicion: i + 1, puntos: nuevoPuntaje });
 
             let bonus = calcularBonus(asistenciasConsecutivas);
 
             batchUpdates.push(updateDoc(atletaRef, {
                 puntos: totalPuntos + bonus,
-                asistencias: asistencias, // 🔹 Se mantiene
-                asistenciasConsecutivas: asistenciasConsecutivas, // 🔹 Se usa solo para el bonus
+                asistencias: asistencias,
+                asistenciasConsecutivas: asistenciasConsecutivas,
                 historial: historial
             }));
         }
     }
 
-    // 🔥 Ejecutar todas las actualizaciones en Firebase
     await Promise.all(batchUpdates);
 
     uploadMessage.textContent = "✅ Resultados cargados correctamente.";
     actualizarRanking();
 }
-
 // =========================
 // 🔥 CÁLCULO DE BONOS POR ASISTENCIA 🔥
 // =========================
@@ -208,7 +206,6 @@ async function actualizarRanking() {
                 atletasPorCategoria[categoriaCompleta] = [];
             }
 
-            // Contar primeros puestos y calcular posición promedio
             let primerosPuestos = 0;
             let sumaPosiciones = 0;
             let totalFechas = data.historial.length;
@@ -233,15 +230,13 @@ async function actualizarRanking() {
         }
     });
 
-    // 🔹 Ordenar categorías alfabéticamente
     Object.keys(atletasPorCategoria).sort().forEach(categoria => {
         let atletas = atletasPorCategoria[categoria];
 
-        // 🔹 Ordenar correctamente por puntos, primeros puestos y posición promedio
         atletas.sort((a, b) => {
-            if (b.puntos !== a.puntos) return b.puntos - a.puntos; // Primero por puntos totales
-            if (b.primerosPuestos !== a.primerosPuestos) return b.primerosPuestos - a.primerosPuestos; // Luego por más primeros puestos
-            return a.posicionPromedio - b.posicionPromedio; // Finalmente, por mejor posición promedio
+            if (b.puntos !== a.puntos) return b.puntos - a.puntos;
+            if (b.primerosPuestos !== a.primerosPuestos) return b.primerosPuestos - a.primerosPuestos;
+            return a.posicionPromedio - b.posicionPromedio;
         });
 
         let maxFechas = atletas.reduce((max, atleta) => Math.max(max, atleta.historial.length), 0);
@@ -260,11 +255,6 @@ async function actualizarRanking() {
         for (let i = 1; i <= maxFechas; i++) {
             theadHTML += `<th colspan="2">Fecha ${i}</th>`;
         }
-        theadHTML += `</tr><tr><th colspan="6"></th>`;
-
-        for (let i = 1; i <= maxFechas; i++) {
-            theadHTML += `<th>P°</th><th>Pts</th>`;
-        }
         theadHTML += `</tr></thead>`;
 
         table.innerHTML = theadHTML + `<tbody></tbody>`;
@@ -273,12 +263,10 @@ async function actualizarRanking() {
 
         let tbody = table.querySelector("tbody");
 
-        // 🔹 Mostrar los atletas en la tabla
         atletas.forEach((atleta, index) => {
-            let posicionRanking = index + 1;
             let row = document.createElement("tr");
             row.innerHTML = `
-                <td>${posicionRanking}</td>
+                <td>${index + 1}</td>
                 <td>${atleta.nombre}</td>
                 <td>${atleta.localidad}</td>
                 <td>${atleta.puntos}</td>
@@ -292,11 +280,8 @@ async function actualizarRanking() {
 
             tbody.appendChild(row);
         });
-
-        rankingContainer.appendChild(table);
     });
 }
-
 // =========================
 // 🔥 Resetear Historial 🔥
 // =========================
