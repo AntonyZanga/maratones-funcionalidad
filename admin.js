@@ -132,16 +132,19 @@ async function procesarResultados(results) {
         let asistenciasConsecutivas = atleta.asistenciasConsecutivas || 0;
         let faltas = atleta.faltas || 0;
 
+        // 📌 Determinar la cantidad de fechas ya cargadas
+        let cantidadFechas = atleta.historial ? atleta.historial.length : 0;
+
+        // 📌 Si el atleta participó, se registra con posición pendiente
         if (atletasParticipantes.has(dni)) {
-            // El atleta participó en esta fecha
-            historial.push({ posicion: "P", puntos: 0 }); // Marcamos que participó (posición real se actualizará después)
+            historial[cantidadFechas] = { posicion: "P", puntos: 0 }; // Participación pendiente de actualizar
             asistencias++;
             asistenciasConsecutivas++;
         } else {
-            // El atleta NO participó en esta fecha
-            historial.push({ posicion: "X", puntos: 0 }); // "X" indica falta
+            // 📌 Si faltó, se marca con "X" en la fecha correspondiente
+            historial[cantidadFechas] = { posicion: "X", puntos: 0 };
             faltas++;
-            asistenciasConsecutivas = 0; // Se reinician asistencias consecutivas
+            asistenciasConsecutivas = 0;
         }
 
         batchUpdates.push(updateDoc(atletaRef, {
@@ -265,22 +268,31 @@ async function actualizarRanking() {
 
         let tbody = table.querySelector("tbody");
 
-        atletas.forEach((atleta, index) => {
-            let row = document.createElement("tr");
-            row.innerHTML = `
-                <td>${index + 1}</td>
-                <td>${atleta.nombre}</td>
-                <td>${atleta.localidad}</td>
-                <td>${atleta.puntos}</td>
-                <td>${atleta.asistencias}</td>
-                <td>${atleta.faltas}</td>`;
+atletas.forEach((atleta, index) => {
+    let row = document.createElement("tr");
+    row.innerHTML = `
+        <td>${index + 1}</td>
+        <td>${atleta.nombre}</td>
+        <td>${atleta.localidad}</td>
+        <td>${atleta.puntos}</td>
+        <td>${atleta.asistencias}</td>
+        <td>${atleta.faltas}</td>`;
 
-            atleta.historial.forEach(fecha => {
-                row.innerHTML += `<td>${fecha.posicion}</td><td>${fecha.puntos}</td>`;
-            });
+    // Agregar historial de fechas
+    for (let i = 0; i < totalFechas; i++) {
+        let resultado = atleta.historial[i] || { posicion: "-", puntos: "-" };
+        let celdaPos = document.createElement("td");
+        let celdaPts = document.createElement("td");
 
-            tbody.appendChild(row);
-        });
+        celdaPos.textContent = resultado.posicion;
+        celdaPts.textContent = resultado.puntos;
+
+        row.appendChild(celdaPos);
+        row.appendChild(celdaPts);
+    }
+
+    tbody.appendChild(row);
+});
     });
 }
 
