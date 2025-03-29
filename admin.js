@@ -31,13 +31,12 @@ document.getElementById("logout").addEventListener("click", () => {
 document.getElementById("upload-results").addEventListener("click", async () => {
     const fileInput = document.getElementById("file-input");
     const uploadMessage = document.getElementById("upload-message");
-    
+
     if (fileInput.files.length === 0) {
         uploadMessage.textContent = "Selecciona un archivo Excel.";
         return;
     }
 
-    // 🔹 Deshabilitar TODOS los botones y entradas
     deshabilitarInterfaz(true);
     uploadMessage.textContent = "⏳ Procesando resultados... Por favor, espera.";
 
@@ -57,7 +56,6 @@ document.getElementById("upload-results").addEventListener("click", async () => 
             console.error("Error al procesar el archivo:", error);
             uploadMessage.textContent = "❌ Error al procesar los resultados.";
         } finally {
-            // 🔹 Habilitar nuevamente la interfaz
             deshabilitarInterfaz(false);
         }
     };
@@ -121,15 +119,14 @@ async function procesarResultados(results) {
 
     const atletasRef = collection(db, "atletas");
     const snapshot = await getDocs(atletasRef);
-    
+
     let batchUpdates = [];
 
-    // 🔹 Procesar atletas que no participaron
     snapshot.forEach((docSnap) => {
         let atleta = docSnap.data();
         let dni = docSnap.id;
 
-        if (!atletasParticipantes.has(dni)) { 
+        if (!atletasParticipantes.has(dni)) {
             let atletaRef = doc(db, "atletas", dni);
             let nuevasFaltas = (atleta.faltas || 0) + 1;
 
@@ -140,7 +137,6 @@ async function procesarResultados(results) {
         }
     });
 
-    // 🔹 Procesar atletas que sí participaron
     for (let categoria in categorias) {
         let atletasCategoria = categorias[categoria];
 
@@ -156,8 +152,7 @@ async function procesarResultados(results) {
             let asistenciasConsecutivas = (atleta.asistenciasConsecutivas || 0) + 1;
             let totalPuntos = (atleta.puntos || 0) + nuevoPuntaje;
 
-            // 🔹 Asegurar que la posición quede bien asignada
-            historial.push({ posicion: i + 1, puntos: nuevoPuntaje });
+            historial.push({ posicion, puntos: nuevoPuntaje });
 
             let bonus = calcularBonus(asistenciasConsecutivas);
 
