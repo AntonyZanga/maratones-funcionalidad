@@ -1,5 +1,5 @@
 import { db } from './config.js';
-import { collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { collection, getDocs, doc, updateDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 async function borrarHistorialCarreras() {
     try {
@@ -11,9 +11,9 @@ async function borrarHistorialCarreras() {
         snapshot.forEach((docSnap) => {
             const atletaRef = doc(db, "atletas", docSnap.id);
 
-            // 🔹 Borrar solo el campo historialCarreras, manteniendo el resto de los datos
+            // 🔹 Eliminar completamente el campo historialCarreras
             batchUpdates.push(updateDoc(atletaRef, {
-                historialCarreras: null
+                historialCarreras: deleteField()
             }));
         });
 
