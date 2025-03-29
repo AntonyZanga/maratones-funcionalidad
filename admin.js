@@ -278,8 +278,10 @@ async function actualizarRanking() {
             // Agregar datos de cada fecha con los puntos correctamente sumados
             for (let i = 0; i < maxFechas; i++) {
                 let dato = atleta.historial[i] || { posicion: "-", puntos: 0, bonus: 0 };
-                let puntosConBonus = (dato.puntos || 0) + (dato.bonus || 0); // 🔥 Evitar NaN asegurando valores numéricos
-                
+
+                // 🔥 Calcular el total de puntos con bonus correctamente
+                let puntosConBonus = (dato.puntos || 0) + (dato.bonus || 0); 
+
                 row.innerHTML += `<td>${dato.posicion}</td><td>${puntosConBonus}</td>`; 
             }
 
