@@ -214,7 +214,7 @@ async function actualizarRanking() {
                 puntos: data.puntos || 0,
                 asistencias: data.asistencias || 0,
                 faltas: data.faltas || 0,
-                historial: data.historial || [], // 🔥 Se asegura que historial siempre sea un array
+                historial: data.historial || [], // 🔥 Asegurar que siempre haya historial
                 categoria: categoriaCompleta,
                 edad: edad
             });
@@ -265,7 +265,7 @@ async function actualizarRanking() {
 
         // Asignar la posición real en el ranking de la categoría
         atletas.forEach((atleta, index) => {
-            let posicionCategoria = index + 1; // 🔥 Posición en el ranking de la categoría
+            let posicionCategoria = index + 1; // 🔥 P° en ranking de la categoría
 
             let row = document.createElement("tr");
             row.innerHTML = `
@@ -280,8 +280,8 @@ async function actualizarRanking() {
             // Agregar datos de cada fecha con la misma P° del ranking
             for (let i = 0; i < maxFechas; i++) {
                 let dato = atleta.historial[i] || { posicion: posicionCategoria, puntos: 0, bonus: 0 };
-                let puntosConBonus = dato.puntos + (dato.bonus || 0); // 🔥 Suma de puntos + bonus
-                row.innerHTML += `<td>${posicionCategoria}</td><td>${puntosConBonus}</td>`; 
+                let puntosConBonus = dato.puntos + dato.bonus; // 🔥 Asegurar que sume puntos + bonus correctamente
+                row.innerHTML += `<td>${dato.posicion}</td><td>${puntosConBonus}</td>`; 
             }
 
             tbody.appendChild(row);
