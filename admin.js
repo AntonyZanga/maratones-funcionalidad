@@ -274,14 +274,18 @@ async function actualizarRanking() {
                 <td>${atleta.faltas}</td>`;
 
             for (let i = 0; i < maxFechas; i++) {
-                let dato = atleta.historial[i] || { posicion: "-", puntos: "-" };
-                row.innerHTML += `<td>${dato.posicion}</td><td>${dato.puntos}</td>`;
+                let dato = atleta.historial[i] || null; // Si no tiene datos, es un faltante
+                let posicion = dato ? dato.posicion : "-";
+                let puntos = dato ? dato.puntos : "-";
+
+                row.innerHTML += `<td>${posicion}</td><td>${puntos}</td>`;
             }
 
             tbody.appendChild(row);
         });
     });
 }
+
 // =========================
 // 🔥 Resetear Historial 🔥
 // =========================
