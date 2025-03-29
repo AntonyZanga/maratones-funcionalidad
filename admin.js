@@ -125,20 +125,25 @@ async function procesarResultados(results) {
     let batchUpdates = [];
 
     // 🔹 Procesar atletas que no participaron
-    snapshot.forEach((docSnap) => {
-        let atleta = docSnap.data();
-        let dni = docSnap.id;
+snapshot.forEach((docSnap) => {
+    let atleta = docSnap.data();
+    let dni = docSnap.id;
 
-        if (!atletasParticipantes.has(dni)) { 
-            let atletaRef = doc(db, "atletas", dni);
-            let nuevasFaltas = (atleta.faltas || 0) + 1;
+    if (!atletasParticipantes.has(dni)) { 
+        let atletaRef = doc(db, "atletas", dni);
+        let nuevasFaltas = (atleta.faltas || 0) + 1;
 
-            batchUpdates.push(updateDoc(atletaRef, {
-                faltas: nuevasFaltas,
-                asistenciasConsecutivas: 0
-            }));
-        }
-    });
+        let historial = atleta.historial || [];
+        historial.push({ posicion: "-", puntos: "-" }); // Mantiene la estructura
+
+        batchUpdates.push(updateDoc(atletaRef, {
+            faltas: nuevasFaltas,
+            asistenciasConsecutivas: 0,
+            historial: historial
+        }));
+    }
+});
+
 
     // 🔹 Procesar atletas que sí participaron
     for (let categoria in categorias) {
@@ -220,13 +225,13 @@ async function actualizarRanking() {
     });
 
     // 2. Asegurar que todos los atletas tengan la misma cantidad de fechas
-    Object.keys(atletasPorCategoria).forEach(categoria => {
-        atletasPorCategoria[categoria].forEach(atleta => {
-            while (atleta.historial.length < totalFechas) {
-                atleta.historial.push({ posicion: "-", puntos: "-" });
-            }
-        });
+Object.keys(atletasPorCategoria).forEach(categoria => {
+    atletasPorCategoria[categoria].forEach(atleta => {
+        while (atleta.historial.length < totalFechas) {
+            atleta.historial.push({ posicion: "-", puntos: "-" });
+        }
     });
+});
 
     // 3. Renderizar el ranking en la tabla
     Object.keys(atletasPorCategoria).sort().forEach(categoria => {
