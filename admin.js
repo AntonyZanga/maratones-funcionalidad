@@ -125,18 +125,34 @@ async function procesarResultados(results) {
     snapshot.forEach((docSnap) => {
         let atleta = docSnap.data();
         let dni = docSnap.id;
+        let atletaRef = doc(db, "atletas", dni);
 
-        if (!atletasParticipantes.has(dni)) {
-            let atletaRef = doc(db, "atletas", dni);
-            let nuevasFaltas = (atleta.faltas || 0) + 1;
+        let historial = atleta.historial || [];
+        let asistencias = atleta.asistencias || 0;
+        let asistenciasConsecutivas = atleta.asistenciasConsecutivas || 0;
+        let faltas = atleta.faltas || 0;
 
-            batchUpdates.push(updateDoc(atletaRef, {
-                faltas: nuevasFaltas,
-                asistenciasConsecutivas: 0
-            }));
+        if (atletasParticipantes.has(dni)) {
+            // El atleta participó en esta fecha
+            historial.push({ posicion: "P", puntos: 0 }); // Marcamos que participó (posición real se actualizará después)
+            asistencias++;
+            asistenciasConsecutivas++;
+        } else {
+            // El atleta NO participó en esta fecha
+            historial.push({ posicion: "X", puntos: 0 }); // "X" indica falta
+            faltas++;
+            asistenciasConsecutivas = 0; // Se reinician asistencias consecutivas
         }
+
+        batchUpdates.push(updateDoc(atletaRef, {
+            historial: historial,
+            asistencias: asistencias,
+            faltas: faltas,
+            asistenciasConsecutivas: asistenciasConsecutivas
+        }));
     });
 
+    // Procesar los puntos y posiciones reales
     for (let categoria in categorias) {
         let atletasCategoria = categorias[categoria];
 
@@ -146,20 +162,16 @@ async function procesarResultados(results) {
             let { dni, posicion, atletaRef, atleta } = atletasCategoria[i];
 
             let nuevoPuntaje = puntosBase[i] !== undefined ? puntosBase[i] : 1;
-
             let historial = atleta.historial || [];
-            let asistencias = (atleta.asistencias || 0) + 1;
-            let asistenciasConsecutivas = (atleta.asistenciasConsecutivas || 0) + 1;
             let totalPuntos = (atleta.puntos || 0) + nuevoPuntaje;
 
-            historial.push({ posicion, puntos: nuevoPuntaje });
+            // Modificamos el último valor del historial para reflejar el puesto real
+            historial[historial.length - 1] = { posicion, puntos: nuevoPuntaje };
 
-            let bonus = calcularBonus(asistenciasConsecutivas);
+            let bonus = calcularBonus(atleta.asistenciasConsecutivas);
 
             batchUpdates.push(updateDoc(atletaRef, {
                 puntos: totalPuntos + bonus,
-                asistencias: asistencias,
-                asistenciasConsecutivas: asistenciasConsecutivas,
                 historial: historial
             }));
         }
@@ -170,6 +182,7 @@ async function procesarResultados(results) {
     uploadMessage.textContent = "✅ Resultados cargados correctamente.";
     actualizarRanking();
 }
+
 // =========================
 // 🔥 CÁLCULO DE BONOS POR ASISTENCIA 🔥
 // =========================
