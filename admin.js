@@ -279,8 +279,9 @@ async function actualizarRanking() {
 
             // Agregar datos de cada fecha con la misma P° del ranking
             for (let i = 0; i < maxFechas; i++) {
-                let dato = atleta.historial[i] || { posicion: posicionCategoria, puntos: "-" };
-                row.innerHTML += `<td>${posicionCategoria}</td><td>${dato.puntos}</td>`; // 🔥 P° de cada fecha igual a la P° en la tabla
+                let dato = atleta.historial[i] || { posicion: posicionCategoria, puntos: 0, bonus: 0 };
+                let puntosConBonus = dato.puntos + (dato.bonus || 0); // 🔥 Suma de puntos + bonus
+                row.innerHTML += `<td>${posicionCategoria}</td><td>${puntosConBonus}</td>`; 
             }
 
             tbody.appendChild(row);
