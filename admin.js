@@ -297,7 +297,8 @@ document.getElementById("reset-history").addEventListener("click", async () => {
                 historial: [],
                 puntos: 0,
                 asistencias: 0,
-                faltas: 0
+                faltas: 0,
+                asistenciasConsecutivas: 0
             }));
         });
 
