@@ -299,11 +299,21 @@ document.getElementById("reset-history").addEventListener("click", async () => {
 // =========================
 // 🔥 FUNCIONES AUXILIARES 🔥
 // =========================
+function calcularBonus(asistencias) {
+    const bonus = [0, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 25, 30];
+    return bonus[Math.min(asistencias, bonus.length - 1)];
+}
+
+function obtenerCategoria(fechaNacimiento, genero) {
+    let edad = calcularEdad(fechaNacimiento);
+    let categoriaEdad = determinarCategoriaEdad(edad);
+    return `${genero} - ${categoriaEdad}`;
+}
+
 function calcularEdad(fechaNacimiento) {
     let fechaNac = new Date(fechaNacimiento);
     let hoy = new Date();
-    let edad = hoy.getFullYear() - fechaNac.getFullYear();
-    return edad;
+    return hoy.getFullYear() - fechaNac.getFullYear();
 }
 
 function determinarCategoriaEdad(edad) {
@@ -316,4 +326,10 @@ function determinarCategoriaEdad(edad) {
         if (edad >= min && edad <= max) return `${min} - ${max}`;
     }
     return "90+";
+}
+
+function deshabilitarInterfaz(deshabilitar) {
+    document.querySelectorAll("button, input, select, textarea").forEach(elemento => {
+        elemento.disabled = deshabilitar;
+    });
 }
