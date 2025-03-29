@@ -31,12 +31,13 @@ document.getElementById("logout").addEventListener("click", () => {
 document.getElementById("upload-results").addEventListener("click", async () => {
     const fileInput = document.getElementById("file-input");
     const uploadMessage = document.getElementById("upload-message");
-
+    
     if (fileInput.files.length === 0) {
         uploadMessage.textContent = "Selecciona un archivo Excel.";
         return;
     }
 
+    // 🔹 Deshabilitar TODOS los botones y entradas
     deshabilitarInterfaz(true);
     uploadMessage.textContent = "⏳ Procesando resultados... Por favor, espera.";
 
@@ -56,6 +57,7 @@ document.getElementById("upload-results").addEventListener("click", async () => 
             console.error("Error al procesar el archivo:", error);
             uploadMessage.textContent = "❌ Error al procesar los resultados.";
         } finally {
+            // 🔹 Habilitar nuevamente la interfaz
             deshabilitarInterfaz(false);
         }
     };
@@ -119,43 +121,26 @@ async function procesarResultados(results) {
 
     const atletasRef = collection(db, "atletas");
     const snapshot = await getDocs(atletasRef);
-
+    
     let batchUpdates = [];
 
+    // 🔹 Procesar atletas que no participaron
     snapshot.forEach((docSnap) => {
         let atleta = docSnap.data();
         let dni = docSnap.id;
-        let atletaRef = doc(db, "atletas", dni);
 
-        let historial = atleta.historial || [];
-        let asistencias = atleta.asistencias || 0;
-        let asistenciasConsecutivas = atleta.asistenciasConsecutivas || 0;
-        let faltas = atleta.faltas || 0;
+        if (!atletasParticipantes.has(dni)) { 
+            let atletaRef = doc(db, "atletas", dni);
+            let nuevasFaltas = (atleta.faltas || 0) + 1;
 
-        // 📌 Determinar la cantidad de fechas ya cargadas
-        let cantidadFechas = atleta.historial ? atleta.historial.length : 0;
-
-        // 📌 Si el atleta participó, se registra con posición pendiente
-        if (atletasParticipantes.has(dni)) {
-            historial[cantidadFechas] = { posicion: "P", puntos: 0 }; // Participación pendiente de actualizar
-            asistencias++;
-            asistenciasConsecutivas++;
-        } else {
-            // 📌 Si faltó, se marca con "X" en la fecha correspondiente
-            historial[cantidadFechas] = { posicion: "X", puntos: 0 };
-            faltas++;
-            asistenciasConsecutivas = 0;
+            batchUpdates.push(updateDoc(atletaRef, {
+                faltas: nuevasFaltas,
+                asistenciasConsecutivas: 0
+            }));
         }
-
-        batchUpdates.push(updateDoc(atletaRef, {
-            historial: historial,
-            asistencias: asistencias,
-            faltas: faltas,
-            asistenciasConsecutivas: asistenciasConsecutivas
-        }));
     });
 
-    // Procesar los puntos y posiciones reales
+    // 🔹 Procesar atletas que sí participaron
     for (let categoria in categorias) {
         let atletasCategoria = categorias[categoria];
 
@@ -165,16 +150,21 @@ async function procesarResultados(results) {
             let { dni, posicion, atletaRef, atleta } = atletasCategoria[i];
 
             let nuevoPuntaje = puntosBase[i] !== undefined ? puntosBase[i] : 1;
+
             let historial = atleta.historial || [];
+            let asistencias = (atleta.asistencias || 0) + 1;
+            let asistenciasConsecutivas = (atleta.asistenciasConsecutivas || 0) + 1;
             let totalPuntos = (atleta.puntos || 0) + nuevoPuntaje;
 
-            // Modificamos el último valor del historial para reflejar el puesto real
-            historial[historial.length - 1] = { posicion, puntos: nuevoPuntaje };
+            // 🔹 Asegurar que la posición quede bien asignada
+            historial.push({ posicion: i + 1, puntos: nuevoPuntaje });
 
-            let bonus = calcularBonus(atleta.asistenciasConsecutivas);
+            let bonus = calcularBonus(asistenciasConsecutivas);
 
             batchUpdates.push(updateDoc(atletaRef, {
                 puntos: totalPuntos + bonus,
+                asistencias: asistencias,
+                asistenciasConsecutivas: asistenciasConsecutivas,
                 historial: historial
             }));
         }
@@ -185,7 +175,6 @@ async function procesarResultados(results) {
     uploadMessage.textContent = "✅ Resultados cargados correctamente.";
     actualizarRanking();
 }
-
 // =========================
 // 🔥 CÁLCULO DE BONOS POR ASISTENCIA 🔥
 // =========================
@@ -268,31 +257,22 @@ async function actualizarRanking() {
 
         let tbody = table.querySelector("tbody");
 
-atletas.forEach((atleta, index) => {
-    let row = document.createElement("tr");
-    row.innerHTML = `
-        <td>${index + 1}</td>
-        <td>${atleta.nombre}</td>
-        <td>${atleta.localidad}</td>
-        <td>${atleta.puntos}</td>
-        <td>${atleta.asistencias}</td>
-        <td>${atleta.faltas}</td>`;
+        atletas.forEach((atleta, index) => {
+            let row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${atleta.nombre}</td>
+                <td>${atleta.localidad}</td>
+                <td>${atleta.puntos}</td>
+                <td>${atleta.asistencias}</td>
+                <td>${atleta.faltas}</td>`;
 
-    // Agregar historial de fechas
-    for (let i = 0; i < totalFechas; i++) {
-        let resultado = atleta.historial[i] || { posicion: "-", puntos: "-" };
-        let celdaPos = document.createElement("td");
-        let celdaPts = document.createElement("td");
+            atleta.historial.forEach(fecha => {
+                row.innerHTML += `<td>${fecha.posicion}</td><td>${fecha.puntos}</td>`;
+            });
 
-        celdaPos.textContent = resultado.posicion;
-        celdaPts.textContent = resultado.puntos;
-
-        row.appendChild(celdaPos);
-        row.appendChild(celdaPts);
-    }
-
-    tbody.appendChild(row);
-});
+            tbody.appendChild(row);
+        });
     });
 }
 
