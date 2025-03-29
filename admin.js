@@ -219,14 +219,12 @@ async function actualizarRanking() {
         }
     });
 
-    // Iterar por cada categoría
     Object.keys(atletasPorCategoria).sort().forEach(categoria => {
         let atletas = atletasPorCategoria[categoria];
 
-        // Ordenar atletas por puntos de mayor a menor
+        // 🔹 Ordenar por puntos totales de mayor a menor
         atletas.sort((a, b) => b.puntos - a.puntos);
 
-        // Determinar el número máximo de fechas
         let maxFechas = atletas.reduce((max, atleta) => Math.max(max, atleta.historial.length), 0);
 
         let section = document.createElement("section");
@@ -256,7 +254,7 @@ async function actualizarRanking() {
 
         let tbody = table.querySelector("tbody");
 
-        // Ordenar cada fecha por posición antes de mostrarla
+        // 🔹 Reordenar cada fecha por posición correcta
         for (let i = 0; i < maxFechas; i++) {
             atletas.sort((a, b) => {
                 let posA = a.historial[i] ? a.historial[i].posicion : Infinity;
@@ -271,7 +269,6 @@ async function actualizarRanking() {
             });
         }
 
-        // Crear filas de atletas en la tabla
         atletas.forEach((atleta, index) => {
             let posicionRanking = index + 1;
             let row = document.createElement("tr");
