@@ -97,11 +97,6 @@ async function procesarResultados(results) {
     let categorias = {};
     let atletasParticipantes = new Set();
 
-    // 🔹 Obtener el número de fecha actual
-    const configRef = doc(db, "config", "ranking");
-    const configSnap = await getDoc(configRef);
-    let numFecha = configSnap.exists() ? (configSnap.data().numFecha || 0) + 1 : 1;
-
     for (let i = 1; i < results.length; i++) {
         const [posicion, dni] = results[i];
 
@@ -124,58 +119,56 @@ async function procesarResultados(results) {
         categorias[categoria].push({ dni, posicion, atletaRef, atleta });
     }
 
+    // 🔹 Obtener todos los atletas de la base de datos
     const atletasRef = collection(db, "atletas");
     const snapshot = await getDocs(atletasRef);
+    
     let batchUpdates = [];
 
+    // 🔹 Procesar atletas que no participaron
     snapshot.forEach((docSnap) => {
         let atleta = docSnap.data();
         let dni = docSnap.id;
 
-        if (!atletasParticipantes.has(dni)) { 
+        if (!atletasParticipantes.has(dni)) { // Si el atleta no está en la lista de participantes
             let atletaRef = doc(db, "atletas", dni);
             let nuevasFaltas = (atleta.faltas || 0) + 1;
 
             batchUpdates.push(updateDoc(atletaRef, {
                 faltas: nuevasFaltas,
-                asistenciasConsecutivas: 0
+                asistenciasConsecutivas: 0 // 🔹 Solo este contador se reinicia para el bonus
             }));
         }
     });
 
+    // 🔹 Procesar atletas que sí participaron
     for (let categoria in categorias) {
         let atletasCategoria = categorias[categoria];
+
         atletasCategoria.sort((a, b) => a.posicion - b.posicion);
 
         for (let i = 0; i < atletasCategoria.length; i++) {
             let { dni, posicion, atletaRef, atleta } = atletasCategoria[i];
 
             let nuevoPuntaje = puntosBase[i] !== undefined ? puntosBase[i] : 1;
-            let asistencias = (atleta.asistencias || 0) + 1;
-            let asistenciasConsecutivas = (atleta.asistenciasConsecutivas || 0) + 1;
+
+            let historial = atleta.historial || [];
+            let asistencias = (atleta.asistencias || 0) + 1; // 🔹 Se mantiene en el ranking
+            let asistenciasConsecutivas = (atleta.asistenciasConsecutivas || 0) + 1; // 🔹 Para el bonus
             let totalPuntos = (atleta.puntos || 0) + nuevoPuntaje;
 
-            let bonus = calcularBonus(asistenciasConsecutivas);
-            let totalConBonus = totalPuntos + bonus;
+            historial.push({ posicion, puntos: nuevoPuntaje });
 
-            let historial = atleta.historial || {};
-            historial[`Fecha ${numFecha}`] = { posicion, puntos: nuevoPuntaje + bonus };
+            let bonus = calcularBonus(asistenciasConsecutivas);
 
             batchUpdates.push(updateDoc(atletaRef, {
-                puntos: totalConBonus,
-                asistencias: asistencias,
-                asistenciasConsecutivas: asistenciasConsecutivas,
+                puntos: totalPuntos + bonus,
+                asistencias: asistencias, // 🔹 Se mantiene
+                asistenciasConsecutivas: asistenciasConsecutivas, // 🔹 Se usa solo para el bonus
                 historial: historial
             }));
         }
     }
-
-    await Promise.all(batchUpdates);
-    await setDoc(configRef, { numFecha }, { merge: true });
-
-    uploadMessage.textContent = "✅ Resultados cargados correctamente.";
-    actualizarRanking();
-}
 
     // 🔥 Ejecutar todas las actualizaciones en Firebase
     await Promise.all(batchUpdates);
@@ -216,7 +209,7 @@ async function actualizarRanking() {
                 puntos: data.puntos || 0,
                 asistencias: data.asistencias || 0,
                 faltas: data.faltas || 0,
-                historial: data.historial || {},
+                historial: data.historial || [],
                 categoria: `${categoria} - ${categoriaEdad}`,
                 edad: edad
             });
@@ -230,18 +223,16 @@ async function actualizarRanking() {
         return a.categoria.localeCompare(b.categoria);
     });
 
-    const configRef = doc(db, "config", "ranking");
-    const configSnap = await getDoc(configRef);
-    let numFecha = configSnap.exists() ? configSnap.data().numFecha || 0 : 0;
-
     let categoriaActual = "";
     let table = null;
+    let posicionCategoria = 0;
 
     atletas.forEach((atleta, index) => {
         if (atleta.categoria !== categoriaActual) {
             if (table) rankingContainer.appendChild(table);
 
             categoriaActual = atleta.categoria;
+            posicionCategoria = 0; // Reiniciar la posición para la nueva categoría
 
             let section = document.createElement("section");
             let title = document.createElement("h3");
@@ -249,35 +240,36 @@ async function actualizarRanking() {
             section.appendChild(title);
 
             table = document.createElement("table");
-            let thead = `<thead><tr><th>P°</th><th>Nombre</th><th>Localidad</th><th>Pts</th><th>Asis</th><th>Falt</th>`;
-            
-            for (let i = 1; i <= numFecha; i++) {
-                thead += `<th>Fecha ${i}</th>`;
-            }
-
-            thead += `</tr></thead>`;
-            table.innerHTML = thead;
-            let tbody = document.createElement("tbody");
-
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>P°</th>
+                        <th>Nombre</th>
+                        <th>Localidad</th>
+                        <th>Pts</th>
+                        <th>Asis</th>
+                        <th>Falt</th>
+                        <th>Historial</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            `;
             section.appendChild(table);
             rankingContainer.appendChild(section);
         }
 
+        posicionCategoria++; // Incrementar la posición dentro de la categoría
+
         let row = document.createElement("tr");
         row.innerHTML = `
-            <td>${index + 1}</td>
+            <td>${posicionCategoria}</td> <!-- Aquí ahora muestra la posición relativa a la categoría -->
             <td>${atleta.nombre}</td>
             <td>${atleta.localidad}</td>
             <td>${atleta.puntos}</td>
             <td>${atleta.asistencias}</td>
             <td>${atleta.faltas}</td>
+            <td>${atleta.historial.map(h => `#${h.posicion} (${h.puntos} pts)`).join(", ")}</td>
         `;
-
-        for (let i = 1; i <= numFecha; i++) {
-            let fechaData = atleta.historial[`Fecha ${i}`] || { posicion: "-", puntos: "-" };
-            row.innerHTML += `<td>P°${fechaData.posicion} - ${fechaData.puntos} pts</td>`;
-        }
-
         table.querySelector("tbody").appendChild(row);
     });
 
