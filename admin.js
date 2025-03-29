@@ -193,53 +193,47 @@ async function actualizarRanking() {
     const atletasRef = collection(db, "atletas");
     const snapshot = await getDocs(atletasRef);
     let atletasPorCategoria = {};
+    let totalFechas = 0;
 
+    // 1. Obtener atletas y registrar la cantidad total de fechas
     snapshot.forEach(doc => {
         let data = doc.data();
-        if (data.puntos > 0) {
-            let edad = calcularEdad(data.fechaNacimiento);
-            let categoriaEdad = determinarCategoriaEdad(edad);
-            let categoria = data.categoria || "Especial";
-            let categoriaCompleta = `${categoria} - ${categoriaEdad}`;
+        let edad = calcularEdad(data.fechaNacimiento);
+        let categoriaEdad = determinarCategoriaEdad(edad);
+        let categoria = data.categoria || "Especial";
+        let categoriaCompleta = `${categoria} - ${categoriaEdad}`;
 
-            if (!atletasPorCategoria[categoriaCompleta]) {
-                atletasPorCategoria[categoriaCompleta] = [];
-            }
-
-            let primerosPuestos = 0;
-            let sumaPosiciones = 0;
-            let totalFechas = data.historial.length;
-
-            data.historial.forEach(fecha => {
-                if (fecha.posicion === 1) primerosPuestos++;
-                sumaPosiciones += fecha.posicion || 0;
-            });
-
-            let posicionPromedio = totalFechas > 0 ? sumaPosiciones / totalFechas : Infinity;
-
-            atletasPorCategoria[categoriaCompleta].push({
-                nombre: `${data.nombre} ${data.apellido}`,
-                localidad: data.localidad || "Desconocida",
-                puntos: data.puntos || 0,
-                asistencias: data.asistencias || 0,
-                faltas: data.faltas || 0,
-                historial: data.historial || [],
-                primerosPuestos: primerosPuestos,
-                posicionPromedio: posicionPromedio
-            });
+        if (!atletasPorCategoria[categoriaCompleta]) {
+            atletasPorCategoria[categoriaCompleta] = [];
         }
+
+        totalFechas = Math.max(totalFechas, data.historial.length);
+
+        atletasPorCategoria[categoriaCompleta].push({
+            nombre: `${data.nombre} ${data.apellido}`,
+            localidad: data.localidad || "Desconocida",
+            puntos: data.puntos || 0,
+            asistencias: data.asistencias || 0,
+            faltas: data.faltas || 0,
+            historial: data.historial || []
+        });
     });
 
+    // 2. Asegurar que todos los atletas tengan la misma cantidad de fechas
+    Object.keys(atletasPorCategoria).forEach(categoria => {
+        atletasPorCategoria[categoria].forEach(atleta => {
+            while (atleta.historial.length < totalFechas) {
+                atleta.historial.push({ posicion: "-", puntos: "-" });
+            }
+        });
+    });
+
+    // 3. Renderizar el ranking en la tabla
     Object.keys(atletasPorCategoria).sort().forEach(categoria => {
         let atletas = atletasPorCategoria[categoria];
 
-        atletas.sort((a, b) => {
-            if (b.puntos !== a.puntos) return b.puntos - a.puntos;
-            if (b.primerosPuestos !== a.primerosPuestos) return b.primerosPuestos - a.primerosPuestos;
-            return a.posicionPromedio - b.posicionPromedio;
-        });
-
-        let maxFechas = atletas.reduce((max, atleta) => Math.max(max, atleta.historial.length), 0);
+        // Ordenar por puntos, primeros puestos y posición promedio
+        atletas.sort((a, b) => b.puntos - a.puntos);
 
         let section = document.createElement("section");
         let title = document.createElement("h3");
@@ -252,7 +246,7 @@ async function actualizarRanking() {
                 <th>P°</th><th>Nombre</th><th>Localidad</th><th>Pts</th>
                 <th>Asis</th><th>Falt</th>`;
 
-        for (let i = 1; i <= maxFechas; i++) {
+        for (let i = 1; i <= totalFechas; i++) {
             theadHTML += `<th colspan="2">Fecha ${i}</th>`;
         }
         theadHTML += `</tr></thead>`;
@@ -273,13 +267,9 @@ async function actualizarRanking() {
                 <td>${atleta.asistencias}</td>
                 <td>${atleta.faltas}</td>`;
 
-            for (let i = 0; i < maxFechas; i++) {
-                let dato = atleta.historial[i] || null; // Si no tiene datos, es un faltante
-                let posicion = dato ? dato.posicion : "-";
-                let puntos = dato ? dato.puntos : "-";
-
-                row.innerHTML += `<td>${posicion}</td><td>${puntos}</td>`;
-            }
+            atleta.historial.forEach(fecha => {
+                row.innerHTML += `<td>${fecha.posicion}</td><td>${fecha.puntos}</td>`;
+            });
 
             tbody.appendChild(row);
         });
