@@ -214,18 +214,14 @@ async function actualizarRanking() {
                 puntos: data.puntos || 0,
                 asistencias: data.asistencias || 0,
                 faltas: data.faltas || 0,
-                historial: data.historial || [] // 🔥 Asegurar que siempre haya historial
+                historial: data.historial || []
             });
         }
     });
 
     Object.keys(atletasPorCategoria).sort().forEach(categoria => {
         let atletas = atletasPorCategoria[categoria];
-
-        // Ordenar atletas por puntos
         atletas.sort((a, b) => b.puntos - a.puntos);
-
-        // Determinar número máximo de fechas
         let maxFechas = atletas.reduce((max, atleta) => Math.max(max, atleta.historial.length), 0);
 
         let section = document.createElement("section");
@@ -234,22 +230,16 @@ async function actualizarRanking() {
         section.appendChild(title);
 
         let table = document.createElement("table");
+        let theadHTML = `<thead>
+            <tr>
+                <th>P°</th><th>Nombre</th><th>Localidad</th><th>Pts</th>
+                <th>Asis</th><th>Falt</th>`;
 
-        // Construir cabecera
-        let theadHTML = `<thead>`;
-        theadHTML += `<tr>
-            <th>P°</th>
-            <th>Nombre</th>
-            <th>Localidad</th>
-            <th>Pts</th>
-            <th>Asis</th>
-            <th>Falt</th>`;
         for (let i = 1; i <= maxFechas; i++) {
             theadHTML += `<th colspan="2">Fecha ${i}</th>`;
         }
-        theadHTML += `</tr>`;
-        theadHTML += `<tr>
-            <th colspan="6"></th>`;
+        theadHTML += `</tr><tr><th colspan="6"></th>`;
+
         for (let i = 1; i <= maxFechas; i++) {
             theadHTML += `<th>P°</th><th>Pts</th>`;
         }
@@ -261,28 +251,20 @@ async function actualizarRanking() {
 
         let tbody = table.querySelector("tbody");
 
-        // Asignar la posición real en el ranking de la categoría
         atletas.forEach((atleta, index) => {
-            let posicionRanking = index + 1; // 🔥 Mantener P° en ranking general de la categoría
-
+            let posicionRanking = index + 1;
             let row = document.createElement("tr");
             row.innerHTML = `
-                <td>${posicionRanking}</td> <!-- 🔥 Mantener P° en ranking de la categoría -->
+                <td>${posicionRanking}</td>
                 <td>${atleta.nombre}</td>
                 <td>${atleta.localidad}</td>
                 <td>${atleta.puntos}</td>
                 <td>${atleta.asistencias}</td>
-                <td>${atleta.faltas}</td>
-            `;
+                <td>${atleta.faltas}</td>`;
 
-            // Agregar datos de cada fecha con los puntos correctamente sumados
             for (let i = 0; i < maxFechas; i++) {
-                let dato = atleta.historial[i] || { posicion: "-", puntos: 0, bonus: 0 };
-
-                // 🔥 Calcular el total de puntos con bonus correctamente
-                let puntosConBonus = (dato.puntos || 0) + (dato.bonus || 0); 
-
-                row.innerHTML += `<td>${dato.posicion}</td><td>${puntosConBonus}</td>`; 
+                let dato = atleta.historial[i] || { posicion: "-", puntos: 0 };
+                row.innerHTML += `<td>${dato.posicion}</td><td>${dato.puntos}</td>`;
             }
 
             tbody.appendChild(row);
