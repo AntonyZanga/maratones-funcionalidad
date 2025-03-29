@@ -196,7 +196,6 @@ async function actualizarRanking() {
     const snapshot = await getDocs(atletasRef);
     let atletasPorCategoria = {};
 
-    // 🔹 Agrupar atletas por categoría
     snapshot.forEach(doc => {
         let data = doc.data();
         if (data.puntos > 0) {
@@ -209,13 +208,27 @@ async function actualizarRanking() {
                 atletasPorCategoria[categoriaCompleta] = [];
             }
 
+            // Contar primeros puestos y calcular posición promedio
+            let primerosPuestos = 0;
+            let sumaPosiciones = 0;
+            let totalFechas = data.historial.length;
+
+            data.historial.forEach(fecha => {
+                if (fecha.posicion === 1) primerosPuestos++;
+                sumaPosiciones += fecha.posicion || 0;
+            });
+
+            let posicionPromedio = totalFechas > 0 ? sumaPosiciones / totalFechas : Infinity;
+
             atletasPorCategoria[categoriaCompleta].push({
                 nombre: `${data.nombre} ${data.apellido}`,
                 localidad: data.localidad || "Desconocida",
                 puntos: data.puntos || 0,
                 asistencias: data.asistencias || 0,
                 faltas: data.faltas || 0,
-                historial: data.historial || []
+                historial: data.historial || [],
+                primerosPuestos: primerosPuestos,
+                posicionPromedio: posicionPromedio
             });
         }
     });
@@ -224,8 +237,12 @@ async function actualizarRanking() {
     Object.keys(atletasPorCategoria).sort().forEach(categoria => {
         let atletas = atletasPorCategoria[categoria];
 
-        // 🔹 Ordenar por puntos totales de mayor a menor
-        atletas.sort((a, b) => b.puntos - a.puntos);
+        // 🔹 Ordenar correctamente por puntos, primeros puestos y posición promedio
+        atletas.sort((a, b) => {
+            if (b.puntos !== a.puntos) return b.puntos - a.puntos; // Primero por puntos totales
+            if (b.primerosPuestos !== a.primerosPuestos) return b.primerosPuestos - a.primerosPuestos; // Luego por más primeros puestos
+            return a.posicionPromedio - b.posicionPromedio; // Finalmente, por mejor posición promedio
+        });
 
         let maxFechas = atletas.reduce((max, atleta) => Math.max(max, atleta.historial.length), 0);
 
@@ -256,21 +273,6 @@ async function actualizarRanking() {
 
         let tbody = table.querySelector("tbody");
 
-        // 🔹 Reordenar cada fecha por posición correcta antes de mostrar
-        for (let i = 0; i < maxFechas; i++) {
-            atletas.sort((a, b) => {
-                let posA = a.historial[i] ? a.historial[i].posicion : Infinity;
-                let posB = b.historial[i] ? b.historial[i].posicion : Infinity;
-                return posA - posB;
-            });
-
-            atletas.forEach((atleta, index) => {
-                if (atleta.historial[i]) {
-                    atleta.historial[i].posicionCategoria = index + 1;
-                }
-            });
-        }
-
         // 🔹 Mostrar los atletas en la tabla
         atletas.forEach((atleta, index) => {
             let posicionRanking = index + 1;
@@ -284,8 +286,8 @@ async function actualizarRanking() {
                 <td>${atleta.faltas}</td>`;
 
             for (let i = 0; i < maxFechas; i++) {
-                let dato = atleta.historial[i] || { posicionCategoria: "-", puntos: "-" };
-                row.innerHTML += `<td>${dato.posicionCategoria}</td><td>${dato.puntos}</td>`;
+                let dato = atleta.historial[i] || { posicion: "-", puntos: "-" };
+                row.innerHTML += `<td>${dato.posicion}</td><td>${dato.puntos}</td>`;
             }
 
             tbody.appendChild(row);
