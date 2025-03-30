@@ -205,7 +205,7 @@ async function actualizarRanking() {
     let data = doc.data();
     
     // 🔥 NO MOSTRAR ATLETAS SIN PARTICIPACIONES 🔥
-    if (!data.historial || data.historial.length === 0) return; 
+    if (!data.historial || data.historial.every(fecha => fecha.posicion === "-" && fecha.puntos === "-")) return;
 
     let edad = calcularEdad(data.fechaNacimiento);
     let categoriaEdad = determinarCategoriaEdad(edad);
