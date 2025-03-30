@@ -176,62 +176,56 @@ function calcularBonus(asistencias) {
     const bonus = [0, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 25, 30]; // Máx. 30 puntos extra
     return bonus[Math.min(asistencias, bonus.length - 1)];
 }
-
 // =========================
-// 🔥 ACTUALIZAR TABLA DE RANKING 🔥
+// 🔥 ACTUALIZAR RANKING 🔥
 // =========================
 async function actualizarRanking() {
     const rankingContainer = document.getElementById("ranking-container");
     rankingContainer.innerHTML = "";
 
-    const atletasRef = collection(db, "atletas");
-    const snapshot = await getDocs(atletasRef);
+    const snapshot = await getDocs(collection(db, "atletas"));
     let atletasPorCategoria = {};
     let totalFechas = 0;
 
-    // Obtener atletas y registrar la cantidad total de fechas
+    // 🔹 Procesar atletas y calcular total de fechas
     snapshot.forEach(doc => {
-    let data = doc.data();
-    
-    // 🔥 NO MOSTRAR ATLETAS SIN PARTICIPACIONES 🔥
-    if (!data.historial || data.historial.every(fecha => fecha.posicion === "-" && fecha.puntos === "-")) return;
+        let data = doc.data();
+        let historial = data.historial || [];
 
-    let edad = calcularEdad(data.fechaNacimiento);
-    let categoriaEdad = determinarCategoriaEdad(edad);
-    let categoria = data.categoria || "Especial";
-    let categoriaCompleta = `${categoria} - ${categoriaEdad}`;
+        // 🔥 NO MOSTRAR ATLETAS SIN PARTICIPACIONES 🔥
+        if (historial.every(fecha => fecha.posicion === "-" && fecha.puntos === "-")) return;
 
-    if (!atletasPorCategoria[categoriaCompleta]) {
-        atletasPorCategoria[categoriaCompleta] = [];
-    }
+        let edad = calcularEdad(data.fechaNacimiento);
+        let categoriaEdad = determinarCategoriaEdad(edad);
+        let categoria = data.categoria || "Especial";
+        let categoriaCompleta = `${categoria} - ${categoriaEdad}`;
 
-    totalFechas = Math.max(totalFechas, data.historial.length);
+        if (!atletasPorCategoria[categoriaCompleta]) atletasPorCategoria[categoriaCompleta] = [];
 
-    atletasPorCategoria[categoriaCompleta].push({
-        nombre: `${data.nombre} ${data.apellido}`,
-        localidad: data.localidad || "Desconocida",
-        puntos: data.puntos || 0,
-        asistencias: data.asistencias || 0,
-        faltas: data.faltas || 0,
-        historial: data.historial || []
-    });
-});
+        totalFechas = Math.max(totalFechas, historial.length);
 
-    // Asegurar que todos los atletas tengan la misma cantidad de fechas
-    Object.keys(atletasPorCategoria).forEach(categoria => {
-        atletasPorCategoria[categoria].forEach(atleta => {
-            while (atleta.historial.length < totalFechas) {
-                atleta.historial.push({ posicion: "-", puntos: "-" });
-            }
+        atletasPorCategoria[categoriaCompleta].push({
+            nombre: `${data.nombre} ${data.apellido}`,
+            localidad: data.localidad || "Desconocida",
+            puntos: data.puntos || 0,
+            asistencias: data.asistencias || 0,
+            faltas: data.faltas || 0,
+            historial
         });
     });
 
-    // Renderizar el ranking en la tabla
-    Object.keys(atletasPorCategoria).sort().forEach(categoria => {
-        let atletas = atletasPorCategoria[categoria];
+    // 🔹 Normalizar historial de atletas
+    Object.values(atletasPorCategoria).forEach(atletas =>
+        atletas.forEach(atleta => {
+            while (atleta.historial.length < totalFechas) {
+                atleta.historial.push({ posicion: "-", puntos: "-" });
+            }
+        })
+    );
 
-        // Ordenar por puntos
-        atletas.sort((a, b) => b.puntos - a.puntos);
+    // 🔹 Renderizar el ranking
+    Object.keys(atletasPorCategoria).sort().forEach(categoria => {
+        let atletas = atletasPorCategoria[categoria].sort((a, b) => b.puntos - a.puntos);
 
         let section = document.createElement("section");
         let title = document.createElement("h3");
@@ -239,41 +233,57 @@ async function actualizarRanking() {
         section.appendChild(title);
 
         let table = document.createElement("table");
-        let theadHTML = `<thead>
-            <tr>
-                <th>P°</th><th>Nombre</th><th>Localidad</th><th>Pts</th>
-                <th>Asis</th><th>Falt</th>`;
+        let thead = document.createElement("thead");
+        let tbody = document.createElement("tbody");
+
+        // 🔹 Encabezado de la tabla
+        let headerRow1 = document.createElement("tr");
+        let headerRow2 = document.createElement("tr");
+
+        ["P°", "Nombre", "Localidad", "Pts", "Asis", "Falt"].forEach(text => {
+            let th = document.createElement("th");
+            th.textContent = text;
+            headerRow1.appendChild(th);
+            let th2 = document.createElement("th");
+            headerRow2.appendChild(th2);
+        });
 
         for (let i = 1; i <= totalFechas; i++) {
-            theadHTML += `<th colspan="2">Fecha ${i}</th>`;
-        }
-        theadHTML += `</tr><tr>
-                <th></th><th></th><th></th><th></th>
-                <th></th><th></th>`;
+            let thFecha = document.createElement("th");
+            thFecha.colSpan = 2;
+            thFecha.textContent = `Fecha ${i}`;
+            headerRow1.appendChild(thFecha);
 
-        for (let i = 1; i <= totalFechas; i++) {
-            theadHTML += `<th>P°</th><th>Pts</th>`;
+            ["P°", "Pts"].forEach(text => {
+                let th = document.createElement("th");
+                th.textContent = text;
+                headerRow2.appendChild(th);
+            });
         }
-        theadHTML += `</tr></thead>`;
 
-        table.innerHTML = theadHTML + `<tbody></tbody>`;
+        thead.appendChild(headerRow1);
+        thead.appendChild(headerRow2);
+        table.appendChild(thead);
+        table.appendChild(tbody);
         section.appendChild(table);
         rankingContainer.appendChild(section);
 
-        let tbody = table.querySelector("tbody");
-
+        // 🔹 Cuerpo de la tabla
         atletas.forEach((atleta, index) => {
             let row = document.createElement("tr");
-            row.innerHTML = `
-                <td>${index + 1}</td>
-                <td>${atleta.nombre}</td>
-                <td>${atleta.localidad}</td>
-                <td>${atleta.puntos}</td>
-                <td>${atleta.asistencias}</td>
-                <td>${atleta.faltas}</td>`;
+
+            [index + 1, atleta.nombre, atleta.localidad, atleta.puntos, atleta.asistencias, atleta.faltas].forEach(text => {
+                let td = document.createElement("td");
+                td.textContent = text;
+                row.appendChild(td);
+            });
 
             atleta.historial.forEach(fecha => {
-                row.innerHTML += `<td>${fecha.posicion}</td><td>${fecha.puntos}</td>`;
+                ["posicion", "puntos"].forEach(key => {
+                    let td = document.createElement("td");
+                    td.textContent = fecha[key];
+                    row.appendChild(td);
+                });
             });
 
             tbody.appendChild(row);
@@ -283,7 +293,6 @@ async function actualizarRanking() {
 // =========================
 // 🔥 Resetear Historial 🔥
 // =========================
-
 document.getElementById("reset-history").addEventListener("click", async () => {
     const confirmReset = confirm("⚠️ ¿Estás seguro de que quieres reiniciar el historial de todos los atletas? Esta acción no se puede deshacer.");
     
