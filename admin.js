@@ -192,10 +192,6 @@ async function actualizarRanking() {
     // 🔥 Procesar atletas y calcular total de fechas
     snapshot.forEach(doc => {
         let data = doc.data();
-
-        // 🔹 NO INCLUIR ATLETAS QUE NO HAYAN PARTICIPADO NI FALTADO 🔹
-        if (!data.historial || data.historial.length === 0) return;
-
         let edad = calcularEdad(data.fechaNacimiento);
         let categoriaEdad = determinarCategoriaEdad(edad);
         let categoria = data.categoria || "Especial";
@@ -205,10 +201,15 @@ async function actualizarRanking() {
             atletasPorCategoria[categoriaCompleta] = [];
         }
 
+        if (!data.historial || data.historial.length === 0) {
+            data.historial = [];
+        }
+
         totalFechas = Math.max(totalFechas, data.historial.length);
-        fechaInscripcion[doc.id] = data.historial.length; // Guarda en qué fecha empezó a participar
+        fechaInscripcion[doc.id] = data.historial.length > 0 ? data.historial.length : totalFechas;
 
         atletasPorCategoria[categoriaCompleta].push({
+            id: doc.id,
             nombre: `${data.nombre} ${data.apellido}`,
             localidad: data.localidad || "Desconocida",
             puntos: data.puntos || 0,
@@ -221,13 +222,11 @@ async function actualizarRanking() {
     // 🔹 Asegurar que los atletas tengan datos en todas las fechas 🔹
     Object.keys(atletasPorCategoria).forEach(categoria => {
         atletasPorCategoria[categoria].forEach(atleta => {
-            let inicioParticipacion = fechaInscripcion[atleta.dni] || 1; 
-
+            let inicioParticipacion = fechaInscripcion[atleta.id] || totalFechas;
+            
             for (let i = 0; i < totalFechas; i++) {
                 if (!atleta.historial[i]) {
-                    atleta.historial[i] = (i < inicioParticipacion - 1) 
-                        ? { posicion: "-", puntos: "-" } // 🔹 Faltó en fechas anteriores 🔹
-                        : { posicion: "-", puntos: "0" }; // 🔹 Faltó después de inscribirse 🔹
+                    atleta.historial[i] = { posicion: "-", puntos: "-" }; // 🔹 Siempre marcar falta con "-" 🔹
                 }
             }
         });
@@ -236,8 +235,6 @@ async function actualizarRanking() {
     // 🔹 Renderizar el ranking ordenado por categoría y puntos 🔹
     Object.keys(atletasPorCategoria).sort().forEach(categoria => {
         let atletas = atletasPorCategoria[categoria];
-
-        // Ordenar por puntos
         atletas.sort((a, b) => b.puntos - a.puntos);
 
         let section = document.createElement("section");
@@ -287,7 +284,6 @@ async function actualizarRanking() {
         });
     });
 }
-
 // =========================
 // 🔥 Resetear Historial 🔥
 // =========================
