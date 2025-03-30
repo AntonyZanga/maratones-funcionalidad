@@ -179,6 +179,9 @@ function calcularBonus(asistencias) {
 // =========================
 // 🔥 ACTUALIZAR RANKING 🔥
 // =========================
+// =========================
+// 🔥 ACTUALIZAR RANKING 🔥
+// =========================
 async function actualizarRanking() {
     const rankingContainer = document.getElementById("ranking-container");
     rankingContainer.innerHTML = "";
@@ -187,10 +190,23 @@ async function actualizarRanking() {
     let atletasPorCategoria = {};
     let totalFechas = 0;
 
+    // 🔹 Obtener la fecha de la primera maratón cargada
+    let fechasRegistradas = [];
+
+    snapshot.forEach(doc => {
+        let data = doc.data();
+        if (data.historial) {
+            fechasRegistradas = data.historial.map((_, index) => `Fecha ${index + 1}`);
+        }
+    });
+
+    totalFechas = fechasRegistradas.length;
+
     // 🔹 Procesar atletas y calcular total de fechas
     snapshot.forEach(doc => {
         let data = doc.data();
         let historial = data.historial || [];
+        let fechaInscripcion = data.fechaInscripcion || null;
 
         // 🔥 NO MOSTRAR ATLETAS SIN PARTICIPACIONES 🔥
         if (historial.every(fecha => fecha.posicion === "-" && fecha.puntos === "-")) return;
@@ -202,7 +218,11 @@ async function actualizarRanking() {
 
         if (!atletasPorCategoria[categoriaCompleta]) atletasPorCategoria[categoriaCompleta] = [];
 
-        totalFechas = Math.max(totalFechas, historial.length);
+        // 🔹 Ajustar historial según la fecha de inscripción
+        if (fechaInscripcion) {
+            let fechaInscripcionIndex = fechasRegistradas.findIndex(fecha => new Date(fecha) >= new Date(fechaInscripcion));
+            historial = historial.slice(fechaInscripcionIndex);
+        }
 
         atletasPorCategoria[categoriaCompleta].push({
             nombre: `${data.nombre} ${data.apellido}`,
@@ -213,15 +233,6 @@ async function actualizarRanking() {
             historial
         });
     });
-
-    // 🔹 Normalizar historial de atletas
-    Object.values(atletasPorCategoria).forEach(atletas =>
-        atletas.forEach(atleta => {
-            while (atleta.historial.length < totalFechas) {
-                atleta.historial.push({ posicion: "-", puntos: "-" });
-            }
-        })
-    );
 
     // 🔹 Renderizar el ranking
     Object.keys(atletasPorCategoria).sort().forEach(categoria => {
@@ -248,10 +259,10 @@ async function actualizarRanking() {
             headerRow2.appendChild(th2);
         });
 
-        for (let i = 1; i <= totalFechas; i++) {
+        fechasRegistradas.forEach(fecha => {
             let thFecha = document.createElement("th");
             thFecha.colSpan = 2;
-            thFecha.textContent = `Fecha ${i}`;
+            thFecha.textContent = fecha;
             headerRow1.appendChild(thFecha);
 
             ["P°", "Pts"].forEach(text => {
@@ -259,7 +270,7 @@ async function actualizarRanking() {
                 th.textContent = text;
                 headerRow2.appendChild(th);
             });
-        }
+        });
 
         thead.appendChild(headerRow1);
         thead.appendChild(headerRow2);
@@ -290,6 +301,7 @@ async function actualizarRanking() {
         });
     });
 }
+
 // =========================
 // 🔥 Resetear Historial 🔥
 // =========================
