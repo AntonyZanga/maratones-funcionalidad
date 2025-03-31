@@ -97,6 +97,12 @@ async function procesarResultados(results) {
     let categorias = {};
     let atletasParticipantes = new Set();
 
+    const atletasRef = collection(db, "atletas");
+    const snapshot = await getDocs(atletasRef);
+    let totalFechas = await obtenerTotalFechas();
+
+    let batchUpdates = [];
+
     for (let i = 1; i < results.length; i++) {
         const [posicion, dni] = results[i];
 
@@ -107,7 +113,9 @@ async function procesarResultados(results) {
         const atletaRef = doc(db, "atletas", String(dni).trim());
         const atletaSnap = await getDoc(atletaRef);
 
-        if (!atletaSnap.exists()) continue;
+        if (!atletaSnap.exists()) {
+            continue;
+        }
 
         let atleta = atletaSnap.data();
         let categoria = obtenerCategoria(atleta.fechaNacimiento, atleta.categoria);
@@ -116,34 +124,37 @@ async function procesarResultados(results) {
             categorias[categoria] = [];
         }
 
+        // 🔹 Si es la primera vez que participa, rellenar historial con '-'
+        if (!atleta.historial || atleta.historial.length < totalFechas) {
+            let historial = atleta.historial || [];
+            while (historial.length < totalFechas - 1) {
+                historial.push({ posicion: "-", puntos: "-" });
+            }
+            batchUpdates.push(updateDoc(atletaRef, { historial }));
+        }
+
         categorias[categoria].push({ dni, posicion, atletaRef, atleta });
     }
 
-    const atletasRef = collection(db, "atletas");
-    const snapshot = await getDocs(atletasRef);
-    
-    let batchUpdates = [];
-
     // 🔹 Procesar atletas que no participaron
-snapshot.forEach((docSnap) => {
-    let atleta = docSnap.data();
-    let dni = docSnap.id;
+    snapshot.forEach((docSnap) => {
+        let atleta = docSnap.data();
+        let dni = docSnap.id;
 
-    if (!atletasParticipantes.has(dni)) { 
-        let atletaRef = doc(db, "atletas", dni);
-        let nuevasFaltas = (atleta.faltas || 0) + 1;
+        if (!atletasParticipantes.has(dni)) {
+            let atletaRef = doc(db, "atletas", dni);
+            let nuevasFaltas = (atleta.faltas || 0) + 1;
 
-        let historial = atleta.historial || [];
-        historial.push({ posicion: "-", puntos: "-" }); // Mantiene la estructura
+            let historial = atleta.historial || [];
+            historial.push({ posicion: "-", puntos: "-" });
 
-        batchUpdates.push(updateDoc(atletaRef, {
-            faltas: nuevasFaltas,
-            asistenciasConsecutivas: 0,
-            historial: historial
-        }));
-    }
-});
-
+            batchUpdates.push(updateDoc(atletaRef, {
+                faltas: nuevasFaltas,
+                asistenciasConsecutivas: 0,
+                historial: historial
+            }));
+        }
+    });
 
     // 🔹 Procesar atletas que sí participaron
     for (let categoria in categorias) {
@@ -161,7 +172,6 @@ snapshot.forEach((docSnap) => {
             let asistenciasConsecutivas = (atleta.asistenciasConsecutivas || 0) + 1;
             let totalPuntos = (atleta.puntos || 0) + nuevoPuntaje;
 
-            // 🔹 Asegurar que la posición quede bien asignada
             historial.push({ posicion: i + 1, puntos: nuevoPuntaje });
 
             let bonus = calcularBonus(asistenciasConsecutivas);
@@ -180,6 +190,7 @@ snapshot.forEach((docSnap) => {
     uploadMessage.textContent = "✅ Resultados cargados correctamente.";
     actualizarRanking();
 }
+
 // =========================
 // 🔥 CÁLCULO DE BONOS POR ASISTENCIA 🔥
 // =========================
