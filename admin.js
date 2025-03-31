@@ -302,7 +302,6 @@ async function actualizarRanking() {
 // =========================
 // 🔥 Resetear Historial 🔥
 // =========================
-
 document.getElementById("reset-history").addEventListener("click", async () => {
     const confirmReset = confirm("⚠️ ¿Estás seguro de que quieres reiniciar el historial de todos los atletas? Esta acción no se puede deshacer.");
     
@@ -326,6 +325,10 @@ document.getElementById("reset-history").addEventListener("click", async () => {
         });
 
         await Promise.all(batchUpdates);
+
+        // 🔹 Resetear cantidadFechas a 0 en Firestore
+        const torneoRef = doc(db, "torneo", "datos");
+        await updateDoc(torneoRef, { cantidadFechas: 0 });
 
         alert("✅ Historial reseteado correctamente.");
         actualizarRanking();
