@@ -217,6 +217,9 @@ async function actualizarRanking() {
     }
 
     totalFechas = Math.max(totalFechas, data.historial.length);
+    // 🔥 ACTUALIZAR EL NÚMERO DE FECHAS EN LA COLECCIÓN "torneo"
+    const torneoRef = doc(db, "torneo", "datos");
+    await updateDoc(torneoRef, { cantidadFechas: totalFechas });
 
     atletasPorCategoria[categoriaCompleta].push({
         nombre: `${data.nombre} ${data.apellido}`,
