@@ -206,7 +206,20 @@ async function actualizarRanking() {
         }
 
         totalFechas = Math.max(totalFechas, data.historial.length);
-        fechaInscripcion[doc.id] = data.historial.length > 0 ? data.historial.length : totalFechas;
+        let inscripcionFecha = data.historial.length > 0 ? data.historial.length : totalFechas;
+        fechaInscripcion[doc.id] = inscripcionFecha;
+
+        // 🔹 Crear historial faltante para nuevos inscritos 🔹
+        let historialCompleto = [];
+        let faltas = 0;
+        for (let i = 0; i < totalFechas; i++) {
+            if (i < inscripcionFecha - 1) {
+                historialCompleto.push({ posicion: "-", puntos: "-" });
+                faltas++;
+            } else {
+                historialCompleto.push(data.historial[i] || { posicion: "-", puntos: "-" });
+            }
+        }
 
         atletasPorCategoria[categoriaCompleta].push({
             id: doc.id,
@@ -214,21 +227,8 @@ async function actualizarRanking() {
             localidad: data.localidad || "Desconocida",
             puntos: data.puntos || 0,
             asistencias: data.asistencias || 0,
-            faltas: data.faltas || 0,
-            historial: [...data.historial]
-        });
-    });
-
-    // 🔹 Asegurar que los atletas tengan datos en todas las fechas 🔹
-    Object.keys(atletasPorCategoria).forEach(categoria => {
-        atletasPorCategoria[categoria].forEach(atleta => {
-            let inicioParticipacion = fechaInscripcion[atleta.id] || totalFechas;
-            
-            for (let i = 0; i < totalFechas; i++) {
-                if (!atleta.historial[i]) {
-                    atleta.historial[i] = { posicion: "-", puntos: "-" }; // 🔹 Siempre marcar falta con "-" 🔹
-                }
-            }
+            faltas: data.faltas ? data.faltas + faltas : faltas,
+            historial: historialCompleto
         });
     });
 
