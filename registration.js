@@ -122,7 +122,7 @@ async function registrarAtleta(event) {
             aptoMedicoURL = await getDownloadURL(aptoRef);
         }
 
-        // Guardar el atleta en Firestore
+        // Guardar el atleta en Firestore con historial y faltas
         await setDoc(atletaRef, {
             nombre,
             apellido,
@@ -134,7 +134,8 @@ async function registrarAtleta(event) {
             password, // ⚠️ Debe encriptarse en producción
             aptoMedico: aptoMedicoURL,
             certificadoDiscapacidad: certificadoURL,
-            historial // ← Se agrega el historial dinámico
+            historial, // ← Se agrega el historial dinámico
+            faltas: cantidadFechas // ← Se asigna el número de fechas como cantidad inicial de faltas
         });
 
         // Limpiar sessionStorage y localStorage
