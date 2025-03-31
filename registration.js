@@ -32,6 +32,24 @@ function mostrarMensaje(mensaje, color = "black") {
     mensajeElemento.style.color = color;
 }
 
+// Obtener cantidadFechas desde Firestore
+async function obtenerCantidadFechas() {
+    try {
+        const torneoRef = doc(db, "torneo", "datos");
+        const torneoSnap = await getDoc(torneoRef);
+
+        if (torneoSnap.exists()) {
+            return torneoSnap.data().cantidadFechas || 0;
+        } else {
+            console.warn("No se encontró el documento de torneo.");
+            return 0;
+        }
+    } catch (error) {
+        console.error("Error al obtener cantidadFechas:", error);
+        return 0;
+    }
+}
+
 // Función para registrar atleta
 async function registrarAtleta(event) {
     event.preventDefault();
@@ -79,6 +97,15 @@ async function registrarAtleta(event) {
             return;
         }
 
+        // Obtener cantidad de fechas antes de registrar
+        let cantidadFechas = await obtenerCantidadFechas();
+
+        // Crear historial con "-" en posicion y puntos
+        let historial = Array.from({ length: cantidadFechas }, () => ({
+            posicion: "-",
+            puntos: "-"
+        }));
+
         let certificadoURL = null;
         if (categoria === "especial" && certificadoDiscapacidad) {
             mostrarMensaje("Subiendo certificado de discapacidad...", "blue");
@@ -106,7 +133,8 @@ async function registrarAtleta(event) {
             categoria,
             password, // ⚠️ Debe encriptarse en producción
             aptoMedico: aptoMedicoURL,
-            certificadoDiscapacidad: certificadoURL
+            certificadoDiscapacidad: certificadoURL,
+            historial // ← Se agrega el historial dinámico
         });
 
         // Limpiar sessionStorage y localStorage
