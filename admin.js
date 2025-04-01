@@ -222,7 +222,7 @@ async function actualizarRanking() {
             atletasPorCategoria[categoriaCompleta].push({
                 nombre: `${data.nombre} ${data.apellido}`,
                 localidad: data.localidad || "Desconocida",
-                puntos: (data.puntos || 0) + (data.puntosBonus || 0), // ✅ Sumar puntos bonus
+                puntos: data.puntos || 0,
                 asistencias: data.asistencias || 0,
                 faltas: data.faltas || 0,
                 historial: data.historial || []
@@ -366,15 +366,11 @@ document.getElementById("undo-last-date").addEventListener("click", async () => 
         snapshot.forEach((docSnap) => {
             let atleta = docSnap.data();
             let historial = atleta.historial || [];
-            let puntosBonus = atleta.puntosBonus || 0; // 🔹 Guardar puntos de bonus antes de modificar el puntaje
 
             if (historial.length > 0) {
                 let ultimaFecha = historial.pop(); // 🔥 Eliminar la última fecha
 
-                // 🔹 Recalcular puntaje sin perder los puntos de bonus
                 let nuevoPuntaje = historial.reduce((acc, fecha) => acc + (parseInt(fecha.puntos) || 0), 0);
-                nuevoPuntaje += puntosBonus; // 🏆 Sumar los puntos de bonus
-
                 let nuevasAsistencias = (atleta.asistencias || 0) - (ultimaFecha.puntos !== "-" ? 1 : 0);
                 let nuevasFaltas = (atleta.faltas || 0) - (ultimaFecha.puntos === "-" ? 1 : 0);
 
@@ -388,11 +384,10 @@ document.getElementById("undo-last-date").addEventListener("click", async () => 
                 let atletaRef = doc(db, "atletas", docSnap.id);
                 batchUpdates.push(updateDoc(atletaRef, {
                     historial: historial,
-                    puntos: nuevoPuntaje, // ✅ Se mantiene el puntaje con bonus
+                    puntos: nuevoPuntaje,
                     asistencias: nuevasAsistencias,
                     faltas: nuevasFaltas,
-                    asistenciasConsecutivas: nuevasAsistenciasConsecutivas,
-                    puntosBonus: puntosBonus // ✅ Se mantiene el bonus
+                    asistenciasConsecutivas: nuevasAsistenciasConsecutivas
                 }));
             }
         });
