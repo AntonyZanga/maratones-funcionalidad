@@ -368,17 +368,18 @@ document.getElementById("undo-last-date").addEventListener("click", async () => 
             let historial = atleta.historial || [];
 
             if (historial.length > 0) {
-                let ultimaFecha = historial.pop(); // 🔥 Eliminar la última fecha correctamente
+                let ultimaFecha = historial.pop(); // 🔥 Eliminar la última fecha
 
-                // 🔹 Calcular nuevo puntaje total SIN la última fecha
                 let nuevoPuntaje = historial.reduce((acc, fecha) => acc + (parseInt(fecha.puntos) || 0), 0);
-                
-                // 🔹 Ajustar asistencias y faltas correctamente
                 let nuevasAsistencias = (atleta.asistencias || 0) - (ultimaFecha.puntos !== "-" ? 1 : 0);
                 let nuevasFaltas = (atleta.faltas || 0) - (ultimaFecha.puntos === "-" ? 1 : 0);
-                let nuevasAsistenciasConsecutivas = ultimaFecha.puntos !== "-" 
-                    ? Math.max(0, (atleta.asistenciasConsecutivas || 0) - 1) 
-                    : atleta.asistenciasConsecutivas;
+
+                // 🔹 RECALCULAR ASISTENCIAS CONSECUTIVAS 🔹
+                let nuevasAsistenciasConsecutivas = 0;
+                for (let i = historial.length - 1; i >= 0; i--) {
+                    if (historial[i].puntos === "-") break;
+                    nuevasAsistenciasConsecutivas++;
+                }
 
                 let atletaRef = doc(db, "atletas", docSnap.id);
                 batchUpdates.push(updateDoc(atletaRef, {
