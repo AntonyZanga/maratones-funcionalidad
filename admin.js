@@ -366,11 +366,15 @@ document.getElementById("undo-last-date").addEventListener("click", async () => 
         snapshot.forEach((docSnap) => {
             let atleta = docSnap.data();
             let historial = atleta.historial || [];
+            let puntosBonus = atleta.puntosBonus || 0; // 🔹 Guardar puntos de bonus antes de modificar el puntaje
 
             if (historial.length > 0) {
                 let ultimaFecha = historial.pop(); // 🔥 Eliminar la última fecha
 
+                // 🔹 Recalcular puntaje sin perder los puntos de bonus
                 let nuevoPuntaje = historial.reduce((acc, fecha) => acc + (parseInt(fecha.puntos) || 0), 0);
+                nuevoPuntaje += puntosBonus; // 🏆 Sumar los puntos de bonus
+
                 let nuevasAsistencias = (atleta.asistencias || 0) - (ultimaFecha.puntos !== "-" ? 1 : 0);
                 let nuevasFaltas = (atleta.faltas || 0) - (ultimaFecha.puntos === "-" ? 1 : 0);
 
@@ -384,10 +388,11 @@ document.getElementById("undo-last-date").addEventListener("click", async () => 
                 let atletaRef = doc(db, "atletas", docSnap.id);
                 batchUpdates.push(updateDoc(atletaRef, {
                     historial: historial,
-                    puntos: nuevoPuntaje,
+                    puntos: nuevoPuntaje, // ✅ Se mantiene el puntaje con bonus
                     asistencias: nuevasAsistencias,
                     faltas: nuevasFaltas,
-                    asistenciasConsecutivas: nuevasAsistenciasConsecutivas
+                    asistenciasConsecutivas: nuevasAsistenciasConsecutivas,
+                    puntosBonus: puntosBonus // ✅ Se mantiene el bonus
                 }));
             }
         });
