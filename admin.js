@@ -300,12 +300,18 @@ async function actualizarRanking() {
     }
 }
 // =========================
-// 🔥 Resetear Historial 🔥
+// 🔥 Resetear Historial (Borrar todo el torneo) 🔥
 // =========================
 document.getElementById("reset-history").addEventListener("click", async () => {
-    const confirmReset = confirm("⚠️ ¿Estás seguro de que quieres reiniciar el historial de todos los atletas? Esta acción no se puede deshacer.");
+    const confirmReset = confirm("⚠️ ¿Estás seguro de que quieres resetear todo el historial? Esto borrará todas las fechas y puntuaciones.");
     
     if (!confirmReset) return;
+    
+    const doubleCheck = confirm("⚠️ Esta acción es IRREVERSIBLE. Se eliminarán todas las puntuaciones, asistencias y faltas. ¿Deseas continuar?");
+    
+    if (!doubleCheck) return;
+
+    deshabilitarInterfaz(true);
 
     try {
         const atletasRef = collection(db, "atletas");
@@ -326,26 +332,32 @@ document.getElementById("reset-history").addEventListener("click", async () => {
 
         await Promise.all(batchUpdates);
 
-        // 🔹 Resetear cantidadFechas a 0 en Firestore
+        // 🔹 Resetear cantidad de fechas en Firestore
         const torneoRef = doc(db, "torneo", "datos");
         await updateDoc(torneoRef, { cantidadFechas: 0 });
 
-        alert("✅ Historial reseteado correctamente.");
+        alert("✅ El torneo ha sido reiniciado.");
         actualizarRanking();
     } catch (error) {
         console.error("❌ Error al resetear el historial:", error);
-        alert("❌ Ocurrió un error al resetear el historial. Revisa la consola para más detalles.");
+        alert("❌ Ocurrió un error al resetear el historial.");
+    } finally {
+        deshabilitarInterfaz(false);
     }
 });
+
 // =========================
-// 🔥 Resetear última fecha 🔥
+// 🔥 Deshacer Última Fecha 🔥
 // =========================
 document.getElementById("undo-last-date").addEventListener("click", async () => {
-    const confirmUndo = confirm("⚠️ ¿Deseas deshacer la última fecha? Esta acción eliminará los últimos resultados cargados.");
+    const confirmUndo = confirm("⚠️ ¿Estás seguro de que deseas eliminar la última fecha? Se revertirán los últimos cambios en el ranking.");
     
     if (!confirmUndo) return;
 
-    // 🔹 Deshabilitar la interfaz mientras se realiza la operación
+    const doubleCheck = confirm("⚠️ Esta acción NO se puede deshacer. ¿Confirmas que quieres borrar la última fecha?");
+    
+    if (!doubleCheck) return;
+
     deshabilitarInterfaz(true);
 
     try {
@@ -395,7 +407,6 @@ document.getElementById("undo-last-date").addEventListener("click", async () => 
         console.error("❌ Error al deshacer la última fecha:", error);
         alert("❌ Ocurrió un error. Revisa la consola.");
     } finally {
-        // 🔹 Habilitar la interfaz nuevamente
         deshabilitarInterfaz(false);
     }
 });
