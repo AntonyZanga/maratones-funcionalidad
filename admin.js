@@ -366,47 +366,51 @@ document.getElementById("undo-last-date").addEventListener("click", async () => 
             let atleta = docSnap.data();
             let historial = atleta.historial || [];
 
-            if (historial.length > 0) {
-                // Se elimina la última fecha
-                historial.pop();
+            // Si no hay fechas, no hay nada que deshacer
+            if (historial.length === 0) return;
 
-                // Variables para recalcular desde cero
-                let basePoints = 0;
-                let asistencias = 0;
-                let faltas = 0;
-                let consecutivas = 0;
+            // Elimina la última fecha
+            historial.pop();
 
-                // Recorrer todo el historial para recalcular los valores
-                historial.forEach(fecha => {
-                    if (fecha.puntos === "-") {
-                        faltas++;
-                        consecutivas = 0; // Se rompe la racha
-                    } else {
-                        let pts = parseInt(fecha.puntos) || 0;
-                        basePoints += pts;
-                        asistencias++;
-                        consecutivas++;
-                    }
-                });
+            // Variables para recalcular desde cero
+            let basePoints = 0;
+            let asistencias = 0;
+            let faltas = 0;
+            let consecutivas = 0; // racha actual de asistencias
 
-                // Calcular bonus en función de la racha actual
-                let bonus = calcularBonus(consecutivas);
-                let totalPuntos = basePoints + bonus;
+            // Se recorre el historial completo (ya sin la última fecha)
+            // La racha se reinicia cada vez que se encuentra una falta ("-")
+            let streak = 0;
+            historial.forEach(evento => {
+                if (evento.puntos === "-") {
+                    faltas++;
+                    streak = 0;
+                } else {
+                    let pts = parseInt(evento.puntos) || 0;
+                    basePoints += pts;
+                    asistencias++;
+                    streak++;
+                }
+            });
+            consecutivas = streak; // La racha actual es la última acumulada
 
-                let atletaRef = doc(db, "atletas", docSnap.id);
-                batchUpdates.push(updateDoc(atletaRef, {
-                    historial: historial,
-                    puntos: totalPuntos,
-                    asistencias: asistencias,
-                    faltas: faltas,
-                    asistenciasConsecutivas: consecutivas
-                }));
-            }
+            // Recalcular bonus con la racha actual
+            let bonus = calcularBonus(consecutivas);
+            let totalPuntos = basePoints + bonus;
+
+            let atletaRef = doc(db, "atletas", docSnap.id);
+            batchUpdates.push(updateDoc(atletaRef, {
+                historial: historial,
+                puntos: totalPuntos,
+                asistencias: asistencias,
+                faltas: faltas,
+                asistenciasConsecutivas: consecutivas
+            }));
         });
 
         await Promise.all(batchUpdates);
 
-        // Reducir en 1 la cantidad total de fechas en Firestore
+        // Reducir en 1 la cantidad total de fechas en la colección "torneo"
         const torneoRef = doc(db, "torneo", "datos");
         const torneoSnap = await getDoc(torneoRef);
         if (torneoSnap.exists()) {
