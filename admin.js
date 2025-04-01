@@ -345,17 +345,14 @@ document.getElementById("reset-history").addEventListener("click", async () => {
         deshabilitarInterfaz(false);
     }
 });
-
 // =========================
-// 🔥 Deshacer Última Fecha 🔥
+// 🔥 DESHACER ÚLTIMA FECHA 🔥
 // =========================
 document.getElementById("undo-last-date").addEventListener("click", async () => {
     const confirmUndo = confirm("⚠️ ¿Estás seguro de que deseas eliminar la última fecha? Se revertirán los últimos cambios en el ranking.");
-    
     if (!confirmUndo) return;
 
     const doubleCheck = confirm("⚠️ Esta acción NO se puede deshacer. ¿Confirmas que quieres borrar la última fecha?");
-    
     if (!doubleCheck) return;
 
     deshabilitarInterfaz(true);
@@ -371,12 +368,17 @@ document.getElementById("undo-last-date").addEventListener("click", async () => 
             let historial = atleta.historial || [];
 
             if (historial.length > 0) {
-                let ultimaFecha = historial.pop(); // 🔥 Eliminar la última fecha
+                let ultimaFecha = historial.pop(); // 🔥 Eliminar la última fecha correctamente
 
+                // 🔹 Calcular nuevo puntaje total SIN la última fecha
                 let nuevoPuntaje = historial.reduce((acc, fecha) => acc + (parseInt(fecha.puntos) || 0), 0);
+                
+                // 🔹 Ajustar asistencias y faltas correctamente
                 let nuevasAsistencias = (atleta.asistencias || 0) - (ultimaFecha.puntos !== "-" ? 1 : 0);
                 let nuevasFaltas = (atleta.faltas || 0) - (ultimaFecha.puntos === "-" ? 1 : 0);
-                let nuevasAsistenciasConsecutivas = ultimaFecha.puntos !== "-" ? Math.max(0, (atleta.asistenciasConsecutivas || 0) - 1) : atleta.asistenciasConsecutivas;
+                let nuevasAsistenciasConsecutivas = ultimaFecha.puntos !== "-" 
+                    ? Math.max(0, (atleta.asistenciasConsecutivas || 0) - 1) 
+                    : atleta.asistenciasConsecutivas;
 
                 let atletaRef = doc(db, "atletas", docSnap.id);
                 batchUpdates.push(updateDoc(atletaRef, {
