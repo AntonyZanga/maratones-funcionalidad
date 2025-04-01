@@ -366,51 +366,50 @@ document.getElementById("undo-last-date").addEventListener("click", async () => 
             let atleta = docSnap.data();
             let historial = atleta.historial || [];
 
-            // Si no hay fechas, no hay nada que deshacer
+            // Si no hay historial, no se puede deshacer nada
             if (historial.length === 0) return;
 
             // Elimina la última fecha
             historial.pop();
 
-            // Variables para recalcular desde cero
+            // Variables para recalcultar
             let basePoints = 0;
             let asistencias = 0;
             let faltas = 0;
-            let consecutivas = 0; // racha actual de asistencias
+            let streak = 0; // racha actual de carreras consecutivas
 
-            // Se recorre el historial completo (ya sin la última fecha)
-            // La racha se reinicia cada vez que se encuentra una falta ("-")
-            let streak = 0;
+            // Recorremos todo el historial (ya sin la última fecha)
             historial.forEach(evento => {
                 if (evento.puntos === "-") {
+                    // Si es falta, se suma 1 a faltas y se reinicia la racha
                     faltas++;
                     streak = 0;
                 } else {
+                    // Si asistió, se suma el puntaje base, se cuenta la asistencia y se incrementa la racha
                     let pts = parseInt(evento.puntos) || 0;
                     basePoints += pts;
                     asistencias++;
                     streak++;
                 }
             });
-            consecutivas = streak; // La racha actual es la última acumulada
 
-            // Recalcular bonus con la racha actual
-            let bonus = calcularBonus(consecutivas);
-            let totalPuntos = basePoints + bonus;
+            // Se calcula el bonus en función del streak actual (solo se considera la racha continua al final)
+            let bonus = calcularBonusStreak(streak);
+            let totalPoints = basePoints + bonus;
 
             let atletaRef = doc(db, "atletas", docSnap.id);
             batchUpdates.push(updateDoc(atletaRef, {
                 historial: historial,
-                puntos: totalPuntos,
+                puntos: totalPoints,
                 asistencias: asistencias,
                 faltas: faltas,
-                asistenciasConsecutivas: consecutivas
+                asistenciasConsecutivas: streak
             }));
         });
 
         await Promise.all(batchUpdates);
 
-        // Reducir en 1 la cantidad total de fechas en la colección "torneo"
+        // Reducir en 1 la cantidad total de fechas en Firestore (colección "torneo")
         const torneoRef = doc(db, "torneo", "datos");
         const torneoSnap = await getDoc(torneoRef);
         if (torneoSnap.exists()) {
@@ -429,6 +428,19 @@ document.getElementById("undo-last-date").addEventListener("click", async () => 
         deshabilitarInterfaz(false);
     }
 });
+
+// =========================
+// 🔥 FUNCIÓN PARA CALCULAR BONUS SEGÚN RACHAS 🔥
+// =========================
+function calcularBonusStreak(streak) {
+    if (streak < 2) return 0;
+    if (streak === 2) return 2;
+    if (streak === 3) return 6;   // 2 + 4
+    if (streak === 4) return 12;  // 2 + 4 + 6
+    if (streak === 5) return 20;  // 2 + 4 + 6 + 8
+    if (streak >= 6) return 30;   // 2 + 4 + 6 + 8 + 10 (máximo)
+    return 0;
+}
 
 // =========================
 // 🔥 FUNCIONES AUXILIARES 🔥
