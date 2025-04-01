@@ -337,6 +337,68 @@ document.getElementById("reset-history").addEventListener("click", async () => {
         alert("❌ Ocurrió un error al resetear el historial. Revisa la consola para más detalles.");
     }
 });
+// =========================
+// 🔥 Resetear última fecha 🔥
+// =========================
+document.getElementById("undo-last-date").addEventListener("click", async () => {
+    const confirmUndo = confirm("⚠️ ¿Deseas deshacer la última fecha? Esta acción eliminará los últimos resultados cargados.");
+    
+    if (!confirmUndo) return;
+
+    // 🔹 Deshabilitar la interfaz mientras se realiza la operación
+    deshabilitarInterfaz(true);
+
+    try {
+        const atletasRef = collection(db, "atletas");
+        const snapshot = await getDocs(atletasRef);
+
+        let batchUpdates = [];
+
+        snapshot.forEach((docSnap) => {
+            let atleta = docSnap.data();
+            let historial = atleta.historial || [];
+
+            if (historial.length > 0) {
+                let ultimaFecha = historial.pop(); // 🔥 Eliminar la última fecha
+
+                let nuevoPuntaje = historial.reduce((acc, fecha) => acc + (parseInt(fecha.puntos) || 0), 0);
+                let nuevasAsistencias = (atleta.asistencias || 0) - (ultimaFecha.puntos !== "-" ? 1 : 0);
+                let nuevasFaltas = (atleta.faltas || 0) - (ultimaFecha.puntos === "-" ? 1 : 0);
+                let nuevasAsistenciasConsecutivas = ultimaFecha.puntos !== "-" ? Math.max(0, (atleta.asistenciasConsecutivas || 0) - 1) : atleta.asistenciasConsecutivas;
+
+                let atletaRef = doc(db, "atletas", docSnap.id);
+                batchUpdates.push(updateDoc(atletaRef, {
+                    historial: historial,
+                    puntos: nuevoPuntaje,
+                    asistencias: nuevasAsistencias,
+                    faltas: nuevasFaltas,
+                    asistenciasConsecutivas: nuevasAsistenciasConsecutivas
+                }));
+            }
+        });
+
+        await Promise.all(batchUpdates);
+
+        // 🔹 Reducir en 1 la cantidad total de fechas en Firestore
+        const torneoRef = doc(db, "torneo", "datos");
+        const torneoSnap = await getDoc(torneoRef);
+        if (torneoSnap.exists()) {
+            let cantidadFechas = torneoSnap.data().cantidadFechas || 0;
+            if (cantidadFechas > 0) {
+                await updateDoc(torneoRef, { cantidadFechas: cantidadFechas - 1 });
+            }
+        }
+
+        alert("✅ Última fecha eliminada correctamente.");
+        actualizarRanking();
+    } catch (error) {
+        console.error("❌ Error al deshacer la última fecha:", error);
+        alert("❌ Ocurrió un error. Revisa la consola.");
+    } finally {
+        // 🔹 Habilitar la interfaz nuevamente
+        deshabilitarInterfaz(false);
+    }
+});
 
 // =========================
 // 🔥 FUNCIONES AUXILIARES 🔥
