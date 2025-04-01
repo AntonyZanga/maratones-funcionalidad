@@ -222,7 +222,7 @@ async function actualizarRanking() {
             atletasPorCategoria[categoriaCompleta].push({
                 nombre: `${data.nombre} ${data.apellido}`,
                 localidad: data.localidad || "Desconocida",
-                puntos: data.puntos || 0,
+                puntos: (data.puntos || 0) + (data.puntosBonus || 0), // ✅ Sumar puntos bonus
                 asistencias: data.asistencias || 0,
                 faltas: data.faltas || 0,
                 historial: data.historial || []
