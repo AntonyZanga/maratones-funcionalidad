@@ -348,6 +348,9 @@ document.getElementById("reset-history").addEventListener("click", async () => {
 // =========================
 // 🔥 DESHACER ÚLTIMA FECHA 🔥
 // =========================
+// =========================
+// 🔥 DESHACER ÚLTIMA FECHA 🔥
+// =========================
 document.getElementById("undo-last-date").addEventListener("click", async () => {
     const confirmUndo = confirm("⚠️ ¿Estás seguro de que deseas eliminar la última fecha? Se revertirán los últimos cambios en el ranking.");
     if (!confirmUndo) return;
@@ -370,21 +373,28 @@ document.getElementById("undo-last-date").addEventListener("click", async () => 
             if (historial.length > 0) {
                 let ultimaFecha = historial.pop(); // 🔥 Eliminar la última fecha
 
+                // Recalcular la suma de puntos base (sin bonus)
                 let nuevoPuntaje = historial.reduce((acc, fecha) => acc + (parseInt(fecha.puntos) || 0), 0);
+
+                // Actualizar asistencias y faltas según la última fecha
                 let nuevasAsistencias = (atleta.asistencias || 0) - (ultimaFecha.puntos !== "-" ? 1 : 0);
                 let nuevasFaltas = (atleta.faltas || 0) - (ultimaFecha.puntos === "-" ? 1 : 0);
 
-                // 🔹 RECALCULAR ASISTENCIAS CONSECUTIVAS 🔹
+                // Recalcular asistencias consecutivas: contar desde el final hasta encontrar una fecha con falta
                 let nuevasAsistenciasConsecutivas = 0;
                 for (let i = historial.length - 1; i >= 0; i--) {
                     if (historial[i].puntos === "-") break;
                     nuevasAsistenciasConsecutivas++;
                 }
 
+                // Recalcular bonus según las asistencias consecutivas actuales
+                let bonus = calcularBonus(nuevasAsistenciasConsecutivas);
+                let puntosFinales = nuevoPuntaje + bonus;
+
                 let atletaRef = doc(db, "atletas", docSnap.id);
                 batchUpdates.push(updateDoc(atletaRef, {
                     historial: historial,
-                    puntos: nuevoPuntaje,
+                    puntos: puntosFinales,
                     asistencias: nuevasAsistencias,
                     faltas: nuevasFaltas,
                     asistenciasConsecutivas: nuevasAsistenciasConsecutivas
