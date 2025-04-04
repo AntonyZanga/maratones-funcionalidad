@@ -6,16 +6,27 @@ import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/fireba
 // Función para cargar los grupos de running desde Firebase
 async function cargarGrupos() {
     const selectGrupo = document.getElementById("tipo-grupo");
-    selectGrupo.innerHTML = '<option value="">Seleccione un grupo...</option>'; // Reset opciones
+    selectGrupo.innerHTML = ''; // Limpiamos primero todas las opciones
+
+    // Agregar opción "Individual" como default seleccionada
+    const optionIndividual = document.createElement("option");
+    optionIndividual.value = "Individual";
+    optionIndividual.textContent = "Individual";
+    optionIndividual.selected = true;
+    selectGrupo.appendChild(optionIndividual);
 
     try {
         const querySnapshot = await getDocs(collection(db, "grupos"));
         querySnapshot.forEach((doc) => {
             const grupo = doc.data().nombre;
-            const option = document.createElement("option");
-            option.value = grupo;
-            option.textContent = grupo;
-            selectGrupo.appendChild(option);
+
+            // Evitar duplicar "Individual" si ya existe en Firestore
+            if (grupo !== "Individual") {
+                const option = document.createElement("option");
+                option.value = grupo;
+                option.textContent = grupo;
+                selectGrupo.appendChild(option);
+            }
         });
     } catch (error) {
         console.error("Error al cargar los grupos:", error);
