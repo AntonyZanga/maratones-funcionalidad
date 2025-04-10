@@ -102,7 +102,7 @@ body {
   width: 100%;
 }
 
-.form-group label {
+.form-group > label:not(.radio-label) {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 600;
