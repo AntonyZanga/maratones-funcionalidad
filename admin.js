@@ -275,86 +275,7 @@ async function actualizarRanking() {
             table.innerHTML = theadHTML + `<tbody></tbody>`;
             section.appendChild(table);
             rankingContainer.appendChild(section);
-// =========================
-// 🔥 RANKING DE RUNNING TEAMS 🔥
-// =========================
-let equipos = {};
 
-// Agrupar atletas por grupo (excluyendo "Individual") y sumar puntos
-snapshot.forEach(doc => {
-    let data = doc.data();
-
-    if (!data.historial || data.historial.every(fecha => fecha.puntos === "-" && fecha.posicion === "-")) return;
-
-    let grupo = data.grupo || "Sin grupo";
-    if (grupo.toLowerCase() === "individual") return;
-
-    if (!equipos[grupo]) {
-        equipos[grupo] = {
-            nombre: grupo,
-            puntos: 0,
-            atletas: []
-        };
-    }
-
-    equipos[grupo].puntos += data.puntos || 0;
-    equipos[grupo].atletas.push(`${data.nombre} ${data.apellido}`);
-});
-
-// Ordenar por puntos
-let equiposOrdenados = Object.values(equipos).sort((a, b) => b.puntos - a.puntos);
-
-// Crear sección y tabla
-let equiposSection = document.createElement("section");
-equiposSection.classList.add("ranking-equipos");
-
-let equiposTitle = document.createElement("h3");
-equiposTitle.textContent = "🏆 Ranking de Equipos de Running";
-equiposSection.appendChild(equiposTitle);
-
-let equiposTable = document.createElement("table");
-equiposTable.innerHTML = `
-    <thead>
-        <tr>
-            <th>P°</th>
-            <th>Equipo</th>
-            <th>Puntos Totales</th>
-            <th>Integrantes <small>(mostrar/ocultar)</small></th>
-        </tr>
-    </thead>
-    <tbody>
-        ${equiposOrdenados.map((equipo, index) => `
-            <tr>
-                <td>${index + 1}</td>
-                <td>${equipo.nombre}</td>
-                <td>${equipo.puntos}</td>
-                <td>
-                    <button class="toggle-integrantes" data-index="${index}">Mostrar</button>
-                    <div class="integrantes" id="integrantes-${index}" style="display: none; margin-top: 5px; font-size: 0.9em;">
-                        ${equipo.atletas.join(", ")}
-                    </div>
-                </td>
-            </tr>
-        `).join("")}
-    </tbody>
-`;
-
-equiposSection.appendChild(equiposTable);
-rankingContainer.appendChild(equiposSection);
-
-// Agregar funcionalidad para mostrar/ocultar
-equiposTable.querySelectorAll(".toggle-integrantes").forEach(btn => {
-    btn.addEventListener("click", () => {
-        const index = btn.getAttribute("data-index");
-        const div = document.getElementById(`integrantes-${index}`);
-        const visible = div.style.display === "block";
-        div.style.display = visible ? "none" : "block";
-        btn.textContent = visible ? "Mostrar" : "Ocultar";
-    });
-});
-// =========================
-// 🔥 RANKING DE RUNNING TEAMS 🔥
-// =========================
             let tbody = table.querySelector("tbody");
 
             atletas.forEach((atleta, index) => {
@@ -374,6 +295,88 @@ equiposTable.querySelectorAll(".toggle-integrantes").forEach(btn => {
                 tbody.appendChild(row);
             });
         });
+        // ============================
+        // 🏃‍♂️ RANKING GENERAL DE EQUIPOS
+        // ============================
+        let equipos = {};
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+
+            // 🔥 NO CONTAR ATLETAS SIN PARTICIPACIÓN
+            if (!data.historial || data.historial.every(f => f.posicion === "-" && f.puntos === "-")) return;
+
+            const grupo = data.grupo || "Individual";
+            const puntos = data.puntos || 0;
+            const nombreCompleto = `${data.nombre} ${data.apellido}`;
+
+            if (!equipos[grupo]) {
+                equipos[grupo] = {
+                    nombre: grupo,
+                    puntos: 0,
+                    integrantes: []
+                };
+            }
+
+            equipos[grupo].puntos += puntos;
+            equipos[grupo].integrantes.push({
+                nombre: nombreCompleto,
+                puntos: puntos
+            });
+        });
+
+        const seccionEquipos = document.createElement("section");
+        const tituloEquipos = document.createElement("h3");
+        tituloEquipos.textContent = "Ranking General de Running Teams";
+        seccionEquipos.appendChild(tituloEquipos);
+
+        const tablaEquipos = document.createElement("table");
+        tablaEquipos.innerHTML = `
+            <thead>
+                <tr>
+                    <th>P°</th><th>Equipo</th><th>Puntos</th><th>Integrantes</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        `;
+
+        const cuerpoEquipos = tablaEquipos.querySelector("tbody");
+
+        const equiposOrdenados = Object.values(equipos)
+            .filter(e => e.nombre !== "Individual")
+            .sort((a, b) => b.puntos - a.puntos);
+
+        equiposOrdenados.forEach((equipo, index) => {
+            const filaEquipo = document.createElement("tr");
+
+            filaEquipo.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${equipo.nombre}</td>
+                <td>${equipo.puntos}</td>
+                <td><button class="btn btn-warning" onclick="toggleIntegrantes('${equipo.nombre.replace(/'/g, "\\'")}')">Mostrar integrantes</button></td>
+            `;
+
+            cuerpoEquipos.appendChild(filaEquipo);
+
+            const filaIntegrantes = document.createElement("tr");
+            filaIntegrantes.id = `integrantes-${equipo.nombre}`;
+            filaIntegrantes.classList.add("hidden");
+
+            let lista = `<ul>`;
+            equipo.integrantes
+                .sort((a, b) => b.puntos - a.puntos)
+                .forEach(integrante => {
+                    lista += `<li>${integrante.nombre} (${integrante.puntos} pts)</li>`;
+                });
+            lista += `</ul>`;
+
+            filaIntegrantes.innerHTML = `<td colspan="4">${lista}</td>`;
+            cuerpoEquipos.appendChild(filaIntegrantes);
+        });
+
+        seccionEquipos.appendChild(tablaEquipos);
+        rankingContainer.appendChild(seccionEquipos);
+
     } catch (error) {
         console.error("❌ Error al actualizar el ranking:", error);
     }
@@ -524,6 +527,20 @@ function calcularBonusStreak(streak) {
 // =========================
 // 🔥 FUNCIONES AUXILIARES 🔥
 // =========================
+function toggleIntegrantes(nombreEquipo) {
+    const fila = document.getElementById(`integrantes-${nombreEquipo}`);
+    if (!fila) return;
+
+    fila.classList.toggle("hidden");
+
+    const btn = fila.previousElementSibling.querySelector("button");
+    if (fila.classList.contains("hidden")) {
+        btn.textContent = "Mostrar integrantes";
+    } else {
+        btn.textContent = "Ocultar integrantes";
+    }
+}
+
 function calcularEdad(fechaNacimiento) {
     let fechaNac = new Date(fechaNacimiento);
     let hoy = new Date();
