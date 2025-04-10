@@ -62,11 +62,20 @@
           <input type="file" id="apto-medico" name="apto-medico" accept=".pdf,.jpg,.png">
         </div>
         <fieldset class="form-group">
-          <legend>Categoría</legend>
-          <label><input type="radio" name="categoria" value="Masculino" required> Masculino</label>
-          <label><input type="radio" name="categoria" value="Femenino"> Femenino</label>
-          <label><input type="radio" name="categoria" value="Especial"> Especial</label>
-        </fieldset>
+  <legend>Categoría</legend>
+  <label class="radio-inline">
+    <input type="radio" name="categoria" value="Masculino" required>
+    Masculino
+  </label>
+  <label class="radio-inline">
+    <input type="radio" name="categoria" value="Femenino">
+    Femenino
+  </label>
+  <label class="radio-inline">
+    <input type="radio" name="categoria" value="Especial">
+    Especial
+  </label>
+</fieldset>
         <div id="certificado-container" class="form-group hidden">
           <label for="certificado-discapacidad">Certificado de Discapacidad:</label>
           <input type="file" id="certificado-discapacidad" name="certificado-discapacidad" accept=".pdf,.jpg,.png">
