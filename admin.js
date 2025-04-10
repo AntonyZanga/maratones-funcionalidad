@@ -187,9 +187,8 @@ function calcularBonus(asistencias) {
     const bonus = [0, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 25, 30]; // Máx. 30 puntos extra
     return bonus[Math.min(asistencias, bonus.length - 1)];
 }
-
 // =========================
-// 🔥 ACTUALIZAR TABLA DE RANKING 🔥
+// 🔥 ACTUALIZAR TABLA DE RANKING (Individual y Running Teams) 🔥
 // =========================
 async function actualizarRanking() {
     try {
@@ -242,11 +241,11 @@ async function actualizarRanking() {
             });
         });
 
-        // Renderizar el ranking en la tabla
+        // Renderizar el ranking individual en la tabla
         Object.keys(atletasPorCategoria).sort().forEach(categoria => {
             let atletas = atletasPorCategoria[categoria];
 
-            // Ordenar por puntos
+            // Ordenar por puntos (de mayor a menor)
             atletas.sort((a, b) => b.puntos - a.puntos);
 
             let section = document.createElement("section");
@@ -259,14 +258,12 @@ async function actualizarRanking() {
                 <tr>
                     <th>P°</th><th>Nombre</th><th>Localidad</th><th>Pts</th>
                     <th>Asis</th><th>Falt</th>`;
-
             for (let i = 1; i <= totalFechas; i++) {
                 theadHTML += `<th colspan="2">Fecha ${i}</th>`;
             }
             theadHTML += `</tr><tr>
                     <th></th><th></th><th></th><th></th>
                     <th></th><th></th>`;
-
             for (let i = 1; i <= totalFechas; i++) {
                 theadHTML += `<th>P°</th><th>Pts</th>`;
             }
@@ -287,17 +284,86 @@ async function actualizarRanking() {
                     <td>${atleta.puntos}</td>
                     <td>${atleta.asistencias}</td>
                     <td>${atleta.faltas}</td>`;
-
                 atleta.historial.forEach(fecha => {
                     row.innerHTML += `<td>${fecha.posicion}</td><td>${fecha.puntos}</td>`;
                 });
-
                 tbody.appendChild(row);
             });
         });
+
+        // Finalmente, actualizar el ranking de running teams según la colección "grupos"
+        actualizarRankingTeams();
     } catch (error) {
         console.error("❌ Error al actualizar el ranking:", error);
     }
+}
+
+// =========================
+// 🔥 ACTUALIZAR RANKING DE RUNNING TEAMS (USANDO LA COLECCIÓN "grupos") 🔥
+// =========================
+async function actualizarRankingTeams() {
+    // Primero, obtenemos los grupos registrados en la colección "grupos"
+    const gruposRef = collection(db, "grupos");
+    const gruposSnap = await getDocs(gruposRef);
+    let teams = {};
+
+    gruposSnap.forEach(groupDoc => {
+        const groupData = groupDoc.data();
+        // Se asume que cada documento de grupo tiene el campo "nombre"
+        const groupName = groupData.nombre;
+        teams[groupName] = {
+            team: groupName,
+            puntos: 0
+        };
+    });
+
+    // Luego, obtenemos los atletas y acumulamos sus puntos según el campo "grupoRunning"
+    const atletasRef = collection(db, "atletas");
+    const atletasSnap = await getDocs(atletasRef);
+
+    atletasSnap.forEach(docSnap => {
+        let data = docSnap.data();
+        // Se descartan aquellos atletas que sean "Individual" o que no tengan definido grupoRunning
+        if (data.grupoRunning && data.grupoRunning.toLowerCase() !== "individual") {
+            // Solo se acumulan los puntos si el grupoRunning coincide con alguno registrado en la colección "grupos"
+            if (teams[data.grupoRunning]) {
+                teams[data.grupoRunning].puntos += (data.puntos || 0);
+            }
+        }
+    });
+
+    // Convertimos el objeto a arreglo y lo ordenamos de mayor a menor por puntos
+    let teamsArray = Object.values(teams).sort((a, b) => b.puntos - a.puntos);
+
+    // Renderizar la tabla del ranking de running teams
+    const rankingContainer = document.getElementById("ranking-container");
+    let section = document.createElement("section");
+    let title = document.createElement("h3");
+    title.textContent = "Ranking de Running Teams";
+    section.appendChild(title);
+    
+    let table = document.createElement("table");
+    let thead = document.createElement("thead");
+    thead.innerHTML = `<tr>
+      <th>Puesto</th>
+      <th>Team</th>
+      <th>Puntos</th>
+    </tr>`;
+    table.appendChild(thead);
+
+    let tbody = document.createElement("tbody");
+    teamsArray.forEach((team, index) => {
+        let row = document.createElement("tr");
+        row.innerHTML = `<td>${index + 1}</td>
+                         <td>${team.team}</td>
+                         <td>${team.puntos}</td>`;
+        tbody.appendChild(row);
+    });
+    table.appendChild(tbody);
+    section.appendChild(table);
+
+    // Se agrega la sección del ranking de equipos al final del contenedor
+    rankingContainer.appendChild(section);
 }
 // =========================
 // 🔥 Resetear Historial (Borrar todo el torneo) 🔥
