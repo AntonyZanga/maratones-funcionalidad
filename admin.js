@@ -345,7 +345,7 @@ async function actualizarRankingTeams() {
     let table = document.createElement("table");
     let thead = document.createElement("thead");
     thead.innerHTML = `<tr>
-      <th>Puesto</th>
+      <th>P°</th>
       <th>Team</th>
       <th>Puntos</th>
     </tr>`;
