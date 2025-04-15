@@ -76,8 +76,8 @@ function deshabilitarInterfaz(deshabilitar) {
 // =========================
 // 🔥 OBTENER CATEGORÍA SEGÚN EDAD Y GÉNERO 🔥
 // =========================
-function obtenerCategoria(fechaNacimiento, genero) {
-    let edad = calcularEdad(fechaNacimiento);
+function obtenerCategoria(fechaNacimiento, genero, fechaCarrera) {
+    let edad = calcularEdad(fechaNacimiento, fechaCarrera);
     let categoriaEdad = determinarCategoriaEdad(edad);
     return `${genero} - ${categoriaEdad}`;
 }
@@ -87,6 +87,13 @@ function obtenerCategoria(fechaNacimiento, genero) {
 // =========================
 async function procesarResultados(results) {
     const uploadMessage = document.getElementById("upload-message");
+    const fechaMaratonInput = document.getElementById("fecha-maraton");
+    const fechaMaraton = fechaMaratonInput?.value;
+
+    if (!fechaMaraton) {
+        uploadMessage.textContent = "Seleccioná la fecha de la maratón.";
+        return;
+    }
 
     if (results.length < 2) {
         uploadMessage.textContent = "El archivo no tiene datos válidos.";
@@ -110,7 +117,7 @@ async function procesarResultados(results) {
         if (!atletaSnap.exists()) continue;
 
         let atleta = atletaSnap.data();
-        let categoria = obtenerCategoria(atleta.fechaNacimiento, atleta.categoria);
+        let categoria = obtenerCategoria(atleta.fechaNacimiento, atleta.categoria, fechaMaraton);
 
         if (!categorias[categoria]) {
             categorias[categoria] = [];
@@ -121,15 +128,13 @@ async function procesarResultados(results) {
 
     const atletasRef = collection(db, "atletas");
     const snapshot = await getDocs(atletasRef);
-    
     let batchUpdates = [];
 
-    // Procesar atletas que no participaron
     snapshot.forEach((docSnap) => {
         let atleta = docSnap.data();
         let dni = docSnap.id;
 
-        if (!atletasParticipantes.has(dni)) { 
+        if (!atletasParticipantes.has(dni)) {
             let atletaRef = doc(db, "atletas", dni);
             let nuevasFaltas = (atleta.faltas || 0) + 1;
 
@@ -138,7 +143,8 @@ async function procesarResultados(results) {
                 posicion: "-",
                 puntos: "-",
                 bonus: 0,
-                grupoRunning: atleta.grupoRunning || "Individual"
+                grupoRunning: atleta.grupoRunning || "Individual",
+                fecha: fechaMaraton
             });
 
             batchUpdates.push(updateDoc(atletaRef, {
@@ -149,7 +155,6 @@ async function procesarResultados(results) {
         }
     });
 
-    // Procesar atletas que sí participaron
     for (let categoria in categorias) {
         let atletasCategoria = categorias[categoria];
 
@@ -159,7 +164,6 @@ async function procesarResultados(results) {
             let { dni, posicion, atletaRef, atleta } = atletasCategoria[i];
 
             let nuevoPuntaje = puntosBase[i] !== undefined ? puntosBase[i] : 1;
-
             let historial = atleta.historial || [];
             let asistencias = (atleta.asistencias || 0) + 1;
             let asistenciasConsecutivas = (atleta.asistenciasConsecutivas || 0) + 1;
@@ -171,7 +175,8 @@ async function procesarResultados(results) {
                 posicion: i + 1,
                 puntos: nuevoPuntaje,
                 bonus: bonus,
-                grupoRunning: atleta.grupoRunning || "Individual"
+                grupoRunning: atleta.grupoRunning || "Individual",
+                fecha: fechaMaraton
             });
 
             batchUpdates.push(updateDoc(atletaRef, {
@@ -544,10 +549,14 @@ function calcularBonusStreak(streak) {
 // =========================
 // 🔥 FUNCIONES AUXILIARES 🔥
 // =========================
-function calcularEdad(fechaNacimiento) {
-    let fechaNac = new Date(fechaNacimiento);
-    let hoy = new Date();
-    let edad = hoy.getFullYear() - fechaNac.getFullYear();
+function calcularEdad(fechaNacimiento, fechaReferencia) {
+    let nacimiento = new Date(fechaNacimiento);
+    let referencia = fechaReferencia ? new Date(fechaReferencia) : new Date();
+    let edad = referencia.getFullYear() - nacimiento.getFullYear();
+    let m = referencia.getMonth() - nacimiento.getMonth();
+    if (m < 0 || (m === 0 && referencia.getDate() < nacimiento.getDate())) {
+        edad--;
+    }
     return edad;
 }
 
