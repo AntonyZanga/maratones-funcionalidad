@@ -303,4 +303,8 @@ table tr:hover {
     width: 100%;
     max-width: 100%;
   }
+  .ranking-table-wrapper table {
+  min-width: max-content;
+}
+
 }
