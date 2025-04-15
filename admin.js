@@ -30,38 +30,27 @@ document.getElementById("logout").addEventListener("click", () => {
 // =========================
 document.getElementById("upload-results").addEventListener("click", async () => {
     const fileInput = document.getElementById("file-input");
-    const uploadMessage = document.getElementById("upload-message");
-    
-    if (fileInput.files.length === 0) {
-        uploadMessage.textContent = "Selecciona un archivo Excel.";
-        return;
-    }
-
-    // 🔹 Deshabilitar TODOS los botones y entradas
+    const mensaje = document.getElementById("upload-message");
+    if (fileInput.files.length === 0) return mensaje.textContent = "Selecciona un archivo Excel.";
     deshabilitarInterfaz(true);
-    uploadMessage.textContent = "⏳ Procesando resultados... Por favor, espera.";
+    mensaje.textContent = "⏳ Procesando resultados...";
 
     const file = fileInput.files[0];
     const reader = new FileReader();
-
-    reader.onload = async function (event) {
+    reader.onload = async (e) => {
         try {
-            const data = new Uint8Array(event.target.result);
+            const data = new Uint8Array(e.target.result);
             const workbook = XLSX.read(data, { type: "array" });
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
             const results = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
             await procesarResultados(results);
-            uploadMessage.textContent = "✅ Resultados cargados correctamente.";
-        } catch (error) {
-            console.error("Error al procesar el archivo:", error);
-            uploadMessage.textContent = "❌ Error al procesar los resultados.";
+        } catch (err) {
+            console.error(err);
+            mensaje.textContent = "❌ Error al procesar el archivo.";
         } finally {
-            // 🔹 Habilitar nuevamente la interfaz
             deshabilitarInterfaz(false);
         }
     };
-
     reader.readAsArrayBuffer(file);
 });
 
@@ -323,68 +312,44 @@ document.getElementById("publicar-ranking").addEventListener("click", async () =
 // 🔥 ACTUALIZAR RANKING DE RUNNING TEAMS (USANDO LA COLECCIÓN "grupos") 🔥
 // =========================
 async function actualizarRankingTeams() {
-    // Primero, obtenemos los grupos registrados en la colección "grupos"
-    const gruposRef = collection(db, "grupos");
-    const gruposSnap = await getDocs(gruposRef);
+    const gruposSnap = await getDocs(collection(db, "grupos"));
     let teams = {};
-
-    gruposSnap.forEach(groupDoc => {
-        const groupData = groupDoc.data();
-        // Se asume que cada documento de grupo tiene el campo "nombre"
-        const groupName = groupData.nombre;
-        teams[groupName] = {
-            team: groupName,
-            puntos: 0
-        };
+    gruposSnap.forEach(doc => {
+        const nombre = doc.data().nombre;
+        teams[nombre] = { team: nombre, puntos: 0 };
     });
 
-    // Luego, obtenemos los atletas y acumulamos sus puntos según el campo "grupoRunning"
-    const atletasRef = collection(db, "atletas");
-    const atletasSnap = await getDocs(atletasRef);
-
-    atletasSnap.forEach(docSnap => {
-        let data = docSnap.data();
-        // Se descartan aquellos atletas que sean "Individual" o que no tengan definido grupoRunning
-        if (data.grupoRunning && data.grupoRunning.toLowerCase() !== "individual") {
-            // Solo se acumulan los puntos si el grupoRunning coincide con alguno registrado en la colección "grupos"
-            if (teams[data.grupoRunning]) {
-                teams[data.grupoRunning].puntos += (data.puntos || 0);
+    const atletasSnap = await getDocs(collection(db, "atletas"));
+    atletasSnap.forEach(doc => {
+        const historial = doc.data().historial || [];
+        historial.forEach(e => {
+            if (e.puntos !== "-" && e.grupo && e.grupo.toLowerCase() !== "individual") {
+                if (!teams[e.grupo]) teams[e.grupo] = { team: e.grupo, puntos: 0 };
+                teams[e.grupo].puntos += parseInt(e.puntos);
             }
-        }
+        });
     });
 
-    // Convertimos el objeto a arreglo y lo ordenamos de mayor a menor por puntos
-    let teamsArray = Object.values(teams).sort((a, b) => b.puntos - a.puntos);
-
-    // Renderizar la tabla del ranking de running teams
-    const rankingContainer = document.getElementById("ranking-container");
+    let lista = Object.values(teams).sort((a,b) => b.puntos - a.puntos);
+    const contenedor = document.getElementById("ranking-container");
     let section = document.createElement("section");
     let title = document.createElement("h3");
     title.textContent = "Ranking de Running Teams";
     section.appendChild(title);
-    
-    let table = document.createElement("table");
-    let thead = document.createElement("thead");
-    thead.innerHTML = `<tr>
-      <th>P°</th>
-      <th>Team</th>
-      <th>Puntos</th>
-    </tr>`;
-    table.appendChild(thead);
 
+    let table = document.createElement("table");
+    table.innerHTML = `<thead><tr><th>P°</th><th>Team</th><th>Puntos</th></tr></thead>`;
     let tbody = document.createElement("tbody");
-    teamsArray.forEach((team, index) => {
-        let row = document.createElement("tr");
-        row.innerHTML = `<td>${index + 1}</td>
-                         <td>${team.team}</td>
-                         <td>${team.puntos}</td>`;
+
+    lista.forEach((team, idx) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${idx+1}</td><td>${team.team}</td><td>${team.puntos}</td>`;
         tbody.appendChild(row);
     });
+
     table.appendChild(tbody);
     section.appendChild(table);
-
-    // Se agrega la sección del ranking de equipos al final del contenedor
-    rankingContainer.appendChild(section);
+    contenedor.appendChild(section);
 }
 // =========================
 // 🔥 Resetear Historial (Borrar todo el torneo) 🔥
