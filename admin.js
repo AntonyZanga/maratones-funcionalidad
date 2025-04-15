@@ -349,8 +349,13 @@ async function actualizarRanking() {
             theadHTML += `</tr></thead>`;
 
             table.innerHTML = theadHTML + `<tbody></tbody>`;
-            section.appendChild(table);
+            const wrapper = document.createElement("div");
+            wrapper.classList.add("ranking-table-wrapper");
+
+            wrapper.appendChild(table);
+            section.appendChild(wrapper);
             rankingContainer.appendChild(section);
+
 
             let tbody = table.querySelector("tbody");
 
