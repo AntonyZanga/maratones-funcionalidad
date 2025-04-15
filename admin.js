@@ -298,6 +298,27 @@ async function actualizarRanking() {
     }
 }
 
+document.getElementById("publicar-ranking").addEventListener("click", async () => {
+    try {
+        const confirmar = confirm("¿Deseás publicar el ranking actual al público?");
+        if (!confirmar) return;
+
+        const contenedor = document.getElementById("ranking-container");
+        const html = contenedor.innerHTML;
+
+        const refPublico = doc(db, "torneo", "publico");
+        await setDoc(refPublico, {
+            html: html,
+            fecha: new Date().toISOString()
+        });
+
+        alert("✅ Ranking publicado para el público.");
+    } catch (error) {
+        console.error("❌ Error al publicar el ranking:", error);
+        alert("❌ Ocurrió un error al publicar el ranking.");
+    }
+});
+
 // =========================
 // 🔥 ACTUALIZAR RANKING DE RUNNING TEAMS (USANDO LA COLECCIÓN "grupos") 🔥
 // =========================
