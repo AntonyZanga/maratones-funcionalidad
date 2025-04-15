@@ -146,7 +146,7 @@ body {
 
 .radio-label input[type="radio"] {
   margin: 0;
-  transform: translateY(1px); /* corrige la alineación vertical fina */
+  transform: translateY(1px);
 }
 
 /* 🔹 Alineación del botón Inscribirse */
@@ -170,23 +170,30 @@ body {
   align-items: center;
 }
 
+/* Envuelve cada tabla individualmente */
 .ranking-table-wrapper {
   width: 100%;
   max-width: 100%;
   overflow-x: auto;
   display: block;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.ranking-table-wrapper table {
+  min-width: max-content;
 }
 
 /* 🔹 Estilo de la tabla */
 #ranking-table {
   width: 100%;
   max-width: 100%;
-  table-layout: auto; /* Permite que las columnas se ajusten automáticamente */
+  table-layout: auto;
   border-collapse: collapse;
 }
 
 table th, table td {
-  white-space: nowrap; /* Evita que el contenido se divida en varias líneas */
+  white-space: nowrap;
   padding: 0.75rem;
   text-align: left;
   border-bottom: 1px solid #ddd;
@@ -199,12 +206,12 @@ table th {
   font-weight: 600;
 }
 
-/* Alternar color en filas para mejorar legibilidad */
+/* Alternar color en filas */
 table tr:nth-child(even) {
   background-color: #f2f2f2;
 }
 
-/* Resaltar filas al pasar el mouse */
+/* Hover fila */
 table tr:hover {
   background-color: #e0e0e0;
 }
@@ -272,7 +279,6 @@ table tr:hover {
   }
 }
 
-/* Para pantallas grandes, asegurar que los elementos aprovechen el espacio */
 @media (min-width: 768px) {
   .header-container {
     flex-direction: row;
@@ -288,7 +294,6 @@ table tr:hover {
     flex: 1 1 45%;
   }
 
-  /* Permitir que la tabla ocupe todo el ancho disponible si hay espacio */
   .ranking-container {
     width: 100%;
     max-width: 100%;
@@ -297,14 +302,17 @@ table tr:hover {
   .ranking-table-wrapper {
     width: 100%;
     max-width: 100%;
+    overflow-x: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .ranking-table-wrapper table {
+    min-width: max-content;
   }
 
   #ranking-table {
     width: 100%;
     max-width: 100%;
   }
-  .ranking-table-wrapper table {
-  min-width: max-content;
-}
-
 }
