@@ -239,7 +239,9 @@ async function procesarResultados(results) {
 
     await Promise.all(batchUpdates);
 
+    if (dniNoEncontrados.length === 0 || continuar) {
     uploadMessage.textContent = "✅ Resultados cargados correctamente.";
+    }
     actualizarRanking();
 }
 
