@@ -104,18 +104,36 @@ async function procesarResultados(results) {
     const puntosBase = [12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
     let categorias = {};
     let atletasParticipantes = new Set();
+    let dniNoEncontrados = [];
+    let dniSimilares = [];
+
+    // Obtener todos los atletas para buscar coincidencias
+    const atletasRef = collection(db, "atletas");
+    const snapshotGlobal = await getDocs(atletasRef);
+    const todosLosDNIs = snapshotGlobal.docs.map(doc => doc.id);
 
     for (let i = 1; i < results.length; i++) {
         const [posicion, dni] = results[i];
-
         if (!dni || isNaN(dni)) continue;
 
-        atletasParticipantes.add(String(dni).trim());
+        const dniLimpio = String(dni).trim();
+        atletasParticipantes.add(dniLimpio);
 
-        const atletaRef = doc(db, "atletas", String(dni).trim());
+        const atletaRef = doc(db, "atletas", dniLimpio);
         const atletaSnap = await getDoc(atletaRef);
 
-        if (!atletaSnap.exists()) continue;
+        if (!atletaSnap.exists()) {
+            dniNoEncontrados.push(dniLimpio);
+
+            // Buscar DNIs similares
+            todosLosDNIs.forEach(dniExistente => {
+                if (esSimilar(dniLimpio, dniExistente)) {
+                    dniSimilares.push({ original: dniLimpio, sugerido: dniExistente });
+                }
+            });
+
+            continue;
+        }
 
         let atleta = atletaSnap.data();
         let categoria = obtenerCategoria(atleta.fechaNacimiento, atleta.categoria, fechaMaraton);
@@ -124,10 +142,32 @@ async function procesarResultados(results) {
             categorias[categoria] = [];
         }
 
-        categorias[categoria].push({ dni, posicion, atletaRef, atleta });
+        categorias[categoria].push({ dni: dniLimpio, posicion, atletaRef, atleta });
     }
 
-    const atletasRef = collection(db, "atletas");
+    // Mostrar advertencia si hay DNIs no encontrados
+    if (dniNoEncontrados.length > 0) {
+        let mensaje = `⚠️ Se detectaron ${dniNoEncontrados.length} DNI/s no encontrados en la base de datos:\n\n`;
+        mensaje += dniNoEncontrados.map(dni => `• ${dni}`).join("\n");
+
+        if (dniSimilares.length > 0) {
+            mensaje += `\n\n🔍 Posibles coincidencias:\n`;
+            dniSimilares.forEach(par => {
+                mensaje += `• ${par.original} → ¿Quisiste decir ${par.sugerido}?\n`;
+            });
+        }
+
+        mensaje += `\n\n¿Deseás continuar con la carga de resultados?`;
+
+        const continuar = confirm(mensaje);
+        if (!continuar) {
+            uploadMessage.textContent = "❌ Carga cancelada por el usuario.";
+            deshabilitarInterfaz(false);
+            return;
+        }
+    }
+
+    // Registrar faltas para quienes no participaron
     const snapshot = await getDocs(atletasRef);
     let batchUpdates = [];
 
@@ -156,6 +196,7 @@ async function procesarResultados(results) {
         }
     });
 
+    // Registrar resultados por categoría
     for (let categoria in categorias) {
         let atletasCategoria = categorias[categoria];
 
@@ -169,7 +210,6 @@ async function procesarResultados(results) {
             let asistencias = (atleta.asistencias || 0) + 1;
             let asistenciasConsecutivas = (atleta.asistenciasConsecutivas || 0) + 1;
             let totalPuntos = (atleta.puntos || 0);
-
             let bonus = calcularBonus(asistenciasConsecutivas);
 
             historial.push({
@@ -566,6 +606,18 @@ function calcularBonusStreak(streak) {
 // =========================
 // 🔥 FUNCIONES AUXILIARES 🔥
 // =========================
+function esSimilar(dni1, dni2) {
+    if (dni1.length !== dni2.length) return false;
+
+    let diferencias = 0;
+    for (let i = 0; i < dni1.length; i++) {
+        if (dni1[i] !== dni2[i]) diferencias++;
+        if (diferencias > 1) return false;
+    }
+
+    return diferencias === 1;
+}
+
 function calcularEdad(fechaNacimiento, fechaReferencia) {
     let nacimiento = new Date(fechaNacimiento);
     let referencia = fechaReferencia ? new Date(fechaReferencia) : new Date();
