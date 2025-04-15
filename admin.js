@@ -283,8 +283,12 @@ async function actualizarRanking() {
                     <th>Asis</th><th>Falt</th>`;
 
             for (let i = 0; i < totalFechas; i++) {
-                let fecha = fechasReales[i] ? `<br><small>(${fechasReales[i]})</small>` : "";
-                theadHTML += `<th colspan="2">Fecha ${i + 1}${fecha}</th>`;
+            let fecha = fechasReales[i]
+                ? new Date(fechasReales[i]).toLocaleDateString("es-AR")
+                : "";
+            theadHTML += `<th colspan="2" style="text-align:center">
+                Fecha ${i + 1}<br><small>(${fecha})</small>
+            </th>`;
             }
 
             theadHTML += `</tr><tr>
