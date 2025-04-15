@@ -214,13 +214,14 @@ async function actualizarRanking() {
         const snapshot = await getDocs(atletasRef);
         let atletasPorCategoria = {};
         let totalFechas = 0;
+        let fechasReales = [];
 
         snapshot.forEach(doc => {
             let data = doc.data();
-            
-            if (!data.historial || data.historial.every(fecha => fecha.posicion === "-" && fecha.puntos === "-")) return;
 
-            // Usar la fecha de la primera participación válida
+            if (!data.historial || data.historial.every(f => f.posicion === "-" && f.puntos === "-")) return;
+
+            // Determinar la categoría según la PRIMERA participación
             let primeraFechaReal = data.historial.find(f => f.fecha && f.posicion !== "-");
             let edad = calcularEdad(data.fechaNacimiento, primeraFechaReal?.fecha);
             let categoriaEdad = determinarCategoriaEdad(edad);
@@ -233,6 +234,7 @@ async function actualizarRanking() {
 
             totalFechas = Math.max(totalFechas, data.historial.length);
 
+            // Guardar atleta y su historial
             atletasPorCategoria[categoriaCompleta].push({
                 nombre: `${data.nombre} ${data.apellido}`,
                 localidad: data.localidad || "Desconocida",
@@ -241,11 +243,21 @@ async function actualizarRanking() {
                 faltas: data.faltas || 0,
                 historial: data.historial || []
             });
+
+            // Guardar fechas si están vacías
+            for (let i = 0; i < data.historial.length; i++) {
+                const fecha = data.historial[i]?.fecha || null;
+                if (!fechasReales[i] && fecha) {
+                    fechasReales[i] = fecha;
+                }
+            }
         });
 
+        // Guardar la cantidad de fechas en Firestore
         const torneoRef = doc(db, "torneo", "datos");
         await updateDoc(torneoRef, { cantidadFechas: totalFechas });
 
+        // Asegurar que todos los atletas tengan historial uniforme
         Object.keys(atletasPorCategoria).forEach(categoria => {
             atletasPorCategoria[categoria].forEach(atleta => {
                 while (atleta.historial.length < totalFechas) {
@@ -254,6 +266,7 @@ async function actualizarRanking() {
             });
         });
 
+        // Renderizar tabla por categoría
         Object.keys(atletasPorCategoria).sort().forEach(categoria => {
             let atletas = atletasPorCategoria[categoria];
             atletas.sort((a, b) => b.puntos - a.puntos);
@@ -268,15 +281,18 @@ async function actualizarRanking() {
                 <tr>
                     <th>P°</th><th>Nombre</th><th>Localidad</th><th>Pts</th>
                     <th>Asis</th><th>Falt</th>`;
-            for (let i = 1; i <= totalFechas; i++) {
-                theadHTML += `<th colspan="2">Fecha ${i}</th>`;
+
+            for (let i = 0; i < totalFechas; i++) {
+                let fecha = fechasReales[i] ? `<br><small>(${fechasReales[i]})</small>` : "";
+                theadHTML += `<th colspan="2">Fecha ${i + 1}${fecha}</th>`;
             }
+
             theadHTML += `</tr><tr>
-                    <th></th><th></th><th></th><th></th>
-                    <th></th><th></th>`;
-            for (let i = 1; i <= totalFechas; i++) {
+                    <th></th><th></th><th></th><th></th><th></th><th></th>`;
+            for (let i = 0; i < totalFechas; i++) {
                 theadHTML += `<th>P°</th><th>Pts</th>`;
             }
+
             theadHTML += `</tr></thead>`;
 
             table.innerHTML = theadHTML + `<tbody></tbody>`;
