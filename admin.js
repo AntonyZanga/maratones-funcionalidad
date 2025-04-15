@@ -61,8 +61,10 @@ document.getElementById("upload-results").addEventListener("click", async () => 
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
             const results = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-            await procesarResultados(results);
-            uploadMessage.textContent = "✅ Resultados cargados correctamente.";
+            const resultado = await procesarResultados(results);
+            if (resultado) {
+                uploadMessage.textContent = "✅ Resultados cargados correctamente.";
+            }
         } catch (error) {
             console.error("Error al procesar el archivo:", error);
             uploadMessage.textContent = "❌ Error al procesar los resultados.";
@@ -93,12 +95,12 @@ async function procesarResultados(results) {
 
     if (!fechaMaraton) {
         uploadMessage.textContent = "Seleccioná la fecha de la maratón.";
-        return;
+        return false;
     }
 
     if (results.length < 2) {
         uploadMessage.textContent = "El archivo no tiene datos válidos.";
-        return;
+        return false;
     }
 
     const puntosBase = [12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
@@ -107,12 +109,10 @@ async function procesarResultados(results) {
     let dniNoEncontrados = [];
     let dniSimilares = [];
 
-    // 🔄 Obtener todos los DNIs de la base para buscar coincidencias
     const atletasRef = collection(db, "atletas");
     const snapshotGlobal = await getDocs(atletasRef);
     const todosLosDNIs = snapshotGlobal.docs.map(doc => doc.id);
 
-    // 🔍 Recorrer resultados del Excel
     for (let i = 1; i < results.length; i++) {
         const [posicion, dni] = results[i];
         if (!dni || isNaN(dni)) continue;
@@ -126,7 +126,6 @@ async function procesarResultados(results) {
         if (!atletaSnap.exists()) {
             dniNoEncontrados.push(dniLimpio);
 
-            // Buscar coincidencias
             todosLosDNIs.forEach(dniExistente => {
                 if (esSimilar(dniLimpio, dniExistente)) {
                     dniSimilares.push({ original: dniLimpio, sugerido: dniExistente });
@@ -146,7 +145,6 @@ async function procesarResultados(results) {
         categorias[categoria].push({ dni: dniLimpio, posicion, atletaRef, atleta });
     }
 
-    // ⚠️ Mostrar advertencia si hay errores
     const cantidadTotal = results.length - 1;
     const cantidadEncontrados = cantidadTotal - dniNoEncontrados.length;
 
@@ -154,7 +152,6 @@ async function procesarResultados(results) {
         let mensaje = `🔎 Se procesaron ${cantidadTotal} corredores del archivo.\n\n`;
         mensaje += `✅ Encontrados en la base de datos: ${cantidadEncontrados}\n`;
         mensaje += `❌ No encontrados: ${dniNoEncontrados.length}\n\n`;
-
         mensaje += `📌 DNIs no encontrados:\n`;
         mensaje += dniNoEncontrados.map(dni => `• ${dni}`).join("\n");
 
@@ -171,11 +168,10 @@ async function procesarResultados(results) {
         if (!continuar) {
             uploadMessage.textContent = "❌ Carga cancelada por el usuario.";
             deshabilitarInterfaz(false);
-            return;
+            return false;
         }
     }
 
-    // 🔄 Marcar faltas para quienes no participaron
     const snapshot = await getDocs(atletasRef);
     let batchUpdates = [];
 
@@ -204,7 +200,6 @@ async function procesarResultados(results) {
         }
     });
 
-    // ✅ Cargar puntos para los que sí participaron
     for (let categoria in categorias) {
         let atletasCategoria = categorias[categoria];
 
@@ -238,11 +233,8 @@ async function procesarResultados(results) {
     }
 
     await Promise.all(batchUpdates);
-
-    if (dniNoEncontrados.length === 0 || continuar) {
-    uploadMessage.textContent = "✅ Resultados cargados correctamente.";
-    }
     actualizarRanking();
+    return true;
 }
 
 // =========================
