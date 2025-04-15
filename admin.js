@@ -30,14 +30,19 @@ document.getElementById("logout").addEventListener("click", () => {
 // =========================
 document.getElementById("upload-results").addEventListener("click", async () => {
     const fileInput = document.getElementById("file-input");
+    const fechaInput = document.getElementById("fecha-maraton");
     const uploadMessage = document.getElementById("upload-message");
-    
-    if (fileInput.files.length === 0) {
-        uploadMessage.textContent = "Selecciona un archivo Excel.";
+
+    if (!fechaInput.value) {
+        uploadMessage.textContent = "❌ Debes seleccionar la fecha de la maratón.";
         return;
     }
 
-    // 🔹 Deshabilitar TODOS los botones y entradas
+    if (fileInput.files.length === 0) {
+        uploadMessage.textContent = "❌ Selecciona un archivo Excel.";
+        return;
+    }
+
     deshabilitarInterfaz(true);
     uploadMessage.textContent = "⏳ Procesando resultados... Por favor, espera.";
 
@@ -57,21 +62,12 @@ document.getElementById("upload-results").addEventListener("click", async () => 
             console.error("Error al procesar el archivo:", error);
             uploadMessage.textContent = "❌ Error al procesar los resultados.";
         } finally {
-            // 🔹 Habilitar nuevamente la interfaz
             deshabilitarInterfaz(false);
         }
     };
 
     reader.readAsArrayBuffer(file);
 });
-
-function deshabilitarInterfaz(deshabilitar) {
-    const elementos = document.querySelectorAll("button, input, select, textarea");
-
-    elementos.forEach(elemento => {
-        elemento.disabled = deshabilitar;
-    });
-}
 
 // =========================
 // 🔥 OBTENER CATEGORÍA SEGÚN EDAD Y GÉNERO 🔥
@@ -214,14 +210,14 @@ async function actualizarRanking() {
         let atletasPorCategoria = {};
         let totalFechas = 0;
 
-        // Obtener atletas y registrar la cantidad total de fechas
         snapshot.forEach(doc => {
             let data = doc.data();
             
-            // 🔥 NO MOSTRAR ATLETAS SIN PARTICIPACIONES 🔥
             if (!data.historial || data.historial.every(fecha => fecha.posicion === "-" && fecha.puntos === "-")) return;
 
-            let edad = calcularEdad(data.fechaNacimiento);
+            // Usar la fecha de la primera participación válida
+            let primeraFechaReal = data.historial.find(f => f.fecha && f.posicion !== "-");
+            let edad = calcularEdad(data.fechaNacimiento, primeraFechaReal?.fecha);
             let categoriaEdad = determinarCategoriaEdad(edad);
             let categoria = data.categoria || "Especial";
             let categoriaCompleta = `${categoria} - ${categoriaEdad}`;
@@ -242,11 +238,9 @@ async function actualizarRanking() {
             });
         });
 
-        // 🔥 ACTUALIZAR EL NÚMERO DE FECHAS EN LA COLECCIÓN "torneo"
         const torneoRef = doc(db, "torneo", "datos");
         await updateDoc(torneoRef, { cantidadFechas: totalFechas });
 
-        // Asegurar que todos los atletas tengan la misma cantidad de fechas
         Object.keys(atletasPorCategoria).forEach(categoria => {
             atletasPorCategoria[categoria].forEach(atleta => {
                 while (atleta.historial.length < totalFechas) {
@@ -255,11 +249,8 @@ async function actualizarRanking() {
             });
         });
 
-        // Renderizar el ranking individual en la tabla
         Object.keys(atletasPorCategoria).sort().forEach(categoria => {
             let atletas = atletasPorCategoria[categoria];
-
-            // Ordenar por puntos (de mayor a menor)
             atletas.sort((a, b) => b.puntos - a.puntos);
 
             let section = document.createElement("section");
@@ -305,7 +296,6 @@ async function actualizarRanking() {
             });
         });
 
-        // Finalmente, actualizar el ranking de running teams según la colección "grupos"
         actualizarRankingTeams();
     } catch (error) {
         console.error("❌ Error al actualizar el ranking:", error);
