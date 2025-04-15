@@ -15,7 +15,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     actualizarRanking();
 });
-
+function deshabilitarInterfaz(deshabilitar) {
+    const elementos = document.querySelectorAll("button, input, select, textarea");
+    elementos.forEach(elemento => {
+        elemento.disabled = deshabilitar;
+    });
+}
 // =========================
 // 🔥 CIERRE DE SESIÓN 🔥
 // =========================
