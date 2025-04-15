@@ -386,8 +386,9 @@ async function actualizarRankingTeams() {
         });
     });
 
-    // Ordenar los equipos por puntos
-    let teamsArray = Object.values(teams).sort((a, b) => b.puntos - a.puntos);
+    // Filtrar solo los equipos con puntos > 0
+    let teamsArray = Object.values(teams).filter(t => t.puntos > 0);
+    teamsArray.sort((a, b) => b.puntos - a.puntos);
 
     // Renderizar la tabla del ranking de equipos
     const rankingContainer = document.getElementById("ranking-container");
