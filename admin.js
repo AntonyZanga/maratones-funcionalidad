@@ -107,11 +107,12 @@ async function procesarResultados(results) {
     let dniNoEncontrados = [];
     let dniSimilares = [];
 
-    // Obtener todos los atletas para buscar coincidencias
+    // 🔄 Obtener todos los DNIs de la base para buscar coincidencias
     const atletasRef = collection(db, "atletas");
     const snapshotGlobal = await getDocs(atletasRef);
     const todosLosDNIs = snapshotGlobal.docs.map(doc => doc.id);
 
+    // 🔍 Recorrer resultados del Excel
     for (let i = 1; i < results.length; i++) {
         const [posicion, dni] = results[i];
         if (!dni || isNaN(dni)) continue;
@@ -125,7 +126,7 @@ async function procesarResultados(results) {
         if (!atletaSnap.exists()) {
             dniNoEncontrados.push(dniLimpio);
 
-            // Buscar DNIs similares
+            // Buscar coincidencias
             todosLosDNIs.forEach(dniExistente => {
                 if (esSimilar(dniLimpio, dniExistente)) {
                     dniSimilares.push({ original: dniLimpio, sugerido: dniExistente });
@@ -145,9 +146,16 @@ async function procesarResultados(results) {
         categorias[categoria].push({ dni: dniLimpio, posicion, atletaRef, atleta });
     }
 
-    // Mostrar advertencia si hay DNIs no encontrados
+    // ⚠️ Mostrar advertencia si hay errores
+    const cantidadTotal = results.length - 1;
+    const cantidadEncontrados = cantidadTotal - dniNoEncontrados.length;
+
     if (dniNoEncontrados.length > 0) {
-        let mensaje = `⚠️ Se detectaron ${dniNoEncontrados.length} DNI/s no encontrados en la base de datos:\n\n`;
+        let mensaje = `🔎 Se procesaron ${cantidadTotal} corredores del archivo.\n\n`;
+        mensaje += `✅ Encontrados en la base de datos: ${cantidadEncontrados}\n`;
+        mensaje += `❌ No encontrados: ${dniNoEncontrados.length}\n\n`;
+
+        mensaje += `📌 DNIs no encontrados:\n`;
         mensaje += dniNoEncontrados.map(dni => `• ${dni}`).join("\n");
 
         if (dniSimilares.length > 0) {
@@ -157,7 +165,7 @@ async function procesarResultados(results) {
             });
         }
 
-        mensaje += `\n\n¿Deseás continuar con la carga de resultados?`;
+        mensaje += `\n\n⚠️ ¿Deseás continuar con la carga de resultados?`;
 
         const continuar = confirm(mensaje);
         if (!continuar) {
@@ -167,7 +175,7 @@ async function procesarResultados(results) {
         }
     }
 
-    // Registrar faltas para quienes no participaron
+    // 🔄 Marcar faltas para quienes no participaron
     const snapshot = await getDocs(atletasRef);
     let batchUpdates = [];
 
@@ -196,7 +204,7 @@ async function procesarResultados(results) {
         }
     });
 
-    // Registrar resultados por categoría
+    // ✅ Cargar puntos para los que sí participaron
     for (let categoria in categorias) {
         let atletasCategoria = categorias[categoria];
 
