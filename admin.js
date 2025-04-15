@@ -638,12 +638,13 @@ function calcularEdad(fechaNacimiento, fechaReferencia) {
 
 function determinarCategoriaEdad(edad) {
     const categorias = [
-        [0, 19], [20, 24], [25, 29], [30, 34], [35, 39], [40, 44],
-        [45, 49], [50, 54], [55, 59], [60, 64], [65, 69], [70, 74],
-        [75, 79], [80, 84], [85, 89]
+        [0, 19], [20, 24], [25, 29], [30, 34], [35, 39],
+        [40, 44], [45, 49], [50, 54], [55, 59], [60, 64], [65, 69]
     ];
+
     for (let [min, max] of categorias) {
         if (edad >= min && edad <= max) return `${min} - ${max}`;
     }
-    return "90+";
+
+    return "70 y más años";
 }
