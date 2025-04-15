@@ -284,8 +284,9 @@ async function actualizarRanking() {
 
             for (let i = 0; i < totalFechas; i++) {
             let fecha = fechasReales[i]
-                ? new Date(fechasReales[i]).toLocaleDateString("es-AR")
-                : "";
+            ? fechasReales[i].split("-").reverse().join("/")
+            : "";
+
             theadHTML += `<th colspan="2" style="text-align:center">
                 Fecha ${i + 1}<br><small>(${fecha})</small>
             </th>`;
