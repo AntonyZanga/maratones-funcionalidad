@@ -124,28 +124,27 @@ async function procesarResultados(results) {
     
     let batchUpdates = [];
 
-    // 🔹 Procesar atletas que no participaron
-snapshot.forEach((docSnap) => {
-    let atleta = docSnap.data();
-    let dni = docSnap.id;
+    // Procesar atletas que no participaron
+    snapshot.forEach((docSnap) => {
+        let atleta = docSnap.data();
+        let dni = docSnap.id;
 
-    if (!atletasParticipantes.has(dni)) { 
-        let atletaRef = doc(db, "atletas", dni);
-        let nuevasFaltas = (atleta.faltas || 0) + 1;
+        if (!atletasParticipantes.has(dni)) { 
+            let atletaRef = doc(db, "atletas", dni);
+            let nuevasFaltas = (atleta.faltas || 0) + 1;
 
-        let historial = atleta.historial || [];
-        historial.push({ posicion: "-", puntos: "-" }); // Mantiene la estructura
+            let historial = atleta.historial || [];
+            historial.push({ posicion: "-", puntos: "-", grupoRunning: atleta.grupoRunning || "Individual" });
 
-        batchUpdates.push(updateDoc(atletaRef, {
-            faltas: nuevasFaltas,
-            asistenciasConsecutivas: 0,
-            historial: historial
-        }));
-    }
-});
+            batchUpdates.push(updateDoc(atletaRef, {
+                faltas: nuevasFaltas,
+                asistenciasConsecutivas: 0,
+                historial: historial
+            }));
+        }
+    });
 
-
-    // 🔹 Procesar atletas que sí participaron
+    // Procesar atletas que sí participaron
     for (let categoria in categorias) {
         let atletasCategoria = categorias[categoria];
 
@@ -161,8 +160,11 @@ snapshot.forEach((docSnap) => {
             let asistenciasConsecutivas = (atleta.asistenciasConsecutivas || 0) + 1;
             let totalPuntos = (atleta.puntos || 0) + nuevoPuntaje;
 
-            // 🔹 Asegurar que la posición quede bien asignada
-            historial.push({ posicion: i + 1, puntos: nuevoPuntaje });
+            historial.push({
+                posicion: i + 1,
+                puntos: nuevoPuntaje,
+                grupoRunning: atleta.grupoRunning || "Individual"
+            });
 
             let bonus = calcularBonus(asistenciasConsecutivas);
 
@@ -180,6 +182,7 @@ snapshot.forEach((docSnap) => {
     uploadMessage.textContent = "✅ Resultados cargados correctamente.";
     actualizarRanking();
 }
+
 // =========================
 // 🔥 CÁLCULO DE BONOS POR ASISTENCIA 🔥
 // =========================
@@ -323,14 +326,13 @@ document.getElementById("publicar-ranking").addEventListener("click", async () =
 // 🔥 ACTUALIZAR RANKING DE RUNNING TEAMS (USANDO LA COLECCIÓN "grupos") 🔥
 // =========================
 async function actualizarRankingTeams() {
-    // Primero, obtenemos los grupos registrados en la colección "grupos"
+    // Obtener grupos registrados
     const gruposRef = collection(db, "grupos");
     const gruposSnap = await getDocs(gruposRef);
     let teams = {};
 
     gruposSnap.forEach(groupDoc => {
         const groupData = groupDoc.data();
-        // Se asume que cada documento de grupo tiene el campo "nombre"
         const groupName = groupData.nombre;
         teams[groupName] = {
             team: groupName,
@@ -338,25 +340,26 @@ async function actualizarRankingTeams() {
         };
     });
 
-    // Luego, obtenemos los atletas y acumulamos sus puntos según el campo "grupoRunning"
+    // Obtener atletas y sumar puntos por grupoRunning histórico
     const atletasRef = collection(db, "atletas");
     const atletasSnap = await getDocs(atletasRef);
 
     atletasSnap.forEach(docSnap => {
         let data = docSnap.data();
-        // Se descartan aquellos atletas que sean "Individual" o que no tengan definido grupoRunning
-        if (data.grupoRunning && data.grupoRunning.toLowerCase() !== "individual") {
-            // Solo se acumulan los puntos si el grupoRunning coincide con alguno registrado en la colección "grupos"
-            if (teams[data.grupoRunning]) {
-                teams[data.grupoRunning].puntos += (data.puntos || 0);
+        let historial = data.historial || [];
+
+        historial.forEach(fecha => {
+            const grupo = fecha.grupoRunning || "Individual";
+            const puntos = parseInt(fecha.puntos);
+
+            if (grupo !== "Individual" && !isNaN(puntos) && teams[grupo]) {
+                teams[grupo].puntos += puntos;
             }
-        }
+        });
     });
 
-    // Convertimos el objeto a arreglo y lo ordenamos de mayor a menor por puntos
     let teamsArray = Object.values(teams).sort((a, b) => b.puntos - a.puntos);
 
-    // Renderizar la tabla del ranking de running teams
     const rankingContainer = document.getElementById("ranking-container");
     let section = document.createElement("section");
     let title = document.createElement("h3");
@@ -382,10 +385,9 @@ async function actualizarRankingTeams() {
     });
     table.appendChild(tbody);
     section.appendChild(table);
-
-    // Se agrega la sección del ranking de equipos al final del contenedor
     rankingContainer.appendChild(section);
 }
+
 // =========================
 // 🔥 Resetear Historial (Borrar todo el torneo) 🔥
 // =========================
