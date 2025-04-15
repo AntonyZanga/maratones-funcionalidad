@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ranking Público</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="container header-container">
+      <h1>Ranking Público del Torneo</h1>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <div class="ranking-container" id="ranking-container">
+        <p>Cargando ranking...</p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAFHZcfSELn2Cfgh3I1og2mw3rIL8gqlAM",
+      authDomain: "maratonessudeste.firebaseapp.com",
+      projectId: "maratonessudeste",
+      storageBucket: "maratonessudeste.appspot.com",
+      messagingSenderId: "76996108214",
+      appId: "1:76996108214:web:036e55fbfd01e15b462b17",
+      measurementId: "G-B1GL7QJGSH"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const contenedor = document.getElementById("ranking-container");
+
+    try {
+      const refPublico = doc(db, "torneo", "publico");
+      const docSnap = await getDoc(refPublico);
+
+      if (!docSnap.exists()) {
+        contenedor.innerHTML = "<p>No hay ranking publicado aún.</p>";
+      } else {
+        const data = docSnap.data();
+        contenedor.innerHTML = data.html;
+      }
+    } catch (err) {
+      console.error("Error al cargar el ranking público:", err);
+      contenedor.innerHTML = "<p>Error al cargar el ranking.</p>";
+    }
+  </script>
+</body>
+</html>
