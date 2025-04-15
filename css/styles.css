@@ -16,19 +16,20 @@
   box-sizing: border-box;
 }
 
-body {
+html, body {
+  overflow-x: auto;
   font-family: var(--font-family);
   background-color: var(--color-fondo);
   color: var(--color-primario);
   line-height: 1.6;
+  width: 100%;
 }
 
-/* Contenedores generales */
+/* Contenedor general */
 .container {
-  width: 90%;
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
   padding: 1rem;
+  overflow-x: visible;
 }
 
 /* Header */
@@ -83,6 +84,14 @@ body {
   background-color: #c0392b;
 }
 
+.btn-accent {
+  background-color: var(--color-acento);
+}
+
+.btn-accent:hover {
+  background-color: #d35400;
+}
+
 /* Tarjetas / secciones */
 .card {
   background-color: var(--color-blanco);
@@ -90,10 +99,8 @@ body {
   margin-bottom: 1.5rem;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   width: 100%;
+  overflow-x: visible;
 }
 
 /* Formularios */
@@ -124,7 +131,7 @@ body {
   margin-top: 0.25rem;
 }
 
-/* Pequeños textos de ayuda */
+/* Textos pequeños */
 .small-text {
   font-size: 0.875rem;
   color: #7f8c8d;
@@ -135,6 +142,7 @@ body {
   display: none;
 }
 
+/* Etiquetas radio */
 .radio-label {
   display: inline-flex;
   align-items: center;
@@ -149,7 +157,7 @@ body {
   transform: translateY(1px);
 }
 
-/* 🔹 Alineación del botón Inscribirse */
+/* Botón Inscribirse */
 .btn-inscribirse {
   width: 100%;
   max-width: 200px;
@@ -157,41 +165,29 @@ body {
   align-self: center;
 }
 
-/* 🔹 Ajustes para la tabla de ranking */
+/* Contenedor de ranking */
 .ranking-container {
   width: 100%;
-  max-width: 100%;
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow-x: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  overflow-x: visible;
+  padding: 1rem 0;
 }
 
-/* Envuelve cada tabla individualmente */
+/* Cada tabla tiene su propio scroll horizontal */
 .ranking-table-wrapper {
-  width: 100%;
-  max-width: 100%;
   overflow-x: auto;
   display: block;
-  padding-left: 1rem;
-  padding-right: 1rem;
+  padding: 0;
+  margin: 0;
+  width: 100%;
 }
 
 .ranking-table-wrapper table {
   min-width: max-content;
-}
-
-/* 🔹 Estilo de la tabla */
-#ranking-table {
-  width: 100%;
-  max-width: 100%;
-  table-layout: auto;
+  width: max-content;
   border-collapse: collapse;
 }
 
+/* Estilo de tabla */
 table th, table td {
   white-space: nowrap;
   padding: 0.75rem;
@@ -199,24 +195,21 @@ table th, table td {
   border-bottom: 1px solid #ddd;
 }
 
-/* Encabezado de la tabla */
 table th {
   background-color: var(--color-secundario);
   color: var(--color-blanco);
   font-weight: 600;
 }
 
-/* Alternar color en filas */
 table tr:nth-child(even) {
   background-color: #f2f2f2;
 }
 
-/* Hover fila */
 table tr:hover {
   background-color: #e0e0e0;
 }
 
-/* Ranking de corredores */
+/* Encabezado */
 .ranking-header {
   font-size: 1.2rem;
   font-weight: bold;
@@ -224,7 +217,7 @@ table tr:hover {
   margin-bottom: 1rem;
 }
 
-/* Estilos de usuario logueado */
+/* Usuario logueado */
 .user-info {
   display: flex;
   justify-content: space-between;
@@ -252,67 +245,28 @@ table tr:hover {
   background-color: #c0392b;
 }
 
-/* Ajustes responsivos */
+/* Scroll custom */
+.ranking-table-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+.ranking-table-wrapper::-webkit-scrollbar-thumb {
+  background-color: var(--color-secundario);
+  border-radius: 4px;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
   .container {
-    width: 100vw;
-    max-width: 100vw;
     padding: 0;
   }
 
   .card {
-    width: 100vw;
-    max-width: 100vw;
     border-radius: 0;
     padding: 1rem;
-  }
-
-  .ranking-container {
-    overflow-x: auto;
-    display: block;
-    width: 100%;
   }
 
   table th, table td {
     font-size: 12px;
     padding: 0.5rem;
-  }
-}
-
-@media (min-width: 768px) {
-  .header-container {
-    flex-direction: row;
-  }
-
-  main {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.5rem;
-  }
-
-  .card {
-    flex: 1 1 45%;
-  }
-
-  .ranking-container {
-    width: 100%;
-    max-width: 100%;
-  }
-
-  .ranking-table-wrapper {
-    width: 100%;
-    max-width: 100%;
-    overflow-x: auto;
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-
-  .ranking-table-wrapper table {
-    min-width: max-content;
-  }
-
-  #ranking-table {
-    width: 100%;
-    max-width: 100%;
   }
 }
