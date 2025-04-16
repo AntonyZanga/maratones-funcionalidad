@@ -118,7 +118,7 @@ async function registrarAtleta(event) {
         }));
 
         let certificadoURL = null;
-        if (categoria?.toLowerCase() === "especial" && certificadoDiscapacidad) {
+        if (categoria === "especial" && certificadoDiscapacidad) {
             mostrarMensaje("Subiendo certificado de discapacidad...", "blue");
             const certificadoRef = ref(storage, `certificados/${dni}_certificado.${certificadoDiscapacidad.name.split('.').pop()}`);
             await uploadBytes(certificadoRef, certificadoDiscapacidad);
@@ -197,3 +197,16 @@ function validarPassword() {
 
 // Asignar la función al botón de registro
 document.getElementById("registro-form").addEventListener("submit", registrarAtleta);
+
+
+// Mostrar/ocultar certificado según categoría
+document.querySelectorAll('input[name="categoria"]').forEach((radio) => {
+    radio.addEventListener("change", () => {
+        const certificadoContainer = document.getElementById("certificado-container");
+        if (radio.checked && radio.value.toLowerCase() === "especial") {
+            certificadoContainer.style.display = "block";
+        } else {
+            certificadoContainer.style.display = "none";
+        }
+    });
+});
