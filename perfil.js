@@ -200,3 +200,16 @@ function mostrarMensaje(mensaje, color = "black") {
         mensajeElemento.style.color = color;
     }
 }
+
+
+// Mostrar/ocultar certificado según categoría
+document.querySelectorAll('input[name="categoria"]').forEach((radio) => {
+    radio.addEventListener("change", () => {
+        const certificadoContainer = document.getElementById("certificado-container");
+        if (radio.checked && radio.value.toLowerCase() === "especial") {
+            certificadoContainer.style.display = "block";
+        } else {
+            certificadoContainer.style.display = "none";
+        }
+    });
+});
