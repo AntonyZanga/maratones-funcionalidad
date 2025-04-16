@@ -202,14 +202,21 @@ function mostrarMensaje(mensaje, color = "black") {
 }
 
 
-// Mostrar/ocultar certificado según categoría
-document.querySelectorAll('input[name="categoria"]').forEach((radio) => {
-    radio.addEventListener("change", () => {
-        const certificadoContainer = document.getElementById("certificado-container");
-        if (radio.checked && radio.value.toLowerCase() === "especial") {
+// Mostrar/ocultar certificado según categoría (versión para <select>)
+document.addEventListener("DOMContentLoaded", () => {
+    const categoriaSelect = document.getElementById("categoria");
+    const certificadoContainer = document.getElementById("certificado-container");
+
+    const toggleCertificado = () => {
+        if (categoriaSelect.value.toLowerCase() === "especial") {
             certificadoContainer.style.display = "block";
         } else {
             certificadoContainer.style.display = "none";
         }
-    });
+    };
+
+    categoriaSelect.addEventListener("change", toggleCertificado);
+
+    // Ejecutar al cargar la página por si ya tiene valor
+    toggleCertificado();
 });
