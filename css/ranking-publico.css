@@ -1,0 +1,75 @@
+/* css/ranking-publico.css */
+/* === RANKING PÚBLICO === */
+
+:root {
+  --color-primario: #2c3e50;
+  --color-secundario: #18bc9c;
+  --color-acento: #f39c12;
+  --color-fondo: #ecf0f1;
+  --color-blanco: #ffffff;
+  --color-error: #e74c3c;
+  --font-family: 'Poppins', sans-serif;
+}
+
+.ranking-publico h3 {
+  margin: 2rem 0 1rem;
+  font-size: 1.5rem;
+  color: var(--color-primario);
+  border-bottom: 3px solid var(--color-secundario);
+  padding-bottom: 0.5rem;
+}
+
+.ranking-publico table {
+  border-radius: 12px;
+  overflow: hidden;
+  animation: fadeInUp 0.8s ease;
+}
+
+.ranking-publico thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background-color: var(--color-secundario);
+  color: var(--color-blanco);
+}
+
+.ranking-publico table th,
+.ranking-publico table td {
+  text-align: center;
+  padding: 0.75rem;
+  font-size: 0.95rem;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ranking-publico tr:nth-child(1) td {
+  background-color: #d4efdf;
+  font-weight: bold;
+}
+.ranking-publico tr:nth-child(2) td {
+  background-color: #fcf3cf;
+}
+.ranking-publico tr:nth-child(3) td {
+  background-color: #fdebd0;
+}
+
+@media (max-width: 768px) {
+  .ranking-publico table th,
+  .ranking-publico table td {
+    font-size: 12px;
+    padding: 0.5rem;
+  }
+
+  .ranking-publico h3 {
+    font-size: 1.2rem;
+  }
+}
