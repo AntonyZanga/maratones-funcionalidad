@@ -270,47 +270,48 @@ async function actualizarRanking() {
         let fechasReales = [];
 
         snapshot.forEach(doc => {
-            let data = doc.data();
+            try {
+                let data = doc.data();
 
-            if (!data.historial || data.historial.every(f => f.posicion === "-" && f.puntos === "-")) return;
+                if (!data.historial || data.historial.every(f => f.posicion === "-" && f.puntos === "-")) return;
 
-            // Determinar la categoría según la PRIMERA participación
-            let primeraFechaReal = data.historial.find(f => f.fecha && f.posicion !== "-");
-            let edad = calcularEdad(data.fechaNacimiento, primeraFechaReal?.fecha);
-            let categoriaEdad = determinarCategoriaEdad(edad);
-            let categoria = data.categoria || "Especial";
-            let categoriaCompleta = `${categoria} - ${categoriaEdad}`;
+                let primeraFechaReal = data.historial.find(f => f.fecha && f.posicion !== "-");
+                if (!primeraFechaReal) return;
 
-            if (!atletasPorCategoria[categoriaCompleta]) {
-                atletasPorCategoria[categoriaCompleta] = [];
-            }
+                let edad = calcularEdad(data.fechaNacimiento, primeraFechaReal?.fecha);
+                let categoriaEdad = determinarCategoriaEdad(edad);
+                let categoria = data.categoria || "Especial";
+                let categoriaCompleta = `${categoria} - ${categoriaEdad}`;
 
-            totalFechas = Math.max(totalFechas, data.historial.length);
-
-            // Guardar atleta y su historial
-            atletasPorCategoria[categoriaCompleta].push({
-                nombre: `${data.nombre} ${data.apellido}`,
-                localidad: data.localidad || "Desconocida",
-                puntos: data.puntos || 0,
-                asistencias: data.asistencias || 0,
-                faltas: data.faltas || 0,
-                historial: data.historial || []
-            });
-
-            // Guardar fechas si están vacías
-            for (let i = 0; i < data.historial.length; i++) {
-                const fecha = data.historial[i]?.fecha || null;
-                if (!fechasReales[i] && fecha) {
-                    fechasReales[i] = fecha;
+                if (!atletasPorCategoria[categoriaCompleta]) {
+                    atletasPorCategoria[categoriaCompleta] = [];
                 }
+
+                totalFechas = Math.max(totalFechas, data.historial.length);
+
+                atletasPorCategoria[categoriaCompleta].push({
+                    nombre: `${data.nombre} ${data.apellido}`,
+                    localidad: data.localidad || "Desconocida",
+                    puntos: data.puntos || 0,
+                    asistencias: data.asistencias || 0,
+                    faltas: data.faltas || 0,
+                    historial: data.historial || []
+                });
+
+                for (let i = 0; i < data.historial.length; i++) {
+                    const fecha = data.historial[i]?.fecha || null;
+                    if (!fechasReales[i] && fecha) {
+                        fechasReales[i] = fecha;
+                    }
+                }
+            } catch (error) {
+                console.error(`❌ Error procesando atleta ${doc.id}:`, error);
             }
         });
 
-        // Guardar la cantidad de fechas en Firestore
         const torneoRef = doc(db, "torneo", "datos");
         await updateDoc(torneoRef, { cantidadFechas: totalFechas });
 
-        // Asegurar que todos los atletas tengan historial uniforme
         Object.keys(atletasPorCategoria).forEach(categoria => {
             atletasPorCategoria[categoria].forEach(atleta => {
                 while (atleta.historial.length < totalFechas) {
@@ -319,7 +320,6 @@ async function actualizarRanking() {
             });
         });
 
-        // Renderizar tabla por categoría
         Object.keys(atletasPorCategoria).sort().forEach(categoria => {
             let atletas = atletasPorCategoria[categoria];
             atletas.sort((a, b) => b.puntos - a.puntos);
@@ -336,21 +336,16 @@ async function actualizarRanking() {
                     <th>Asis</th><th>Falt</th>`;
 
             for (let i = 0; i < totalFechas; i++) {
-            let fecha = fechasReales[i]
-            ? fechasReales[i].split("-").reverse().join("/")
-            : "";
-
-            theadHTML += `<th colspan="2" style="text-align:center">
-                Fecha ${i + 1}<br><small>(${fecha})</small>
-            </th>`;
+                let fecha = fechasReales[i] ? fechasReales[i].split("-").reverse().join("/") : "";
+                theadHTML += `<th colspan="2" style="text-align:center">
+                    Fecha ${i + 1}<br><small>(${fecha})</small>
+                </th>`;
             }
 
-            theadHTML += `</tr><tr>
-                    <th></th><th></th><th></th><th></th><th></th><th></th>`;
+            theadHTML += `</tr><tr><th></th><th></th><th></th><th></th><th></th><th></th>`;
             for (let i = 0; i < totalFechas; i++) {
                 theadHTML += `<th>P°</th><th>Pts</th>`;
             }
-
             theadHTML += `</tr></thead>`;
 
             table.innerHTML = theadHTML + `<tbody></tbody>`;
@@ -360,7 +355,6 @@ async function actualizarRanking() {
             wrapper.appendChild(table);
             section.appendChild(wrapper);
             rankingContainer.appendChild(section);
-
 
             let tbody = table.querySelector("tbody");
 
@@ -382,7 +376,7 @@ async function actualizarRanking() {
 
         actualizarRankingTeams();
     } catch (error) {
-        console.error("❌ Error al actualizar el ranking:", error);
+        console.error("❌ Error general al actualizar el ranking:", error);
     }
 }
 
