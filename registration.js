@@ -118,7 +118,7 @@ async function registrarAtleta(event) {
         }));
 
         let certificadoURL = null;
-        if (categoria === "especial" && certificadoDiscapacidad) {
+        if (categoria?.toLowerCase() === "especial" && certificadoDiscapacidad) {
             mostrarMensaje("Subiendo certificado de discapacidad...", "blue");
             const certificadoRef = ref(storage, `certificados/${dni}_certificado.${certificadoDiscapacidad.name.split('.').pop()}`);
             await uploadBytes(certificadoRef, certificadoDiscapacidad);
