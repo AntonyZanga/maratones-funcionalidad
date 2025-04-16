@@ -114,8 +114,19 @@ async function procesarResultados(results) {
     const todosLosDNIs = snapshotGlobal.docs.map(doc => doc.id);
 
     for (let i = 1; i < results.length; i++) {
-        const [posicion, dni] = results[i];
-        if (!dni || isNaN(dni)) continue;
+        const fila = results[i];
+
+        if (!Array.isArray(fila) || fila.length < 2) {
+            console.warn(`Fila inválida en la línea ${i + 1}:`, fila);
+            continue;
+        }
+
+        const [posicion, dni] = fila;
+
+        if (!posicion || isNaN(posicion) || !dni || isNaN(dni)) {
+            console.warn(`Datos inválidos en la fila ${i + 1}:`, fila);
+            continue;
+        }
 
         const dniLimpio = String(dni).trim();
         atletasParticipantes.add(dniLimpio);
