@@ -320,7 +320,7 @@ async function actualizarRanking() {
             });
         });
 
-        // 🔹 Botón y sección informativa
+        // 🔹 Botón y explicación
         const infoBtn = document.createElement("button");
         infoBtn.textContent = "ℹ️ Ver cómo se otorgan los puntos";
         infoBtn.style.margin = "1rem 0";
@@ -348,32 +348,48 @@ async function actualizarRanking() {
                 <li><b>Puesto 4:</b> 8 puntos</li>
                 <li>...hasta el <b>puesto 11</b> con <b>1 punto</b></li>
             </ul>
-            <h4>Bonificación por asistencia consecutiva</h4>
-            <p>Los atletas reciben puntos extra por participar en varias fechas seguidas:</p>
+
+            <div style="margin-top: 1rem;">
+                <h5>Visualización de puntos por puesto:</h5>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-end;">
+                    ${[12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((pts, i) => `
+                        <div style="text-align:center;">
+                            <div style="background:#4caf50; width:28px; height:${pts * 4}px; margin:auto; border-radius:4px;"></div>
+                            <small>${i + 1}°</small>
+                        </div>
+                    `).join("")}
+                </div>
+            </div>
+
+            <h4 style="margin-top:1.5rem;">Bonificación por asistencia consecutiva</h4>
+            <p>Los atletas reciben puntos extra por asistir a varias fechas seguidas:</p>
             <ul style="padding-left: 1.2rem;">
-                <li>3 fechas seguidas: +2 pts</li>
-                <li>4 fechas: +4 pts</li>
-                <li>5 fechas: +6 pts</li>
-                <li>6 fechas o más: hasta +30 pts</li>
+                <li>2 asistencias consecutivas: +2 pts</li>
+                <li>3 asistencias: +4 pts</li>
+                <li>4 asistencias: +6 pts</li>
+                <li>5 asistencias: +8 pts</li>
+                <li>6 asistencias: +10 pts</li>
+                <li>...y así sucesivamente</li>
             </ul>
 
-            <h4>Ejemplos:</h4>
+            <div style="margin-top: 1rem;">
+                <h5>Visualización del bonus por asistencia:</h5>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-end;">
+                    ${[0, 0, 2, 4, 6, 8, 10, 12, 14].map((bonus, i) => `
+                        <div style="text-align:center;">
+                            <div style="background:#2196f3; width:28px; height:${bonus * 4}px; margin:auto; border-radius:4px;"></div>
+                            <small>${i} fechas</small>
+                        </div>
+                    `).join("")}
+                </div>
+            </div>
+
+            <h4 style="margin-top:1.5rem;">Ejemplos</h4>
             <ul>
-                <li><b>Ana González</b> participó 3 fechas seguidas y salió 2°, 1° y 3° → <b>10 + 12 + 9 + 2 (bonus)</b> = 33 pts</li>
+                <li><b>Ana González</b> participó 3 fechas seguidas y salió 2°, 1° y 3° → <b>10 + 12 + 9 + 4 (bonus)</b> = 35 pts</li>
                 <li><b>Lucas Pérez</b> participó solo una vez y quedó 4° → <b>8 pts</b></li>
                 <li><b>Valeria Díaz</b> faltó dos veces y luego ganó una carrera → <b>12 pts, sin bonus</b></li>
             </ul>
-
-            <h4>Visualización del puntaje por puesto:</h4>
-            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                ${[12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((pts, i) => `
-                    <div style="text-align:center;">
-                        <div style="background:#4caf50; width:30px; height:${pts * 4}px; margin:auto; border-radius:4px;"></div>
-                        <small>${i + 1}°</small>
-                    </div>
-                `).join("")}
-            </div>
-            <p style="margin-top:0.5rem;"><small>(Altura de barra proporcional a los puntos por puesto)</small></p>
         `;
 
         infoBtn.addEventListener("click", () => {
@@ -383,7 +399,7 @@ async function actualizarRanking() {
         rankingContainer.prepend(infoBox);
         rankingContainer.prepend(infoBtn);
 
-        // 🔹 Renderizar el ranking por categoría
+        // 🔹 Renderizar tablas por categoría
         Object.keys(atletasPorCategoria).sort().forEach(categoria => {
             let atletas = atletasPorCategoria[categoria];
             atletas.sort((a, b) => b.puntos - a.puntos);
