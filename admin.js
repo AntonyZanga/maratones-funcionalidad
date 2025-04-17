@@ -320,7 +320,7 @@ async function actualizarRanking() {
             });
         });
 
-        // 🔹 Botón y sección informativa
+        // 🔹 Panel explicativo del sistema de puntos
         const infoBtn = document.createElement("button");
         infoBtn.textContent = "ℹ️ Ver cómo se otorgan los puntos";
         infoBtn.classList.add("btn-info-puntos");
@@ -371,7 +371,7 @@ async function actualizarRanking() {
 
             <h4 style="margin-top:1.5rem;">Ejemplos</h4>
             <ul>
-                <li><b>Ana González</b> participó 3 fechas seguidas y salió 2°, 1° y 3° → <b>10 + 12 + 9 + 4 (bonus)</b> = 35 pts</li>
+                <li><b>Ana González</b> participó 3 fechas seguidas y salió 2°, 1° y 3° → <b>10 + 12 (+2) + 9 (+4)</b> = 37 pts</li>
                 <li><b>Lucas Pérez</b> participó solo una vez y quedó 4° → <b>8 pts</b></li>
                 <li><b>Valeria Díaz</b> faltó dos veces y luego ganó una carrera → <b>12 pts, sin bonus</b></li>
             </ul>
@@ -423,6 +423,15 @@ async function actualizarRanking() {
 
             wrapper.appendChild(table);
             section.appendChild(wrapper);
+
+            // 🔄 Aviso para usuarios sobre scroll horizontal
+            const scrollNote = document.createElement("p");
+            scrollNote.textContent = "🔄 Desliza hacia los lados para ver todas las fechas y resultados.";
+            scrollNote.style.fontSize = "0.9rem";
+            scrollNote.style.marginTop = "0.5rem";
+            scrollNote.style.color = "#555";
+            section.appendChild(scrollNote);
+
             rankingContainer.appendChild(section);
 
             let tbody = table.querySelector("tbody");
