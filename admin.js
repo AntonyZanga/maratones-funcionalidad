@@ -320,28 +320,17 @@ async function actualizarRanking() {
             });
         });
 
-        // 🔹 Botón y explicación
+        // 🔹 Botón y sección informativa
         const infoBtn = document.createElement("button");
         infoBtn.textContent = "ℹ️ Ver cómo se otorgan los puntos";
-        infoBtn.style.margin = "1rem 0";
-        infoBtn.style.padding = "0.5rem 1rem";
-        infoBtn.style.cursor = "pointer";
-        infoBtn.style.border = "1px solid #ccc";
-        infoBtn.style.backgroundColor = "#f9f9f9";
-        infoBtn.style.borderRadius = "8px";
+        infoBtn.classList.add("btn-info-puntos");
 
         const infoBox = document.createElement("div");
+        infoBox.classList.add("info-box-puntos");
         infoBox.style.display = "none";
-        infoBox.style.padding = "1rem";
-        infoBox.style.marginBottom = "1rem";
-        infoBox.style.border = "1px solid #ddd";
-        infoBox.style.borderRadius = "8px";
-        infoBox.style.backgroundColor = "#fefefe";
-        infoBox.style.maxWidth = "100%";
-        infoBox.style.fontSize = "0.95rem";
         infoBox.innerHTML = `
             <h4>Sistema de Puntos</h4>
-            <ul style="padding-left: 1.2rem;">
+            <ul>
                 <li><b>Puesto 1:</b> 12 puntos</li>
                 <li><b>Puesto 2:</b> 10 puntos</li>
                 <li><b>Puesto 3:</b> 9 puntos</li>
@@ -349,21 +338,19 @@ async function actualizarRanking() {
                 <li>...hasta el <b>puesto 11</b> con <b>1 punto</b></li>
             </ul>
 
-            <div style="margin-top: 1rem;">
-                <h5>Visualización de puntos por puesto:</h5>
-                <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-end;">
-                    ${[12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((pts, i) => `
-                        <div style="text-align:center;">
-                            <div style="background:#4caf50; width:28px; height:${pts * 4}px; margin:auto; border-radius:4px;"></div>
-                            <small>${i + 1}°</small>
-                        </div>
-                    `).join("")}
-                </div>
+            <h5>Visualización de puntos por puesto:</h5>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-end;">
+                ${[12, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((pts, i) => `
+                    <div style="text-align:center;">
+                        <div style="background:#4caf50; width:28px; height:${pts * 4}px; margin:auto; border-radius:4px;"></div>
+                        <small>${i + 1}°</small>
+                    </div>
+                `).join("")}
             </div>
 
             <h4 style="margin-top:1.5rem;">Bonificación por asistencia consecutiva</h4>
             <p>Los atletas reciben puntos extra por asistir a varias fechas seguidas:</p>
-            <ul style="padding-left: 1.2rem;">
+            <ul>
                 <li>2 asistencias consecutivas: +2 pts</li>
                 <li>3 asistencias: +4 pts</li>
                 <li>4 asistencias: +6 pts</li>
@@ -372,16 +359,14 @@ async function actualizarRanking() {
                 <li>...y así sucesivamente</li>
             </ul>
 
-            <div style="margin-top: 1rem;">
-                <h5>Visualización del bonus por asistencia:</h5>
-                <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-end;">
-                    ${[0, 0, 2, 4, 6, 8, 10, 12, 14].map((bonus, i) => `
-                        <div style="text-align:center;">
-                            <div style="background:#2196f3; width:28px; height:${bonus * 4}px; margin:auto; border-radius:4px;"></div>
-                            <small>${i} fechas</small>
-                        </div>
-                    `).join("")}
-                </div>
+            <h5>Visualización del bonus:</h5>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-end;">
+                ${[0, 0, 2, 4, 6, 8, 10, 12, 14].map((bonus, i) => `
+                    <div style="text-align:center;">
+                        <div style="background:#2196f3; width:28px; height:${bonus * 4}px; margin:auto; border-radius:4px;"></div>
+                        <small>${i} fechas</small>
+                    </div>
+                `).join("")}
             </div>
 
             <h4 style="margin-top:1.5rem;">Ejemplos</h4>
@@ -393,7 +378,11 @@ async function actualizarRanking() {
         `;
 
         infoBtn.addEventListener("click", () => {
-            infoBox.style.display = infoBox.style.display === "none" ? "block" : "none";
+            const visible = infoBox.style.display === "block";
+            infoBox.style.display = visible ? "none" : "block";
+            infoBtn.textContent = visible
+                ? "ℹ️ Ver cómo se otorgan los puntos"
+                : "🔽 Ocultar explicación";
         });
 
         rankingContainer.prepend(infoBox);
