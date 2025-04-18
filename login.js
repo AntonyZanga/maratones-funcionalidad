@@ -1,18 +1,19 @@
 // login.js
 // --------
-// Importar servicios y bcryptjs
-import bcrypt from 'https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js';
+
+// Importar bcryptjs como namespace y los servicios de Firebase
+import * as bcrypt from 'https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js';
 import { auth, db } from './config.js';
 import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-// Función para mostrar mensajes
+// Función para mostrar mensajes en la UI
 function mostrarMensaje(mensaje, color = "red") {
     const elem = document.getElementById("login-message");
     elem.textContent = mensaje;
     elem.style.color = color;
 }
 
-// Login
+// Listener al enviar el formulario de login
 document.getElementById("login-form").addEventListener("submit", async (event) => {
     event.preventDefault();
     const dni = document.getElementById("login-dni").value.trim();
@@ -24,6 +25,7 @@ document.getElementById("login-form").addEventListener("submit", async (event) =
     }
 
     try {
+        // Obtener atleta de Firestore
         const atletaRef = doc(db, "atletas", dni);
         const atletaSnap = await getDoc(atletaRef);
 
@@ -33,7 +35,7 @@ document.getElementById("login-form").addEventListener("submit", async (event) =
         }
 
         const atleta = atletaSnap.data();
-        // **Comparar hash** en lugar de texto plano
+        // Comparar el password con el hash almacenado
         const valid = bcrypt.compareSync(password, atleta.passwordHash || '');
         if (!valid) {
             mostrarMensaje("Contraseña incorrecta.");
@@ -45,7 +47,7 @@ document.getElementById("login-form").addEventListener("submit", async (event) =
         localStorage.setItem("usuario", JSON.stringify(usuarioData));
         sessionStorage.setItem("usuario", JSON.stringify(usuarioData));
 
-        // Redirección
+        // Redirigir según rol
         if (dni === "99999999") {
             window.location.href = "admin.html";
         } else {
@@ -58,7 +60,7 @@ document.getElementById("login-form").addEventListener("submit", async (event) =
     }
 });
 
-// Verificar sesión al cargar
+// Verificar si ya hay usuario en sesión al cargar la página
 document.addEventListener("DOMContentLoaded", () => {
     if (!sessionStorage.getItem("primeraVisita")) {
         sessionStorage.clear();
@@ -88,7 +90,7 @@ document.getElementById("forgot-password-link").addEventListener("click", e => {
 
 document.getElementById("check-dni").addEventListener("click", async event => {
     event.preventDefault();
-    const dni = document.getElementById("dni-recovery").value;
+    const dni = document.getElementById("dni-recovery").value.trim();
     const fechaNacimiento = document.getElementById("fecha-nacimiento-recovery").value;
     const msg = document.getElementById("recovery-message");
 
@@ -117,7 +119,6 @@ document.getElementById("check-dni").addEventListener("click", async event => {
     }
 });
 
-// Actualizar contraseña (con hash)
 document.getElementById("update-password").addEventListener("click", async event => {
     event.preventDefault();
     const dni = document.getElementById("dni-recovery").value.trim();
@@ -139,7 +140,7 @@ document.getElementById("update-password").addEventListener("click", async event
             return;
         }
 
-        // Generar nuevo hash
+        // Generar nuevo hash y actualizar
         const salt = bcrypt.genSaltSync(10);
         const newHash = bcrypt.hashSync(newPassword, salt);
         await updateDoc(atletaRef, { passwordHash: newHash });
