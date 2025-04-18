@@ -135,27 +135,27 @@ async function procesarResultados(results) {
         const atletaSnap = await getDoc(atletaRef);
 
         if (!atletaSnap.exists()) {
-    dniNoEncontrados.push(dniLimpio);
+            dniNoEncontrados.push(dniLimpio);
 
-    for (const posibleDNI of todosLosDNIs) {
-        if (esSimilar(dniLimpio, posibleDNI)) {
-            const snapPosible = await getDoc(doc(db, "atletas", posibleDNI));
-            if (snapPosible.exists()) {
-                const atletaPosible = snapPosible.data();
-                dniSimilares.push({
-                    original: dniLimpio,
-                    sugerido: posibleDNI,
-                    nombre: atletaPosible.nombre || "Desconocido",
-                    apellido: atletaPosible.apellido || "Desconocido",
-                    fechaNacimiento: atletaPosible.fechaNacimiento || "N/D",
-                    localidad: atletaPosible.localidad || "N/D"
-                });
+            for (const posibleDNI of todosLosDNIs) {
+                if (esSimilar(dniLimpio, posibleDNI)) {
+                    const snapPosible = await getDoc(doc(db, "atletas", posibleDNI));
+                    if (snapPosible.exists()) {
+                        const atletaPosible = snapPosible.data();
+                        dniSimilares.push({
+                            original: dniLimpio,
+                            sugerido: posibleDNI,
+                            nombre: atletaPosible.nombre || "Desconocido",
+                            apellido: atletaPosible.apellido || "Desconocido",
+                            fechaNacimiento: atletaPosible.fechaNacimiento || "N/D",
+                            localidad: atletaPosible.localidad || "N/D"
+                        });
+                    }
+                }
             }
-        }
-    }
 
-    continue;
-}
+            continue;
+        }
 
         let atleta = atletaSnap.data();
         let categoria = obtenerCategoria(atleta.fechaNacimiento, atleta.categoria, fechaMaraton);
@@ -257,6 +257,10 @@ async function procesarResultados(results) {
 
     await Promise.all(batchUpdates);
     actualizarRanking();
+
+    // 🔹 Mensaje final con cantidad cargada
+    uploadMessage.textContent = `✅ Resultados cargados correctamente. (${cantidadEncontrados} de ${cantidadTotal} encontrados)`;
+
     return true;
 }
 
