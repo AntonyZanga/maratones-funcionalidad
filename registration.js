@@ -1,8 +1,6 @@
 // registration.js
 // ----------------
 
-// Importar bcryptjs y los servicios de Firebase
-import * as bcrypt from 'https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js';
 import { auth, db, storage } from './config.js';
 import { doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
