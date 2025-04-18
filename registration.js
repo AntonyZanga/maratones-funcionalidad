@@ -2,7 +2,7 @@
 // ----------------
 
 // Importar bcryptjs y los servicios de Firebase
-import bcrypt from 'https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js';
+import * as bcrypt from 'https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js';
 import { auth, db, storage } from './config.js';
 import { doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
@@ -10,9 +10,8 @@ import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/fireba
 // Función para cargar los grupos de running desde Firebase
 async function cargarGrupos() {
     const selectGrupo = document.getElementById("tipo-grupo");
-    selectGrupo.innerHTML = ''; // Limpiar opciones
+    selectGrupo.innerHTML = '';
 
-    // Opción "Individual" por defecto
     const optionIndividual = document.createElement("option");
     optionIndividual.value = "Individual";
     optionIndividual.textContent = "Individual";
@@ -86,7 +85,6 @@ document.getElementById("confirm-password").addEventListener("input", validarPas
 async function registrarAtleta(event) {
     event.preventDefault();
 
-    // Leer campos del formulario
     const dni = document.getElementById("dni").value.trim();
     const nombre = document.getElementById("nombre").value.trim();
     const apellido = document.getElementById("apellido").value.trim();
@@ -118,7 +116,7 @@ async function registrarAtleta(event) {
     }
 
     try {
-        // Verificar si el DNI ya está registrado
+        // Verificar que no exista ya el DNI
         const atletaRef = doc(db, "atletas", dni);
         const atletaSnap = await getDoc(atletaRef);
         if (atletaSnap.exists()) {
@@ -126,14 +124,14 @@ async function registrarAtleta(event) {
             return;
         }
 
-        // Obtener historial inicial
+        // Historial inicial según cantidad de fechas
         const cantidadFechas = await obtenerCantidadFechas();
         const historial = Array.from({ length: cantidadFechas }, () => ({
             posicion: "-",
             puntos: "-"
         }));
 
-        // Subir certificado de discapacidad si es categoría "especial"
+        // Subir certificado de discapacidad si aplica
         let certificadoURL = null;
         if (categoria.toLowerCase() === "especial" && certificadoDiscapacidadFile) {
             mostrarMensaje("Subiendo certificado de discapacidad...", "blue");
@@ -143,7 +141,7 @@ async function registrarAtleta(event) {
             certificadoURL = await getDownloadURL(certificadoRef);
         }
 
-        // Subir apto médico si se provee
+        // Subir apto médico si se cargó
         let aptoMedicoURL = null;
         if (aptoMedicoFile) {
             mostrarMensaje("Subiendo apto médico...", "blue");
@@ -153,11 +151,11 @@ async function registrarAtleta(event) {
             aptoMedicoURL = await getDownloadURL(aptoRef);
         }
 
-        // **Hashear la contraseña** antes de guardar
+        // Hashear la contraseña
         const salt = bcrypt.genSaltSync(10);
         const passwordHash = bcrypt.hashSync(password, salt);
 
-        // Guardar el atleta en Firestore
+        // Guardar en Firestore usando el hash
         await setDoc(atletaRef, {
             nombre,
             apellido,
@@ -166,14 +164,14 @@ async function registrarAtleta(event) {
             localidad,
             grupoRunning: tipoGrupo,
             categoria,
-            passwordHash,               // <-- solo el hash, no la contraseña en claro
+            passwordHash,               // <-- aquí el hash
             aptoMedico: aptoMedicoURL,
             certificadoDiscapacidad: certificadoURL,
             historial,
             faltas: cantidadFechas
         });
 
-        // Limpiar almacenamiento y redirigir
+        // Limpiar y redirigir
         sessionStorage.clear();
         localStorage.clear();
         mostrarMensaje("Registro exitoso. Redirigiendo...", "green");
