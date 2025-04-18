@@ -135,16 +135,27 @@ async function procesarResultados(results) {
         const atletaSnap = await getDoc(atletaRef);
 
         if (!atletaSnap.exists()) {
-            dniNoEncontrados.push(dniLimpio);
+    dniNoEncontrados.push(dniLimpio);
 
-            todosLosDNIs.forEach(dniExistente => {
-                if (esSimilar(dniLimpio, dniExistente)) {
-                    dniSimilares.push({ original: dniLimpio, sugerido: dniExistente });
-                }
-            });
-
-            continue;
+    for (const posibleDNI of todosLosDNIs) {
+        if (esSimilar(dniLimpio, posibleDNI)) {
+            const snapPosible = await getDoc(doc(db, "atletas", posibleDNI));
+            if (snapPosible.exists()) {
+                const atletaPosible = snapPosible.data();
+                dniSimilares.push({
+                    original: dniLimpio,
+                    sugerido: posibleDNI,
+                    nombre: atletaPosible.nombre || "Desconocido",
+                    apellido: atletaPosible.apellido || "Desconocido",
+                    fechaNacimiento: atletaPosible.fechaNacimiento || "N/D",
+                    localidad: atletaPosible.localidad || "N/D"
+                });
+            }
         }
+    }
+
+    continue;
+}
 
         let atleta = atletaSnap.data();
         let categoria = obtenerCategoria(atleta.fechaNacimiento, atleta.categoria, fechaMaraton);
@@ -170,6 +181,7 @@ async function procesarResultados(results) {
             mensaje += `\n\n🔍 Posibles coincidencias:\n`;
             dniSimilares.forEach(par => {
                 mensaje += `• ${par.original} → ¿Quisiste decir ${par.sugerido}?\n`;
+                mensaje += `   ↪ ${par.nombre} ${par.apellido} | Nac: ${par.fechaNacimiento} | Loc: ${par.localidad}\n`;
             });
         }
 
