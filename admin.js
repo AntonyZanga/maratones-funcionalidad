@@ -61,10 +61,7 @@ document.getElementById("upload-results").addEventListener("click", async () => 
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
             const results = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-            const resultado = await procesarResultados(results);
-            if (resultado) {
-                uploadMessage.textContent = "✅ Resultados cargados correctamente.";
-            }
+            await procesarResultados(results);
         } catch (error) {
             console.error("Error al procesar el archivo:", error);
             uploadMessage.textContent = "❌ Error al procesar los resultados.";
