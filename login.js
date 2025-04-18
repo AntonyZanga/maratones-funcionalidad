@@ -1,8 +1,9 @@
 // login.js
-// --------
 
 import { auth, db } from './config.js';
 import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+// Asignar bcrypt desde la librería cargada por CDN
+const bcrypt = dcodeIO.bcrypt;
 
 // Función para mostrar mensajes en la UI
 function mostrarMensaje(mensaje, color = "red") {
