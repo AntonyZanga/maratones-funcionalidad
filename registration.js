@@ -4,6 +4,8 @@
 import { auth, db, storage } from './config.js';
 import { doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+// Asignar bcrypt desde la librería cargada por CDN
+const bcrypt = dcodeIO.bcrypt;
 
 // Función para cargar los grupos de running desde Firebase
 async function cargarGrupos() {
