@@ -1,6 +1,6 @@
 // Importar servicios desde config.js
 import { db } from './config.js';
-import { collection, getDocs, doc, setDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { collection, getDocs, doc, setDoc, updateDoc, getDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // =========================
 // 🔥 VERIFICACIÓN DE ADMINISTRADOR 🔥
@@ -563,16 +563,11 @@ async function actualizarRankingTeams() {
     rankingContainer.appendChild(section);
 }
 
-// =========================
-// 🔥 Resetear Historial (Borrar todo el torneo) 🔥
-// =========================
 document.getElementById("reset-history").addEventListener("click", async () => {
-    const confirmReset = confirm("⚠️ ¿Estás seguro de que quieres resetear todo el historial? Esto borrará todas las fechas y puntuaciones.");
-    
+    const confirmReset = confirm("⚠️ ¿Estás seguro de que quieres resetear todo el historial?");
     if (!confirmReset) return;
-    
-    const doubleCheck = confirm("⚠️ Esta acción es IRREVERSIBLE. Se eliminarán todas las puntuaciones, asistencias y faltas. ¿Deseas continuar?");
-    
+
+    const doubleCheck = confirm("⚠️ Esta acción es IRREVERSIBLE. ¿Deseás continuar?");
     if (!doubleCheck) return;
 
     deshabilitarInterfaz(true);
@@ -581,24 +576,23 @@ document.getElementById("reset-history").addEventListener("click", async () => {
         const atletasRef = collection(db, "atletas");
         const snapshot = await getDocs(atletasRef);
 
-        let batchUpdates = [];
+        const batch = writeBatch(db); // 🔥 Usamos writeBatch
 
         snapshot.forEach((docSnap) => {
             const atletaRef = doc(db, "atletas", docSnap.id);
-            batchUpdates.push(updateDoc(atletaRef, {
+            batch.update(atletaRef, {
                 historial: [],
                 puntos: 0,
                 asistencias: 0,
                 faltas: 0,
                 asistenciasConsecutivas: 0
-            }));
+            });
         });
 
-        await Promise.all(batchUpdates);
-
-        // 🔹 Resetear cantidad de fechas en Firestore
         const torneoRef = doc(db, "torneo", "datos");
-        await updateDoc(torneoRef, { cantidadFechas: 0 });
+        batch.update(torneoRef, { cantidadFechas: 0 });
+
+        await batch.commit(); // 🔥 Se ejecuta todo junto
 
         alert("✅ El torneo ha sido reiniciado.");
         actualizarRanking();
@@ -609,13 +603,15 @@ document.getElementById("reset-history").addEventListener("click", async () => {
         deshabilitarInterfaz(false);
     }
 });
+
 // =========================
 // 🔥 DESHACER ÚLTIMA FECHA 🔥
 // =========================
 document.getElementById("undo-last-date").addEventListener("click", async () => {
-    const confirmUndo = confirm("⚠️ ¿Estás seguro de que deseas eliminar la última fecha? Se revertirán los últimos cambios en el ranking.");
+    const confirmUndo = confirm("⚠️ ¿Querés eliminar la última fecha?");
     if (!confirmUndo) return;
-    const doubleCheck = confirm("⚠️ Esta acción NO se puede deshacer. ¿Confirmas que quieres borrar la última fecha?");
+
+    const doubleCheck = confirm("⚠️ Esta acción NO se puede deshacer. ¿Confirmás?");
     if (!doubleCheck) return;
 
     deshabilitarInterfaz(true);
@@ -623,66 +619,57 @@ document.getElementById("undo-last-date").addEventListener("click", async () => 
     try {
         const atletasRef = collection(db, "atletas");
         const snapshot = await getDocs(atletasRef);
-        let batchUpdates = [];
+
+        const batch = writeBatch(db); // 🔥 Usamos writeBatch
 
         snapshot.forEach((docSnap) => {
             const atleta = docSnap.data();
-            let historial = atleta.historial || [];
+            const historial = [...(atleta.historial || [])];
 
-            // Si no hay historial, saltamos
             if (historial.length === 0) return;
 
-            // 1) Quitamos la última fecha
-            historial.pop();
+            historial.pop(); // Quitamos la última fecha
 
-            // 2) Recalculamos puntos, bonus, asistencias y faltas
             let basePoints = 0;
             let totalBonus = 0;
             let asistencias = 0;
             let faltas = 0;
-            let consec = 0; // contador de asistencias consecutivas
+            let consec = 0;
 
             historial.forEach(evento => {
                 if (evento.puntos === "-") {
-                    // falta
                     faltas++;
                     consec = 0;
                 } else {
-                    // asistencia
                     const pts = parseInt(evento.puntos) || 0;
                     basePoints += pts;
                     asistencias++;
                     consec++;
-                    // bonus _por ese evento_ según la racha actual
                     totalBonus += calcularBonus(consec);
                 }
             });
 
-            const totalPoints = basePoints + totalBonus;
-
-            // 3) Preparamos la actualización
+            const total = basePoints + totalBonus;
             const atletaRef = doc(db, "atletas", docSnap.id);
-            batchUpdates.push(updateDoc(atletaRef, {
-                historial: historial,
-                puntos: totalPoints,
-                asistencias: asistencias,
-                faltas: faltas,
+
+            batch.update(atletaRef, {
+                historial,
+                puntos: total,
+                asistencias,
+                faltas,
                 asistenciasConsecutivas: consec
-            }));
+            });
         });
 
-        // Ejecutamos todas las actualizaciones en batch
-        await Promise.all(batchUpdates);
-
-        // 4) Reducimos en 1 la cantidad de fechas del torneo
         const torneoRef = doc(db, "torneo", "datos");
         const torneoSnap = await getDoc(torneoRef);
-        if (torneoSnap.exists()) {
-            let cantidadFechas = torneoSnap.data().cantidadFechas || 0;
-            if (cantidadFechas > 0) {
-                await updateDoc(torneoRef, { cantidadFechas: cantidadFechas - 1 });
-            }
+        const cantidadFechas = torneoSnap.data()?.cantidadFechas || 0;
+
+        if (cantidadFechas > 0) {
+            batch.update(torneoRef, { cantidadFechas: cantidadFechas - 1 });
         }
+
+        await batch.commit(); // 🔥 Se ejecuta todo junto
 
         alert("✅ Última fecha eliminada correctamente.");
         actualizarRanking();
@@ -693,19 +680,6 @@ document.getElementById("undo-last-date").addEventListener("click", async () => 
         deshabilitarInterfaz(false);
     }
 });
-
-// =========================
-// 🔥 FUNCIÓN PARA CALCULAR BONUS SEGÚN RACHAS 🔥
-// =========================
-function calcularBonusStreak(streak) {
-    if (streak < 2) return 0;
-    if (streak === 2) return 2;
-    if (streak === 3) return 6;   // 2 + 4
-    if (streak === 4) return 12;  // 2 + 4 + 6
-    if (streak === 5) return 20;  // 2 + 4 + 6 + 8
-    if (streak >= 6) return 30;   // 2 + 4 + 6 + 8 + 10 (máximo)
-    return 0;
-}
 
 // =========================
 // 🔥 FUNCIONES AUXILIARES 🔥
