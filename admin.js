@@ -615,7 +615,6 @@ document.getElementById("reset-history").addEventListener("click", async () => {
 document.getElementById("undo-last-date").addEventListener("click", async () => {
     const confirmUndo = confirm("⚠️ ¿Estás seguro de que deseas eliminar la última fecha? Se revertirán los últimos cambios en el ranking.");
     if (!confirmUndo) return;
-
     const doubleCheck = confirm("⚠️ Esta acción NO se puede deshacer. ¿Confirmas que quieres borrar la última fecha?");
     if (!doubleCheck) return;
 
@@ -627,53 +626,55 @@ document.getElementById("undo-last-date").addEventListener("click", async () => 
         let batchUpdates = [];
 
         snapshot.forEach((docSnap) => {
-            let atleta = docSnap.data();
+            const atleta = docSnap.data();
             let historial = atleta.historial || [];
 
-            // Si no hay historial, no se puede deshacer nada
+            // Si no hay historial, saltamos
             if (historial.length === 0) return;
 
-            // Elimina la última fecha
+            // 1) Quitamos la última fecha
             historial.pop();
 
-            // Variables para recalcultar
+            // 2) Recalculamos puntos, bonus, asistencias y faltas
             let basePoints = 0;
+            let totalBonus = 0;
             let asistencias = 0;
             let faltas = 0;
-            let streak = 0; // racha actual de carreras consecutivas
+            let consec = 0; // contador de asistencias consecutivas
 
-            // Recorremos todo el historial (ya sin la última fecha)
             historial.forEach(evento => {
                 if (evento.puntos === "-") {
-                    // Si es falta, se suma 1 a faltas y se reinicia la racha
+                    // falta
                     faltas++;
-                    streak = 0;
+                    consec = 0;
                 } else {
-                    // Si asistió, se suma el puntaje base, se cuenta la asistencia y se incrementa la racha
-                    let pts = parseInt(evento.puntos) || 0;
+                    // asistencia
+                    const pts = parseInt(evento.puntos) || 0;
                     basePoints += pts;
                     asistencias++;
-                    streak++;
+                    consec++;
+                    // bonus _por ese evento_ según la racha actual
+                    totalBonus += calcularBonus(consec);
                 }
             });
 
-            // Se calcula el bonus en función del streak actual (solo se considera la racha continua al final)
-            let bonus = calcularBonusStreak(streak);
-            let totalPoints = basePoints + bonus;
+            const totalPoints = basePoints + totalBonus;
 
-            let atletaRef = doc(db, "atletas", docSnap.id);
+            // 3) Preparamos la actualización
+            const atletaRef = doc(db, "atletas", docSnap.id);
             batchUpdates.push(updateDoc(atletaRef, {
                 historial: historial,
                 puntos: totalPoints,
                 asistencias: asistencias,
                 faltas: faltas,
-                asistenciasConsecutivas: streak
+                asistenciasConsecutivas: consec
             }));
         });
 
+        // Ejecutamos todas las actualizaciones en batch
         await Promise.all(batchUpdates);
 
-        // Reducir en 1 la cantidad total de fechas en Firestore (colección "torneo")
+        // 4) Reducimos en 1 la cantidad de fechas del torneo
         const torneoRef = doc(db, "torneo", "datos");
         const torneoSnap = await getDoc(torneoRef);
         if (torneoSnap.exists()) {
