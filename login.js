@@ -1,20 +1,20 @@
-// Importar los servicios desde config.js
+// login.js
+// --------
+// Importar servicios y bcryptjs
+import bcrypt from 'https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js';
 import { auth, db } from './config.js';
 import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-// Función para mostrar mensajes de estado
+// Función para mostrar mensajes
 function mostrarMensaje(mensaje, color = "red") {
-    const mensajeElemento = document.getElementById("login-message");
-    mensajeElemento.textContent = mensaje;
-    mensajeElemento.style.color = color;
+    const elem = document.getElementById("login-message");
+    elem.textContent = mensaje;
+    elem.style.color = color;
 }
 
-// =========================
-// 🔥 INICIO DE SESIÓN 🔥
-// =========================
-document.getElementById("login-form").addEventListener("submit", async function (event) {
+// Login
+document.getElementById("login-form").addEventListener("submit", async (event) => {
     event.preventDefault();
-
     const dni = document.getElementById("login-dni").value.trim();
     const password = document.getElementById("login-password").value.trim();
 
@@ -33,19 +33,20 @@ document.getElementById("login-form").addEventListener("submit", async function 
         }
 
         const atleta = atletaSnap.data();
-
-        if (atleta.password !== password) {
+        // **Comparar hash** en lugar de texto plano
+        const valid = bcrypt.compareSync(password, atleta.passwordHash || '');
+        if (!valid) {
             mostrarMensaje("Contraseña incorrecta.");
             return;
         }
 
-        // Guardar sesión en localStorage y sessionStorage
+        // Guardar sesión
         const usuarioData = { dni, nombre: atleta.nombre, apellido: atleta.apellido };
-        localStorage.setItem("usuario", JSON.stringify(usuarioData)); 
-        sessionStorage.setItem("usuario", JSON.stringify(usuarioData)); 
+        localStorage.setItem("usuario", JSON.stringify(usuarioData));
+        sessionStorage.setItem("usuario", JSON.stringify(usuarioData));
 
-        // Redirigir al perfil normal o al panel de administrador
-        if (dni === "99999999" && password === "111111") {
+        // Redirección
+        if (dni === "99999999") {
             window.location.href = "admin.html";
         } else {
             window.location.href = "perfil.html";
@@ -57,121 +58,99 @@ document.getElementById("login-form").addEventListener("submit", async function 
     }
 });
 
-// =========================
-// 🔥 VERIFICAR SESIÓN AL CARGAR LA PÁGINA 🔥
-// =========================
+// Verificar sesión al cargar
 document.addEventListener("DOMContentLoaded", () => {
     if (!sessionStorage.getItem("primeraVisita")) {
         sessionStorage.clear();
         localStorage.removeItem("usuario");
         sessionStorage.setItem("primeraVisita", "true");
     }
-
-    let usuario = JSON.parse(sessionStorage.getItem("usuario"));
-
+    const usuario = JSON.parse(sessionStorage.getItem("usuario"));
     if (usuario) {
         document.getElementById("login-section").style.display = "none";
         document.getElementById("user-info").style.display = "block";
         document.getElementById("user-name").textContent = `${usuario.nombre} ${usuario.apellido}`;
-    } else {
-        document.getElementById("login-section").style.display = "block";
-        document.getElementById("user-info").style.display = "none";
     }
 });
 
-// =========================
-// 🔥 CIERRE DE SESIÓN 🔥
-// =========================
+// Logout
 document.getElementById("logout")?.addEventListener("click", () => {
     localStorage.removeItem("usuario");
     sessionStorage.clear();
     window.location.href = "index.html";
 });
 
-// =========================
-// 🔥 RECUPERACIÓN DE CONTRASEÑA 🔥
-// =========================
-document.getElementById("forgot-password-link").addEventListener("click", function(event) {
-    event.preventDefault();
+// Recuperación de contraseña
+document.getElementById("forgot-password-link").addEventListener("click", e => {
+    e.preventDefault();
     document.getElementById("password-recovery").style.display = "block";
 });
 
-document.getElementById("check-dni").addEventListener("click", async function() {
-    event.preventDefault(); // Evitar que el botón recargue la página
+document.getElementById("check-dni").addEventListener("click", async event => {
+    event.preventDefault();
     const dni = document.getElementById("dni-recovery").value;
     const fechaNacimiento = document.getElementById("fecha-nacimiento-recovery").value;
+    const msg = document.getElementById("recovery-message");
 
     if (!dni || !fechaNacimiento) {
-        document.getElementById("recovery-message").textContent = "Completa todos los campos.";
+        msg.textContent = "Completa todos los campos.";
         return;
     }
 
     try {
         const atletaRef = doc(db, "atletas", dni);
         const atletaSnap = await getDoc(atletaRef);
-
         if (!atletaSnap.exists()) {
-            document.getElementById("recovery-message").textContent = "DNI no encontrado.";
+            msg.textContent = "DNI no encontrado.";
             return;
         }
-
-        const atletaData = atletaSnap.data();
-        
-        if (atletaData.fechaNacimiento === fechaNacimiento) {
+        const data = atletaSnap.data();
+        if (data.fechaNacimiento === fechaNacimiento) {
             document.getElementById("new-password-section").style.display = "block";
-            document.getElementById("recovery-message").textContent = "Datos correctos. Ingresa tu nueva contraseña.";
+            msg.textContent = "Datos correctos. Ingresa tu nueva contraseña.";
         } else {
-            document.getElementById("recovery-message").textContent = "Fecha de nacimiento incorrecta.";
+            msg.textContent = "Fecha de nacimiento incorrecta.";
         }
     } catch (error) {
         console.error("Error en la recuperación de contraseña:", error);
-        document.getElementById("recovery-message").textContent = "Error al verificar el DNI.";
+        msg.textContent = "Error al verificar el DNI.";
     }
 });
 
-document.getElementById("update-password").addEventListener("click", async function(event) {
-    event.preventDefault(); // Evitar que el botón recargue la página
-
+// Actualizar contraseña (con hash)
+document.getElementById("update-password").addEventListener("click", async event => {
+    event.preventDefault();
     const dni = document.getElementById("dni-recovery").value.trim();
     const newPassword = document.getElementById("new-password").value.trim();
-    const recoveryMessage = document.getElementById("recovery-message");
+    const msg = document.getElementById("recovery-message");
 
-    // Validar que la nueva contraseña tenga al menos 6 caracteres
     if (newPassword.length < 6) {
-        recoveryMessage.textContent = "La contraseña debe tener al menos 6 caracteres.";
-        recoveryMessage.style.color = "red";
+        msg.textContent = "La contraseña debe tener al menos 6 caracteres.";
+        msg.style.color = "red";
         return;
     }
 
     try {
-        // Obtener referencia del documento en Firestore
         const atletaRef = doc(db, "atletas", dni);
         const atletaSnap = await getDoc(atletaRef);
-
         if (!atletaSnap.exists()) {
-            recoveryMessage.textContent = "DNI no encontrado.";
-            recoveryMessage.style.color = "red";
+            msg.textContent = "DNI no encontrado.";
+            msg.style.color = "red";
             return;
         }
 
-        // Actualizar la contraseña en Firestore
-        await updateDoc(atletaRef, { password: newPassword });
+        // Generar nuevo hash
+        const salt = bcrypt.genSaltSync(10);
+        const newHash = bcrypt.hashSync(newPassword, salt);
+        await updateDoc(atletaRef, { passwordHash: newHash });
 
-        recoveryMessage.textContent = "Contraseña actualizada con éxito. Redirigiendo...";
-        recoveryMessage.style.color = "green";
-
-        // Redirigir después de 2 segundos
-        setTimeout(() => {
-            window.location.href = "index.html";
-        }, 2000);
+        msg.textContent = "Contraseña actualizada con éxito. Redirigiendo...";
+        msg.style.color = "green";
+        setTimeout(() => window.location.href = "index.html", 2000);
 
     } catch (error) {
         console.error("Error al actualizar la contraseña:", error);
-        recoveryMessage.textContent = "Error al actualizar la contraseña.";
-        recoveryMessage.style.color = "red";
+        msg.textContent = "Error al actualizar la contraseña.";
+        msg.style.color = "red";
     }
-});
-
-document.getElementById("btn-inscribirse").addEventListener("click", function() {
-  window.location.href = "registration.html";
 });
