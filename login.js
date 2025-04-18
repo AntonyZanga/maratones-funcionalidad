@@ -154,3 +154,7 @@ document.getElementById("update-password").addEventListener("click", async event
         msg.style.color = "red";
     }
 });
+
+document.getElementById("btn-inscribirse").addEventListener("click", () => {
+    window.location.href = "registration.html";
+});
