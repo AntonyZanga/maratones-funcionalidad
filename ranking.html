@@ -56,7 +56,7 @@
         const data = docSnap.data();
         contenedor.innerHTML = data.html;
 
-        // 🔧 Activar botón de explicación luego de cargar el HTML
+        // 🔧 Botón de explicación (si existe)
         const btn = document.querySelector(".btn-info-puntos");
         const panel = document.querySelector(".info-box-puntos");
 
@@ -69,6 +69,34 @@
               : "🔽 Ocultar explicación";
           });
         }
+
+        // 🔔 Agregar aviso superior
+        const avisoScroll = document.createElement("div");
+        avisoScroll.textContent = "🔄 Desliza hacia los lados para ver más resultados.";
+        avisoScroll.style.position = "sticky";
+        avisoScroll.style.top = "10px";
+        avisoScroll.style.zIndex = "999";
+        avisoScroll.style.backgroundColor = "#fff3cd";
+        avisoScroll.style.color = "#856404";
+        avisoScroll.style.padding = "10px 15px";
+        avisoScroll.style.marginBottom = "10px";
+        avisoScroll.style.border = "1px solid #ffeeba";
+        avisoScroll.style.borderRadius = "8px";
+        avisoScroll.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+        avisoScroll.style.textAlign = "center";
+        avisoScroll.style.fontWeight = "500";
+
+        contenedor.prepend(avisoScroll);
+
+        setTimeout(() => {
+          avisoScroll.style.display = "none";
+        }, 8000);
+
+        // 🧹 Agregar margen entre secciones si no lo tenían
+        const secciones = contenedor.querySelectorAll("section");
+        secciones.forEach((sec, idx) => {
+          if (idx > 0) sec.style.marginTop = "2rem";
+        });
       }
     } catch (err) {
       console.error("Error al cargar el ranking público:", err);
