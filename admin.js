@@ -253,6 +253,22 @@ async function procesarResultados(results) {
     }
 
     await Promise.all(batchUpdates);
+
+    // ✅ ACTUALIZAR cantidadFechas y fechasProcesadas
+    const torneoRef = doc(db, "torneo", "datos");
+    const torneoSnap = await getDoc(torneoRef);
+    const torneoData = torneoSnap.exists() ? torneoSnap.data() : {};
+    const fechasPrevias = Array.isArray(torneoData.fechasProcesadas) ? torneoData.fechasProcesadas : [];
+
+    if (!fechasPrevias.includes(fechaMaraton)) {
+        const nuevasFechas = [...fechasPrevias, fechaMaraton];
+        await setDoc(torneoRef, {
+            ...torneoData,
+            fechasProcesadas: nuevasFechas,
+            cantidadFechas: nuevasFechas.length
+        });
+    }
+
     actualizarRanking();
 
     // 🔹 Mensaje final con cantidad cargada
@@ -260,6 +276,7 @@ async function procesarResultados(results) {
 
     return true;
 }
+
 
 // =========================
 // 🔥 CÁLCULO DE BONOS POR ASISTENCIA 🔥
