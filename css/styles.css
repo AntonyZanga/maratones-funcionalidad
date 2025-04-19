@@ -254,31 +254,10 @@ table tr:hover {
   border-radius: 4px;
 }
 
-/* Botones de ranking agrupados */
-.ranking-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  justify-content: center;
-}
-
-/* Contenedor de carga de resultados organizado */
-.resultados-form-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.resultados-form-container .form-group {
-  width: 100%;
-}
-
 /* Responsive */
 @media (max-width: 768px) {
   .container {
-    padding: 0.5rem;
+    padding: 0;
   }
 
   .card {
@@ -288,16 +267,6 @@ table tr:hover {
 
   table th, table td {
     font-size: 12px;
-    padding: 0.4rem;
-  }
-
-  .ranking-buttons {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
-  }
-
-  .resultados-form-container {
     padding: 0.5rem;
   }
 }
