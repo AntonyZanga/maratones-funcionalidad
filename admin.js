@@ -617,18 +617,29 @@ document.getElementById("undo-last-date").addEventListener("click", async () => 
     deshabilitarInterfaz(true);
 
     try {
+        const torneoRef = doc(db, "torneo", "datos");
+        const torneoSnap = await getDoc(torneoRef);
+        const torneoData = torneoSnap.data();
+        const fechas = torneoData.fechasProcesadas || [];
+        const cantidadFechas = torneoData.cantidadFechas || 0;
+
+        if (fechas.length === 0 || cantidadFechas === 0) {
+            alert("No hay fechas para deshacer.");
+            return;
+        }
+
+        const ultimaFecha = fechas[fechas.length - 1];
+
         const atletasRef = collection(db, "atletas");
         const snapshot = await getDocs(atletasRef);
-
-        const batch = writeBatch(db); // 🔥 Usamos writeBatch
+        const batch = writeBatch(db);
 
         snapshot.forEach((docSnap) => {
             const atleta = docSnap.data();
             const historial = [...(atleta.historial || [])];
 
-            if (historial.length === 0) return;
-
-            historial.pop(); // Quitamos la última fecha
+            // ✅ Eliminar entrada con la fecha exacta
+            const nuevoHistorial = historial.filter(e => e.fecha !== ultimaFecha);
 
             let basePoints = 0;
             let totalBonus = 0;
@@ -636,16 +647,18 @@ document.getElementById("undo-last-date").addEventListener("click", async () => 
             let faltas = 0;
             let consec = 0;
 
-            historial.forEach(evento => {
+            nuevoHistorial.forEach(evento => {
                 if (evento.puntos === "-") {
                     faltas++;
                     consec = 0;
                 } else {
                     const pts = parseInt(evento.puntos) || 0;
-                    basePoints += pts;
                     asistencias++;
                     consec++;
-                    totalBonus += calcularBonus(consec);
+                    const bonus = calcularBonus(consec);
+                    evento.bonus = bonus;
+                    totalBonus += bonus;
+                    basePoints += pts;
                 }
             });
 
@@ -653,7 +666,7 @@ document.getElementById("undo-last-date").addEventListener("click", async () => 
             const atletaRef = doc(db, "atletas", docSnap.id);
 
             batch.update(atletaRef, {
-                historial,
+                historial: nuevoHistorial,
                 puntos: total,
                 asistencias,
                 faltas,
@@ -661,18 +674,18 @@ document.getElementById("undo-last-date").addEventListener("click", async () => 
             });
         });
 
-        const torneoRef = doc(db, "torneo", "datos");
-        const torneoSnap = await getDoc(torneoRef);
-        const cantidadFechas = torneoSnap.data()?.cantidadFechas || 0;
+        // ✅ Actualizar documento del torneo
+        fechas.pop(); // quitamos la última fecha del array
 
-        if (cantidadFechas > 0) {
-            batch.update(torneoRef, { cantidadFechas: cantidadFechas - 1 });
-        }
+        batch.update(torneoRef, {
+            fechasProcesadas: fechas,
+            cantidadFechas: cantidadFechas - 1
+        });
 
-        await batch.commit(); // 🔥 Se ejecuta todo junto
-
+        await batch.commit();
         alert("✅ Última fecha eliminada correctamente.");
         actualizarRanking();
+
     } catch (error) {
         console.error("❌ Error al deshacer la última fecha:", error);
         alert("❌ Ocurrió un error. Revisa la consola.");
