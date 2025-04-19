@@ -433,6 +433,27 @@ async function actualizarRanking() {
         rankingContainer.prepend(infoBox);
         rankingContainer.prepend(infoBtn);
 
+        // 🔔 Aviso inicial de scroll horizontal
+        const avisoScroll = document.createElement("div");
+        avisoScroll.textContent = "🔄 Desliza hacia los lados para ver más resultados.";
+        avisoScroll.style.position = "sticky";
+        avisoScroll.style.top = "10px";
+        avisoScroll.style.zIndex = "999";
+        avisoScroll.style.backgroundColor = "#fff3cd";
+        avisoScroll.style.color = "#856404";
+        avisoScroll.style.padding = "10px 15px";
+        avisoScroll.style.marginBottom = "10px";
+        avisoScroll.style.border = "1px solid #ffeeba";
+        avisoScroll.style.borderRadius = "8px";
+        avisoScroll.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+        avisoScroll.style.textAlign = "center";
+        avisoScroll.style.fontWeight = "500";
+        rankingContainer.prepend(avisoScroll);
+
+        setTimeout(() => {
+            avisoScroll.style.display = "none";
+        }, 8000);
+
         // 🔹 Renderizar tablas por categoría
         Object.keys(atletasPorCategoria).sort().forEach(categoria => {
             let atletas = atletasPorCategoria[categoria];
@@ -469,7 +490,7 @@ async function actualizarRanking() {
             wrapper.appendChild(table);
             section.appendChild(wrapper);
 
-            // 🔄 Aviso para usuarios sobre scroll horizontal
+            // Aviso debajo de cada tabla (opcional adicional)
             const scrollNote = document.createElement("p");
             scrollNote.textContent = "🔄 Desliza hacia los lados para ver todas las fechas y resultados.";
             scrollNote.style.fontSize = "0.9rem";
