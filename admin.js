@@ -490,14 +490,6 @@ async function actualizarRanking() {
             wrapper.appendChild(table);
             section.appendChild(wrapper);
 
-            // Aviso debajo de cada tabla (opcional adicional)
-            const scrollNote = document.createElement("p");
-            scrollNote.textContent = "🔄 Desliza hacia los lados para ver todas las fechas y resultados.";
-            scrollNote.style.fontSize = "0.9rem";
-            scrollNote.style.marginTop = "0.5rem";
-            scrollNote.style.color = "#555";
-            section.appendChild(scrollNote);
-
             rankingContainer.appendChild(section);
 
             let tbody = table.querySelector("tbody");
