@@ -523,7 +523,6 @@ document.getElementById("publicar-ranking").addEventListener("click", async () =
         alert("❌ Ocurrió un error al publicar el ranking.");
     }
 });
-
 // =========================
 // 🔥 ACTUALIZAR RANKING DE RUNNING TEAMS (USANDO LA COLECCIÓN "grupos") 🔥
 // =========================
@@ -562,36 +561,55 @@ async function actualizarRankingTeams() {
         });
     });
 
-    // Filtrar solo los equipos con puntos > 0
-    let teamsArray = Object.values(teams).filter(t => t.puntos > 0);
-    teamsArray.sort((a, b) => b.puntos - a.puntos);
+    // Filtrar solo los equipos con puntos > 0 y ordenar
+    let teamsArray = Object.values(teams)
+        .filter(t => t.puntos > 0)
+        .sort((a, b) => b.puntos - a.puntos);
 
-    // Renderizar la tabla del ranking de equipos
+    // Renderizar la sección del ranking de equipos
     const rankingContainer = document.getElementById("ranking-container");
     let section = document.createElement("section");
+
+    // Título con estilo
     let title = document.createElement("h3");
     title.textContent = "Ranking de Running Teams";
+    title.classList.add("ranking-header");
     section.appendChild(title);
-    
+
+    // Wrapper para la tabla (scroll, sombra, etc.)
+    const wrapper = document.createElement("div");
+    wrapper.classList.add("ranking-table-wrapper");
+
+    // Construcción de la tabla
     let table = document.createElement("table");
+
+    // Encabezado
     let thead = document.createElement("thead");
-    thead.innerHTML = `<tr>
-      <th>P°</th>
-      <th>Team</th>
-      <th>Puntos</th>
-    </tr>`;
+    thead.innerHTML = `
+      <tr>
+        <th>P°</th>
+        <th>Team</th>
+        <th>Puntos</th>
+      </tr>
+    `;
     table.appendChild(thead);
 
+    // Cuerpo
     let tbody = document.createElement("tbody");
     teamsArray.forEach((team, index) => {
         let row = document.createElement("tr");
-        row.innerHTML = `<td>${index + 1}</td>
-                         <td>${team.team}</td>
-                         <td>${team.puntos}</td>`;
+        row.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${team.team}</td>
+          <td>${team.puntos}</td>
+        `;
         tbody.appendChild(row);
     });
     table.appendChild(tbody);
-    section.appendChild(table);
+
+    // Ensamblar todo
+    wrapper.appendChild(table);
+    section.appendChild(wrapper);
     rankingContainer.appendChild(section);
 }
 
