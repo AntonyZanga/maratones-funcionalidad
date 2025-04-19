@@ -212,11 +212,14 @@ async function procesarResultados(results) {
                 fecha: fechaMaraton
             });
 
-            batchUpdates.push(updateDoc(atletaRef, {
-                faltas: nuevasFaltas,
-                asistenciasConsecutivas: 0,
-                historial: historial
-            }));
+            batchUpdates.push({
+                ref: atletaRef,
+                data: {
+                    faltas: nuevasFaltas,
+                    asistenciasConsecutivas: 0,
+                    historial: historial
+                }
+            });
         }
     });
 
@@ -243,16 +246,30 @@ async function procesarResultados(results) {
                 fecha: fechaMaraton
             });
 
-            batchUpdates.push(updateDoc(atletaRef, {
-                puntos: totalPuntos + nuevoPuntaje + bonus,
-                asistencias: asistencias,
-                asistenciasConsecutivas: asistenciasConsecutivas,
-                historial: historial
-            }));
+            batchUpdates.push({
+                ref: atletaRef,
+                data: {
+                    puntos: totalPuntos + nuevoPuntaje + bonus,
+                    asistencias: asistencias,
+                    asistenciasConsecutivas: asistenciasConsecutivas,
+                    historial: historial
+                }
+            });
         }
     }
 
-    await Promise.all(batchUpdates);
+    // ✅ Ejecutar updates en bloques de 450
+    const chunkSize = 450;
+    for (let i = 0; i < batchUpdates.length; i += chunkSize) {
+        const batch = writeBatch(db);
+        const chunk = batchUpdates.slice(i, i + chunkSize);
+
+        chunk.forEach(update => {
+            batch.update(update.ref, update.data);
+        });
+
+        await batch.commit();
+    }
 
     // ✅ ACTUALIZAR cantidadFechas y fechasProcesadas
     const torneoRef = doc(db, "torneo", "datos");
@@ -271,12 +288,10 @@ async function procesarResultados(results) {
 
     actualizarRanking();
 
-    // 🔹 Mensaje final con cantidad cargada
     uploadMessage.textContent = `✅ Resultados cargados correctamente. (${cantidadEncontrados} de ${cantidadTotal} encontrados)`;
 
     return true;
 }
-
 
 // =========================
 // 🔥 CÁLCULO DE BONOS POR ASISTENCIA 🔥
