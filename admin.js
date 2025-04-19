@@ -592,24 +592,29 @@ document.getElementById("reset-history").addEventListener("click", async () => {
     try {
         const atletasRef = collection(db, "atletas");
         const snapshot = await getDocs(atletasRef);
+        const docs = snapshot.docs;
 
-        const batch = writeBatch(db); // 🔥 Usamos writeBatch
+        const chunkSize = 450;
+        for (let i = 0; i < docs.length; i += chunkSize) {
+            const batch = writeBatch(db);
+            const chunk = docs.slice(i, i + chunkSize);
 
-        snapshot.forEach((docSnap) => {
-            const atletaRef = doc(db, "atletas", docSnap.id);
-            batch.update(atletaRef, {
-                historial: [],
-                puntos: 0,
-                asistencias: 0,
-                faltas: 0,
-                asistenciasConsecutivas: 0
+            chunk.forEach((docSnap) => {
+                const atletaRef = doc(db, "atletas", docSnap.id);
+                batch.update(atletaRef, {
+                    historial: [],
+                    puntos: 0,
+                    asistencias: 0,
+                    faltas: 0,
+                    asistenciasConsecutivas: 0
+                });
             });
-        });
+
+            await batch.commit(); // Ejecutamos cada batch por separado
+        }
 
         const torneoRef = doc(db, "torneo", "datos");
-        batch.update(torneoRef, { cantidadFechas: 0 });
-
-        await batch.commit(); // 🔥 Se ejecuta todo junto
+        await updateDoc(torneoRef, { cantidadFechas: 0, fechasProcesadas: [] });
 
         alert("✅ El torneo ha sido reiniciado.");
         actualizarRanking();
@@ -649,57 +654,64 @@ document.getElementById("undo-last-date").addEventListener("click", async () => 
 
         const atletasRef = collection(db, "atletas");
         const snapshot = await getDocs(atletasRef);
-        const batch = writeBatch(db);
+        const docs = snapshot.docs;
 
-        snapshot.forEach((docSnap) => {
-            const atleta = docSnap.data();
-            const historial = [...(atleta.historial || [])];
+        // Dividimos en grupos de 450 atletas para no superar el límite de 500 operaciones
+        const chunkSize = 450;
+        for (let i = 0; i < docs.length; i += chunkSize) {
+            const batch = writeBatch(db);
+            const chunk = docs.slice(i, i + chunkSize);
 
-            // ✅ Eliminar entrada con la fecha exacta
-            const nuevoHistorial = historial.filter(e => e.fecha !== ultimaFecha);
+            chunk.forEach((docSnap) => {
+                const atleta = docSnap.data();
+                const historial = [...(atleta.historial || [])];
 
-            let basePoints = 0;
-            let totalBonus = 0;
-            let asistencias = 0;
-            let faltas = 0;
-            let consec = 0;
+                // Eliminar la última fecha
+                const nuevoHistorial = historial.filter(e => e.fecha !== ultimaFecha);
 
-            nuevoHistorial.forEach(evento => {
-                if (evento.puntos === "-") {
-                    faltas++;
-                    consec = 0;
-                } else {
-                    const pts = parseInt(evento.puntos) || 0;
-                    asistencias++;
-                    consec++;
-                    const bonus = calcularBonus(consec);
-                    evento.bonus = bonus;
-                    totalBonus += bonus;
-                    basePoints += pts;
-                }
+                let basePoints = 0;
+                let totalBonus = 0;
+                let asistencias = 0;
+                let faltas = 0;
+                let consec = 0;
+
+                nuevoHistorial.forEach(evento => {
+                    if (evento.puntos === "-") {
+                        faltas++;
+                        consec = 0;
+                    } else {
+                        const pts = parseInt(evento.puntos) || 0;
+                        asistencias++;
+                        consec++;
+                        const bonus = calcularBonus(consec);
+                        evento.bonus = bonus;
+                        totalBonus += bonus;
+                        basePoints += pts;
+                    }
+                });
+
+                const total = basePoints + totalBonus;
+                const atletaRef = doc(db, "atletas", docSnap.id);
+
+                batch.update(atletaRef, {
+                    historial: nuevoHistorial,
+                    puntos: total,
+                    asistencias,
+                    faltas,
+                    asistenciasConsecutivas: consec
+                });
             });
 
-            const total = basePoints + totalBonus;
-            const atletaRef = doc(db, "atletas", docSnap.id);
+            await batch.commit(); // 🔥 Ejecutamos el batch actual
+        }
 
-            batch.update(atletaRef, {
-                historial: nuevoHistorial,
-                puntos: total,
-                asistencias,
-                faltas,
-                asistenciasConsecutivas: consec
-            });
-        });
-
-        // ✅ Actualizar documento del torneo
-        fechas.pop(); // quitamos la última fecha del array
-
-        batch.update(torneoRef, {
+        // Actualizar el documento del torneo con la nueva lista de fechas
+        fechas.pop(); // quitamos la última
+        await updateDoc(torneoRef, {
             fechasProcesadas: fechas,
             cantidadFechas: cantidadFechas - 1
         });
 
-        await batch.commit();
         alert("✅ Última fecha eliminada correctamente.");
         actualizarRanking();
 
