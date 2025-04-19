@@ -460,6 +460,7 @@ async function actualizarRanking() {
             atletas.sort((a, b) => b.puntos - a.puntos);
 
             let section = document.createElement("section");
+            section.style.marginTop = "2rem";
             let title = document.createElement("h3");
             title.textContent = categoria;
             section.appendChild(title);
