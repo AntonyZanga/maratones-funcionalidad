@@ -4,10 +4,13 @@
 import { auth, db, storage } from './config.js';
 import { doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+
 // Asignar bcrypt desde la librería cargada por CDN
 const bcrypt = dcodeIO.bcrypt;
 
-// Función para cargar los grupos de running desde Firebase
+// ================================
+// 🔹 Cargar grupos de running
+// ================================
 async function cargarGrupos() {
     const selectGrupo = document.getElementById("tipo-grupo");
     selectGrupo.innerHTML = '';
@@ -35,33 +38,48 @@ async function cargarGrupos() {
 }
 document.addEventListener("DOMContentLoaded", cargarGrupos);
 
-// Mostrar mensajes de estado
+// ================================
+// 🔹 Mostrar mensajes
+// ================================
 function mostrarMensaje(mensaje, color = "black") {
     const mensajeElemento = document.getElementById("mensaje");
     mensajeElemento.textContent = mensaje;
     mensajeElemento.style.color = color;
 }
 
-// Obtener cantidad de fechas registradas en Firestore
-async function obtenerCantidadFechas() {
+// ================================
+// 🔹 Obtener fechas procesadas
+// ================================
+async function obtenerDatosTorneo() {
     try {
         const torneoRef = doc(db, "torneo", "datos");
-        const torneoSnap = await getDoc(torneoRef);
-        return torneoSnap.exists() ? (torneoSnap.data().cantidadFechas || 0) : 0;
+        const snap = await getDoc(torneoRef);
+        if (!snap.exists()) {
+            return { cantidadFechas: 0, fechasProcesadas: [] };
+        }
+        const data = snap.data();
+        return {
+            cantidadFechas: data.cantidadFechas || 0,
+            fechasProcesadas: Array.isArray(data.fechasProcesadas) ? data.fechasProcesadas : []
+        };
     } catch (error) {
-        console.error("Error al obtener cantidadFechas:", error);
-        return 0;
+        console.error("Error al obtener datos del torneo:", error);
+        return { cantidadFechas: 0, fechasProcesadas: [] };
     }
 }
 
-// Validación del DNI
+// ================================
+// 🔹 Validar DNI
+// ================================
 function esDniValido(dni) {
     const dniRegex = /^[1-9]\d{6,7}$/;
     const dniInvalidos = ["00000000", "11111111", "12345678", "99999999"];
     return dniRegex.test(dni) && !dniInvalidos.includes(dni);
 }
 
-// Validación en vivo de la contraseña
+// ================================
+// 🔹 Validación en vivo de password
+// ================================
 function validarPassword() {
     const password = document.getElementById("password").value;
     const confirmPassword = document.getElementById("confirm-password").value;
@@ -81,7 +99,9 @@ function validarPassword() {
 document.getElementById("password").addEventListener("input", validarPassword);
 document.getElementById("confirm-password").addEventListener("input", validarPassword);
 
-// Función para registrar atleta
+// ================================
+// 🔹 Registrar atleta
+// ================================
 async function registrarAtleta(event) {
     event.preventDefault();
 
@@ -116,7 +136,6 @@ async function registrarAtleta(event) {
     }
 
     try {
-        // Verificar que no exista ya el DNI
         const atletaRef = doc(db, "atletas", dni);
         const atletaSnap = await getDoc(atletaRef);
         if (atletaSnap.exists()) {
@@ -124,38 +143,49 @@ async function registrarAtleta(event) {
             return;
         }
 
-        // Historial inicial según cantidad de fechas
-        const cantidadFechas = await obtenerCantidadFechas();
-        const historial = Array.from({ length: cantidadFechas }, () => ({
+        const { cantidadFechas, fechasProcesadas } = await obtenerDatosTorneo();
+
+        const historial = fechasProcesadas.map(fecha => ({
             posicion: "-",
-            puntos: "-"
+            puntos: "-",
+            bonus: 0,
+            grupoRunning: "Individual",
+            fecha: fecha,
+            categoria: categoria
         }));
 
-        // Subir certificado de discapacidad si aplica
+        if (historial.length < cantidadFechas) {
+            for (let i = historial.length; i < cantidadFechas; i++) {
+                historial.push({
+                    posicion: "-",
+                    puntos: "-",
+                    bonus: 0,
+                    grupoRunning: "Individual",
+                    fecha: null,
+                    categoria: categoria
+                });
+            }
+        }
+
         let certificadoURL = null;
         if (categoria.toLowerCase() === "especial" && certificadoDiscapacidadFile) {
-            mostrarMensaje("Subiendo certificado de discapacidad...", "blue");
             const ext = certificadoDiscapacidadFile.name.split('.').pop();
             const certificadoRef = ref(storage, `certificados/${dni}_certificado.${ext}`);
             await uploadBytes(certificadoRef, certificadoDiscapacidadFile);
             certificadoURL = await getDownloadURL(certificadoRef);
         }
 
-        // Subir apto médico si se cargó
         let aptoMedicoURL = null;
         if (aptoMedicoFile) {
-            mostrarMensaje("Subiendo apto médico...", "blue");
             const ext2 = aptoMedicoFile.name.split('.').pop();
             const aptoRef = ref(storage, `aptos_medicos/${dni}_apto.${ext2}`);
             await uploadBytes(aptoRef, aptoMedicoFile);
             aptoMedicoURL = await getDownloadURL(aptoRef);
         }
 
-        // Hashear la contraseña
         const salt = bcrypt.genSaltSync(10);
         const passwordHash = bcrypt.hashSync(password, salt);
 
-        // Guardar en Firestore usando el hash
         await setDoc(atletaRef, {
             nombre,
             apellido,
@@ -164,14 +194,13 @@ async function registrarAtleta(event) {
             localidad,
             grupoRunning: tipoGrupo,
             categoria,
-            passwordHash,               // <-- aquí el hash
+            passwordHash,
             aptoMedico: aptoMedicoURL,
             certificadoDiscapacidad: certificadoURL,
             historial,
             faltas: cantidadFechas
         });
 
-        // Limpiar y redirigir
         sessionStorage.clear();
         localStorage.clear();
         mostrarMensaje("Registro exitoso. Redirigiendo...", "green");
@@ -182,10 +211,11 @@ async function registrarAtleta(event) {
         mostrarMensaje("Hubo un error al registrar. Intenta nuevamente.", "red");
     }
 }
-
 document.getElementById("registro-form").addEventListener("submit", registrarAtleta);
 
-// Mostrar/ocultar certificado según categoría
+// ================================
+// 🔹 Mostrar/ocultar certificado
+// ================================
 document.querySelectorAll('input[name="categoria"]').forEach(radio => {
     radio.addEventListener("change", () => {
         const cont = document.getElementById("certificado-container");
