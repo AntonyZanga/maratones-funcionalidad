@@ -90,19 +90,6 @@ async function procesarResultados(results) {
     const fechaMaratonInput = document.getElementById("fecha-maraton");
     const fechaMaraton = fechaMaratonInput?.value;
 
-    const torneoDatosRef = doc(db, "torneo", "datos");
-    const torneoSnap = await getDoc(torneoDatosRef);
-    const torneoData = torneoSnap.exists() ? torneoSnap.data() : {};
-    const fechasPrevias = Array.isArray(torneoData.fechasProcesadas)
-      ? torneoData.fechasProcesadas
-      : [];
-
-    if (fechasPrevias.includes(fechaMaraton)) {
-      uploadMessage.textContent = "❌ Esta fecha ya fue procesada anteriormente.";
-      deshabilitarInterfaz(false);
-      return false;
-    }
-
     if (!fechaMaraton) {
         uploadMessage.textContent = "Seleccioná la fecha de la maratón.";
         return false;
@@ -110,6 +97,19 @@ async function procesarResultados(results) {
 
     if (results.length < 2) {
         uploadMessage.textContent = "El archivo no tiene datos válidos.";
+        return false;
+    }
+
+    const torneoDatosRef = doc(db, "torneo", "datos");
+    const torneoDatosSnap = await getDoc(torneoDatosRef);
+    const torneoData = torneoDatosSnap.exists() ? torneoDatosSnap.data() : {};
+    const fechasPrevias = Array.isArray(torneoData.fechasProcesadas)
+      ? torneoData.fechasProcesadas
+      : [];
+
+    if (fechasPrevias.includes(fechaMaraton)) {
+        uploadMessage.textContent = "❌ Esta fecha ya fue procesada anteriormente.";
+        deshabilitarInterfaz(false);
         return false;
     }
 
@@ -125,18 +125,10 @@ async function procesarResultados(results) {
 
     for (let i = 1; i < results.length; i++) {
         const fila = results[i];
-
-        if (!Array.isArray(fila) || fila.length < 2) {
-            console.warn(`Fila inválida en la línea ${i + 1}:`, fila);
-            continue;
-        }
+        if (!Array.isArray(fila) || fila.length < 2) continue;
 
         const [posicion, dni] = fila;
-
-        if (!posicion || isNaN(posicion) || !dni || isNaN(dni)) {
-            console.warn(`Datos inválidos en la fila ${i + 1}:`, fila);
-            continue;
-        }
+        if (!posicion || isNaN(posicion) || !dni || isNaN(dni)) continue;
 
         const dniLimpio = String(dni).trim();
         atletasParticipantes.add(dniLimpio);
@@ -205,18 +197,17 @@ async function procesarResultados(results) {
         }
     }
 
-    const snapshot = await getDocs(atletasRef);
     let batchUpdates = [];
 
-    snapshot.forEach((docSnap) => {
+    snapshotGlobal.forEach((docSnap) => {
         let atleta = docSnap.data();
         let dni = docSnap.id;
 
+        let historial = atleta.historial || [];
+
         if (!atletasParticipantes.has(dni)) {
-            let atletaRef = doc(db, "atletas", dni);
             let nuevasFaltas = (atleta.faltas || 0) + 1;
 
-            let historial = atleta.historial || [];
             historial.push({
                 posicion: "-",
                 puntos: "-",
@@ -226,7 +217,7 @@ async function procesarResultados(results) {
             });
 
             batchUpdates.push({
-                ref: atletaRef,
+                ref: doc(db, "atletas", dni),
                 data: {
                     faltas: nuevasFaltas,
                     asistenciasConsecutivas: 0,
@@ -238,7 +229,6 @@ async function procesarResultados(results) {
 
     for (let categoria in categorias) {
         let atletasCategoria = categorias[categoria];
-
         atletasCategoria.sort((a, b) => a.posicion - b.posicion);
 
         for (let i = 0; i < atletasCategoria.length; i++) {
@@ -271,11 +261,9 @@ async function procesarResultados(results) {
         }
     }
 
-    // ✅ Ejecutar updates en bloques de 450
-    const chunkSize = 450;
-    for (let i = 0; i < batchUpdates.length; i += chunkSize) {
+    for (let i = 0; i < batchUpdates.length; i += 450) {
         const batch = writeBatch(db);
-        const chunk = batchUpdates.slice(i, i + chunkSize);
+        const chunk = batchUpdates.slice(i, i + 450);
 
         chunk.forEach(update => {
             batch.update(update.ref, update.data);
@@ -284,23 +272,14 @@ async function procesarResultados(results) {
         await batch.commit();
     }
 
-    // ✅ ACTUALIZAR cantidadFechas y fechasProcesadas
-    const torneoRef = doc(db, "torneo", "datos");
-    const torneoSnap = await getDoc(torneoRef);
-    const torneoData = torneoSnap.exists() ? torneoSnap.data() : {};
-    const fechasPrevias = Array.isArray(torneoData.fechasProcesadas) ? torneoData.fechasProcesadas : [];
-
-    if (!fechasPrevias.includes(fechaMaraton)) {
-        const nuevasFechas = [...fechasPrevias, fechaMaraton];
-        await setDoc(torneoRef, {
-            ...torneoData,
-            fechasProcesadas: nuevasFechas,
-            cantidadFechas: nuevasFechas.length
-        });
-    }
+    const nuevasFechas = [...fechasPrevias, fechaMaraton];
+    await setDoc(torneoDatosRef, {
+        ...torneoData,
+        fechasProcesadas: nuevasFechas,
+        cantidadFechas: nuevasFechas.length
+    });
 
     actualizarRanking();
-
     uploadMessage.textContent = `✅ Resultados cargados correctamente. (${cantidadEncontrados} de ${cantidadTotal} encontrados)`;
 
     return true;
