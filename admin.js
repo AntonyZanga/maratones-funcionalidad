@@ -90,8 +90,8 @@ async function procesarResultados(results) {
     const fechaMaratonInput = document.getElementById("fecha-maraton");
     const fechaMaraton = fechaMaratonInput?.value;
 
-    const torneoRef = doc(db, "torneo", "datos");
-    const torneoSnap = await getDoc(torneoRef);
+    const torneoDatosRef = doc(db, "torneo", "datos");
+    const torneoSnap = await getDoc(torneoDatosRef);
     const torneoData = torneoSnap.exists() ? torneoSnap.data() : {};
     const fechasPrevias = Array.isArray(torneoData.fechasProcesadas)
       ? torneoData.fechasProcesadas
