@@ -90,6 +90,19 @@ async function procesarResultados(results) {
     const fechaMaratonInput = document.getElementById("fecha-maraton");
     const fechaMaraton = fechaMaratonInput?.value;
 
+    const torneoRef = doc(db, "torneo", "datos");
+    const torneoSnap = await getDoc(torneoRef);
+    const torneoData = torneoSnap.exists() ? torneoSnap.data() : {};
+    const fechasPrevias = Array.isArray(torneoData.fechasProcesadas)
+      ? torneoData.fechasProcesadas
+      : [];
+
+    if (fechasPrevias.includes(fechaMaraton)) {
+      uploadMessage.textContent = "❌ Esta fecha ya fue procesada anteriormente.";
+      deshabilitarInterfaz(false);
+      return false;
+    }
+
     if (!fechaMaraton) {
         uploadMessage.textContent = "Seleccioná la fecha de la maratón.";
         return false;
