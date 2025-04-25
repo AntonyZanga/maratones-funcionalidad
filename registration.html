@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Registro de Atleta - Maratones de Sudeste</title>
+  <title>Completar Registro - Maratones de Sudeste</title>
   <link rel="stylesheet" href="css/styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,80 +12,100 @@
 <body>
   <header class="header">
     <div class="container header-container">
-      <h1>Registro de Nuevo Atleta</h1>
+      <h1>Completar Datos del Atleta</h1>
     </div>
   </header>
   <main class="container">
     <section id="form-registro" class="card">
+      <div class="info-box">
+        <p>Para participar en las maratones, necesitamos algunos datos adicionales.</p>
+      </div>
       <form id="registro-form">
+        <div class="form-group" id="dni-group">
+          <label for="dni">
+            DNI <span class="required">*</span>
+            <i class="fas fa-id-card"></i>
+          </label>
+          <input 
+            type="text" 
+            id="dni" 
+            name="dni" 
+            maxlength="8" 
+            pattern="\d{7,8}" 
+            required 
+            autocomplete="off"
+            placeholder="Ej: 12345678"
+            class="dni-input"
+          >
+          <div id="dni-hint" class="dni-hint animated fadeIn">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>
+              <strong>¡Atención!</strong> El DNI no se puede modificar después. Si lo ingresas mal, deberás pedir a la administración que elimine tu cuenta y volver a registrarte.
+            </span>
+          </div>
+          <div id="dni-error" class="dni-error"></div>
+        </div>
         <div class="form-group">
-          <label for="nombre">Nombre:</label>
+          <label for="nombre">Nombre: *</label>
           <input type="text" id="nombre" name="nombre" required>
         </div>
         <div class="form-group">
-          <label for="apellido">Apellido:</label>
+          <label for="apellido">Apellido: *</label>
           <input type="text" id="apellido" name="apellido" required>
         </div>
         <div class="form-group">
-          <label for="password">Contraseña (mínimo 6 dígitos):</label>
-          <input type="password" id="password" name="password" minlength="6" required>
-        </div>
-        <div class="form-group">
-          <label for="confirm-password">Confirmar contraseña:</label>
-          <input type="password" id="confirm-password" name="confirm-password" minlength="6" required>
-          <span id="password-match"></span>
-        </div>
-        <div class="form-group">
-          <label for="dni">DNI:</label>
-          <input type="text" id="dni" name="dni" required>
-        </div>
-        <div class="form-group">
-          <label for="fecha-nacimiento">Fecha de Nacimiento:</label>
+          <label for="fecha-nacimiento">Fecha de Nacimiento: *</label>
           <input type="date" id="fecha-nacimiento" name="fecha-nacimiento" required>
-          <p id="age-category"></p>
+          <p id="age-category" class="small-text"></p>
         </div>
         <div class="form-group">
-          <label for="localidad">Localidad:</label>
+          <label for="localidad">Localidad: *</label>
           <input type="text" id="localidad" name="localidad" required>
         </div>
         <div class="form-group">
           <label for="tipo-grupo">Grupo de Running:</label>
-          <select id="tipo-grupo" name="tipo-grupo" required>
-            <option value="">Seleccione un grupo...</option>
+          <select id="tipo-grupo" name="tipo-grupo">
+            <option value="Individual" selected>Individual</option>
           </select>
-          <p id="grupo-ayuda" class="small-text">
-            Si su grupo de running no está en la lista, envíe un correo a <strong>maratonsudeste@gmail.com</strong> solicitando su inclusión.
+          <p class="small-text">
+            Si su grupo de running no está en la lista, envíe un correo a 
+            <strong>maratonsudeste@gmail.com</strong>
           </p>
         </div>
+        <fieldset class="form-group">
+          <legend>Categoría *</legend>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="categoria" value="Masculino" required>
+              <span>Masculino</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="categoria" value="Femenino">
+              <span>Femenino</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="categoria" value="Especial">
+              <span>Especial</span>
+            </label>
+          </div>
+        </fieldset>
         <div class="form-group">
           <label for="apto-medico">Apto Médico:</label>
           <input type="file" id="apto-medico" name="apto-medico" accept=".pdf,.jpg,.png">
+          <span class="small-text">Formatos aceptados: PDF, JPG, PNG (máx. 2MB)</span>
         </div>
-        <fieldset class="form-group">
-  <legend>Categoría</legend>
-  <label class="radio-label">
-    <input type="radio" name="categoria" value="Masculino" required>
-    <span>Masculino</span>
-  </label>
-  <label class="radio-label">
-    <input type="radio" name="categoria" value="Femenino">
-    <span>Femenino</span>
-  </label>
-  <label class="radio-label">
-    <input type="radio" name="categoria" value="Especial">
-    <span>Especial</span>
-  </label>
-</fieldset>
         <div id="certificado-container" class="form-group hidden">
           <label for="certificado-discapacidad">Certificado de Discapacidad:</label>
           <input type="file" id="certificado-discapacidad" name="certificado-discapacidad" accept=".pdf,.jpg,.png">
+          <span class="small-text">Formatos aceptados: PDF, JPG, PNG (máx. 2MB)</span>
         </div>
-        <button type="submit" id="btn-registrar" class="btn">Registrar Atleta</button>
-        <p id="mensaje"></p>
+        <div id="mensaje" class="mensaje"></div>
+        <button type="submit" id="btn-registrar" class="btn btn-primary">
+          Completar Registro
+        </button>
       </form>
     </section>
   </main>
-  <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
   <script type="module" src="config.js"></script>
   <script type="module" src="registration.js"></script>
 </body>

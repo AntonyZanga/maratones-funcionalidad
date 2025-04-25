@@ -8,14 +8,49 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-  <header class="header">
-    <div class="container header-container">
-      <h1>Perfil del Atleta</h1>
+  <div class="perfil-panel">
+    <div class="perfil-header">
+      <div class="perfil-avatar-container">
+        <img id="perfil-foto" class="perfil-avatar" alt="Foto de perfil">
+      </div>
+      <div class="perfil-stats">
+        <div class="stat-card stat-total">
+          <i class="fas fa-star"></i>
+          <div>
+            <span id="perfil-puntos" class="stat-value">0</span>
+            <span class="stat-label">Puntos Totales</span>
+          </div>
+        </div>
+        <div class="stat-card stat-bonus">
+          <i class="fas fa-bolt"></i>
+          <div>
+            <span id="perfil-bonus" class="stat-value">0</span>
+            <span class="stat-label">Bonus por Asistencia</span>
+          </div>
+        </div>
+      </div>
+      <div class="perfil-datos">
+        <h2 id="perfil-nombre"></h2>
+        <p id="perfil-email"></p>
+        <p id="perfil-dni"></p>
+        <div id="estado-apto-medico"></div>
+        <div id="estado-certificado-discapacidad"></div>
+      </div>
+      <p class="perfil-motivacion">
+        <i class="fas fa-running"></i>
+        ¡Sigue participando para sumar más puntos y bonus por asistencia consecutiva!
+      </p>
     </div>
-  </header>
-  
+    <div class="perfil-actions">
+      <button id="logout" class="btn btn-secondary">
+        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+      </button>
+    </div>
+  </div>
+
   <main class="container">
     <section id="perfil" class="card">
       <h2>Información Personal</h2>

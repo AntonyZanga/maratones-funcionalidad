@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ranking Público</title>
+  <title>Maratones del Sudeste | Puntaje <span id="titulo-ano"></span></title>
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/ranking-publico.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,7 +13,7 @@
 <body>
   <header class="header">
     <div class="container header-container">
-      <h1>Ranking Público del Torneo</h1>
+      <h1 id="main-title"></h1>
       <button id="btn-copiar-enlace" class="btn btn-secondary" style="margin-top: 10px;">🔗 Copiar enlace</button>
       <p id="mensaje-copiado" style="color: green; display: none;">✅ Enlace copiado</p>
     </div>
@@ -21,6 +21,8 @@
 
   <main class="container">
     <section class="card">
+      <div id="info-box-puntos-publico" class="info-box-puntos" style="display:none;"></div>
+      <div id="ranking-filtros" class="ranking-filtros" style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap;"></div>
       <div class="ranking-container ranking-publico" id="ranking-container">
         <p>Cargando ranking...</p>
       </div>
@@ -45,6 +47,79 @@
     const db = getFirestore(app);
 
     const contenedor = document.getElementById("ranking-container");
+    const filtrosDiv = document.getElementById("ranking-filtros");
+    const infoBoxPuntos = document.getElementById('info-box-puntos-publico');
+
+    let selectCategoria, inputBusqueda;
+
+    function crearBarraFiltros(categorias) {
+      filtrosDiv.innerHTML = '';
+      selectCategoria = document.createElement('select');
+      selectCategoria.className = 'filtro-categoria';
+      selectCategoria.style.padding = '0.6rem 2.2rem 0.6rem 2.2rem';
+      selectCategoria.style.borderRadius = '8px';
+      selectCategoria.style.border = '1px solid #bdc3c7';
+      selectCategoria.style.fontFamily = 'Poppins, sans-serif';
+      selectCategoria.style.fontSize = '1rem';
+      selectCategoria.style.background = `url('https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.2/svgs/solid/tag.svg') no-repeat 0.7rem center/1.1em, white`;
+      selectCategoria.style.paddingLeft = '2.2rem';
+      selectCategoria.style.cursor = 'pointer';
+      selectCategoria.style.minWidth = '180px';
+      selectCategoria.innerHTML = `<option value="">Todas las categorías</option>` +
+        categorias.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+      filtrosDiv.appendChild(selectCategoria);
+
+      const inputWrapper = document.createElement('div');
+      inputWrapper.style.position = 'relative';
+      inputWrapper.style.flex = '1';
+      inputWrapper.style.maxWidth = '320px';
+      inputWrapper.style.minWidth = '180px';
+      inputBusqueda = document.createElement('input');
+      inputBusqueda.type = 'text';
+      inputBusqueda.placeholder = 'Buscar por nombre...';
+      inputBusqueda.className = 'filtro-busqueda';
+      inputBusqueda.style.padding = '0.6rem 2.2rem 0.6rem 2.2rem';
+      inputBusqueda.style.borderRadius = '8px';
+      inputBusqueda.style.border = '1px solid #bdc3c7';
+      inputBusqueda.style.fontFamily = 'Poppins, sans-serif';
+      inputBusqueda.style.fontSize = '1rem';
+      inputBusqueda.style.background = `url('https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.2/svgs/solid/magnifying-glass.svg') no-repeat 0.7rem center/1.1em, white`;
+      inputBusqueda.style.paddingLeft = '2.2rem';
+      inputBusqueda.style.width = '100%';
+      inputBusqueda.autocomplete = 'off';
+      inputWrapper.appendChild(inputBusqueda);
+      filtrosDiv.appendChild(inputWrapper);
+    }
+
+    function filtrarRanking() {
+      const categoria = selectCategoria.value;
+      const busqueda = inputBusqueda.value.trim().toLowerCase();
+      const secciones = contenedor.querySelectorAll('section');
+      secciones.forEach(sec => {
+        const h3 = sec.querySelector('h3');
+        if (!h3) return;
+        const cat = h3.textContent.trim();
+        if (categoria && cat !== categoria) {
+          sec.style.display = 'none';
+        } else {
+          sec.style.display = '';
+        }
+        const filas = sec.querySelectorAll('tbody tr');
+        let hayCoincidencia = false;
+        filas.forEach(tr => {
+          const nombre = tr.children[1]?.textContent?.toLowerCase() || '';
+          if (!busqueda || nombre.includes(busqueda)) {
+            tr.style.display = '';
+            hayCoincidencia = true;
+          } else {
+            tr.style.display = 'none';
+          }
+        });
+        if (busqueda && !hayCoincidencia) {
+          sec.style.display = 'none';
+        }
+      });
+    }
 
     try {
       const refPublico = doc(db, "torneo", "publico");
@@ -56,47 +131,79 @@
         const data = docSnap.data();
         contenedor.innerHTML = data.html;
 
-        // 🔧 Botón de explicación (si existe)
-        const btn = document.querySelector(".btn-info-puntos");
-        const panel = document.querySelector(".info-box-puntos");
+        const categorias = Array.from(contenedor.querySelectorAll('section > h3'))
+          .map(h3 => h3.textContent.trim())
+          .filter((v, i, arr) => arr.indexOf(v) === i);
+        crearBarraFiltros(categorias);
+        selectCategoria.addEventListener('change', filtrarRanking);
+        inputBusqueda.addEventListener('input', filtrarRanking);
 
-        if (btn && panel) {
-          btn.addEventListener("click", () => {
-            const visible = panel.style.display === "block";
-            panel.style.display = visible ? "none" : "block";
-            btn.textContent = visible
-              ? "ℹ️ Ver cómo se otorgan los puntos"
-              : "🔽 Ocultar explicación";
+        const panel = contenedor.querySelector('.info-box-puntos');
+        if (panel && panel.innerHTML.trim()) {
+          infoBoxPuntos.innerHTML = panel.innerHTML;
+          panel.remove();
+        }
+
+        // Crear y agregar el botón de información de puntos
+        const btnInfoPuntos = document.createElement('button');
+        btnInfoPuntos.id = 'btn-info-puntos-publico';
+        btnInfoPuntos.className = 'btn-info-puntos';
+        btnInfoPuntos.style.marginBottom = '1rem';
+        btnInfoPuntos.textContent = 'ℹ️ Ver cómo se otorgan los puntos';
+        infoBoxPuntos.parentNode.insertBefore(btnInfoPuntos, infoBoxPuntos);
+
+        btnInfoPuntos.addEventListener('click', () => {
+          const visible = infoBoxPuntos.style.display === 'block';
+          infoBoxPuntos.style.display = visible ? 'none' : 'block';
+          btnInfoPuntos.textContent = visible
+            ? 'ℹ️ Ver cómo se otorgan los puntos'
+            : '🔽 Ocultar explicación';
+        });
+
+        if (!document.getElementById('aviso-scroll-publico')) {
+          const avisoScroll = document.createElement("div");
+          avisoScroll.id = 'aviso-scroll-publico';
+          avisoScroll.textContent = "🔄 Desliza hacia los lados para ver más resultados.";
+          avisoScroll.style.position = "sticky";
+          avisoScroll.style.top = "10px";
+          avisoScroll.style.zIndex = "999";
+          avisoScroll.style.backgroundColor = "#fff3cd";
+          avisoScroll.style.color = "#856404";
+          avisoScroll.style.padding = "10px 15px";
+          avisoScroll.style.marginBottom = "10px";
+          avisoScroll.style.border = "1px solid #ffeeba";
+          avisoScroll.style.borderRadius = "8px";
+          avisoScroll.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
+          avisoScroll.style.textAlign = "center";
+          avisoScroll.style.fontWeight = "500";
+          contenedor.prepend(avisoScroll);
+
+          // Desaparecer después de 3 segundos
+          setTimeout(() => {
+            avisoScroll.style.display = "none";
+          }, 3000);
+
+          // Desaparecer cuando el usuario interactúe con la tabla
+          const tablas = contenedor.querySelectorAll('table');
+          tablas.forEach(tabla => {
+            tabla.addEventListener('scroll', () => {
+              avisoScroll.style.display = "none";
+            });
+            tabla.addEventListener('touchstart', () => {
+              avisoScroll.style.display = "none";
+            });
           });
         }
 
-        // 🔔 Agregar aviso superior
-        const avisoScroll = document.createElement("div");
-        avisoScroll.textContent = "🔄 Desliza hacia los lados para ver más resultados.";
-        avisoScroll.style.position = "sticky";
-        avisoScroll.style.top = "10px";
-        avisoScroll.style.zIndex = "999";
-        avisoScroll.style.backgroundColor = "#fff3cd";
-        avisoScroll.style.color = "#856404";
-        avisoScroll.style.padding = "10px 15px";
-        avisoScroll.style.marginBottom = "10px";
-        avisoScroll.style.border = "1px solid #ffeeba";
-        avisoScroll.style.borderRadius = "8px";
-        avisoScroll.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
-        avisoScroll.style.textAlign = "center";
-        avisoScroll.style.fontWeight = "500";
-
-        contenedor.prepend(avisoScroll);
-
-        setTimeout(() => {
-          avisoScroll.style.display = "none";
-        }, 8000);
-
-        // 🧹 Agregar margen entre secciones si no lo tenían
         const secciones = contenedor.querySelectorAll("section");
         secciones.forEach((sec, idx) => {
           if (idx > 0) sec.style.marginTop = "2rem";
         });
+
+        // Título dinámico con año actual
+        const year = new Date().getFullYear();
+        document.title = `Maratones del Sudeste | Puntaje ${year}`;
+        document.getElementById('main-title').textContent = `Maratones del Sudeste | Puntaje ${year}`;
       }
     } catch (err) {
       console.error("Error al cargar el ranking público:", err);

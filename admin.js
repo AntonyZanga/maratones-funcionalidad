@@ -5,22 +5,50 @@ import { collection, getDocs, doc, setDoc, updateDoc, getDoc, writeBatch } from 
 // =========================
 // 🔥 VERIFICACIÓN DE ADMINISTRADOR 🔥
 // =========================
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     const usuario = JSON.parse(sessionStorage.getItem("usuario"));
-
-    if (!usuario || usuario.dni !== "99999999") {
+    if (!usuario || !usuario.uid || !usuario.isAdmin) {
         alert("Acceso denegado. Debes ser administrador.");
         window.location.href = "index.html";
+        return;
     }
 
-    actualizarRanking();
+    // Verificar contra Firestore
+    const usuarioRef = doc(db, "usuarios", usuario.uid);
+    const usuarioDoc = await getDoc(usuarioRef);
+    
+    if (!usuarioDoc.exists() || !usuarioDoc.data().isAdmin) {
+        alert("Acceso denegado. No tienes permisos de administrador.");
+        window.location.href = "index.html";
+        return;
+    }
+
+    await actualizarRanking();
 });
+
+// =========================
+// 🔥 PROTECCIÓN DE OPERACIONES CRÍTICAS 🔥
+// =========================
+async function ejecutarOperacionProtegida(operacion) {
+    try {
+        if (!await verificarPermisoAdmin()) {
+            throw new Error("Operación no autorizada");
+        }
+        return await operacion();
+    } catch (error) {
+        console.error("Error en operación protegida:", error);
+        alert("Error: " + error.message);
+        return null;
+    }
+}
+
 function deshabilitarInterfaz(deshabilitar) {
     const elementos = document.querySelectorAll("button, input, select, textarea");
     elementos.forEach(elemento => {
         elemento.disabled = deshabilitar;
     });
 }
+
 // =========================
 // 🔥 CIERRE DE SESIÓN 🔥
 // =========================
@@ -34,43 +62,45 @@ document.getElementById("logout").addEventListener("click", () => {
 // 🔥 CARGA DE RESULTADOS DESDE EXCEL 🔥
 // =========================
 document.getElementById("upload-results").addEventListener("click", async () => {
-    const fileInput = document.getElementById("file-input");
-    const fechaInput = document.getElementById("fecha-maraton");
-    const uploadMessage = document.getElementById("upload-message");
+    await ejecutarOperacionProtegida(async () => {
+        const fileInput = document.getElementById("file-input");
+        const fechaInput = document.getElementById("fecha-maraton");
+        const uploadMessage = document.getElementById("upload-message");
 
-    if (!fechaInput.value) {
-        uploadMessage.textContent = "❌ Debes seleccionar la fecha de la maratón.";
-        return;
-    }
-
-    if (fileInput.files.length === 0) {
-        uploadMessage.textContent = "❌ Selecciona un archivo Excel.";
-        return;
-    }
-
-    deshabilitarInterfaz(true);
-    uploadMessage.textContent = "⏳ Procesando resultados... Por favor, espera.";
-
-    const file = fileInput.files[0];
-    const reader = new FileReader();
-
-    reader.onload = async function (event) {
-        try {
-            const data = new Uint8Array(event.target.result);
-            const workbook = XLSX.read(data, { type: "array" });
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const results = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
-            await procesarResultados(results);
-        } catch (error) {
-            console.error("Error al procesar el archivo:", error);
-            uploadMessage.textContent = "❌ Error al procesar los resultados.";
-        } finally {
-            deshabilitarInterfaz(false);
+        if (!fechaInput.value) {
+            uploadMessage.textContent = "❌ Debes seleccionar la fecha de la maratón.";
+            return;
         }
-    };
 
-    reader.readAsArrayBuffer(file);
+        if (fileInput.files.length === 0) {
+            uploadMessage.textContent = "❌ Selecciona un archivo Excel.";
+            return;
+        }
+
+        deshabilitarInterfaz(true);
+        uploadMessage.textContent = "⏳ Procesando resultados... Por favor, espera.";
+
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = async function (event) {
+            try {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: "array" });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const results = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+                await procesarResultados(results);
+            } catch (error) {
+                console.error("Error al procesar el archivo:", error);
+                uploadMessage.textContent = "❌ Error al procesar los resultados.";
+            } finally {
+                deshabilitarInterfaz(false);
+            }
+        };
+
+        reader.readAsArrayBuffer(file);
+    });
 });
 
 // =========================
@@ -292,6 +322,7 @@ function calcularBonus(asistencias) {
     const bonus = [0, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 25, 30]; // Máx. 30 puntos extra
     return bonus[Math.min(asistencias, bonus.length - 1)];
 }
+
 // =========================
 // 🔥 ACTUALIZAR TABLA DE RANKING (Individual y Running Teams) 🔥
 // =========================
@@ -306,62 +337,7 @@ async function actualizarRanking() {
         let totalFechas = 0;
         let fechasReales = [];
 
-        snapshot.forEach(doc => {
-            try {
-                let data = doc.data();
-
-                if (!data.historial || data.historial.every(f => f.posicion === "-" && f.puntos === "-")) return;
-
-                let primeraFechaReal = data.historial.find(f => f.fecha && f.posicion !== "-");
-                if (!primeraFechaReal) return;
-
-                let edad = calcularEdad(data.fechaNacimiento, primeraFechaReal?.fecha);
-                let categoriaEdad = determinarCategoriaEdad(edad);
-                let categoria = data.categoria || "Especial";
-                let categoriaCompleta = `${categoria} - ${categoriaEdad}`;
-
-                if (!atletasPorCategoria[categoriaCompleta]) {
-                    atletasPorCategoria[categoriaCompleta] = [];
-                }
-
-                totalFechas = Math.max(totalFechas, data.historial.length);
-
-                atletasPorCategoria[categoriaCompleta].push({
-                    nombre: `${data.nombre} ${data.apellido}`,
-                    localidad: data.localidad || "Desconocida",
-                    puntos: data.puntos || 0,
-                    asistencias: data.asistencias || 0,
-                    faltas: data.faltas || 0,
-                    historial: data.historial || []
-                });
-
-                for (let i = 0; i < data.historial.length; i++) {
-                    const fecha = data.historial[i]?.fecha || null;
-                    if (!fechasReales[i] && fecha) {
-                        fechasReales[i] = fecha;
-                    }
-                }
-            } catch (error) {
-                console.error(`❌ Error procesando atleta ${doc.id}:`, error);
-            }
-        });
-
-        const torneoRef = doc(db, "torneo", "datos");
-        await updateDoc(torneoRef, { cantidadFechas: totalFechas });
-
-        Object.keys(atletasPorCategoria).forEach(categoria => {
-            atletasPorCategoria[categoria].forEach(atleta => {
-                while (atleta.historial.length < totalFechas) {
-                    atleta.historial.push({ posicion: "-", puntos: "-" });
-                }
-            });
-        });
-
         // 🔹 Panel explicativo del sistema de puntos
-        const infoBtn = document.createElement("button");
-        infoBtn.textContent = "ℹ️ Ver cómo se otorgan los puntos";
-        infoBtn.classList.add("btn-info-puntos");
-
         const infoBox = document.createElement("div");
         infoBox.classList.add("info-box-puntos");
         infoBox.style.display = "none";
@@ -414,37 +390,58 @@ async function actualizarRanking() {
             </ul>
         `;
 
-        infoBtn.addEventListener("click", () => {
-            const visible = infoBox.style.display === "block";
-            infoBox.style.display = visible ? "none" : "block";
-            infoBtn.textContent = visible
-                ? "ℹ️ Ver cómo se otorgan los puntos"
-                : "🔽 Ocultar explicación";
+        rankingContainer.prepend(infoBox);
+
+        snapshot.forEach(doc => {
+            try {
+                let data = doc.data();
+
+                if (!data.historial || data.historial.every(f => f.posicion === "-" && f.puntos === "-")) return;
+
+                let primeraFechaReal = data.historial.find(f => f.fecha && f.posicion !== "-");
+                if (!primeraFechaReal) return;
+
+                let edad = calcularEdad(data.fechaNacimiento, primeraFechaReal?.fecha);
+                let categoriaEdad = determinarCategoriaEdad(edad);
+                let categoria = data.categoria || "Especial";
+                let categoriaCompleta = `${categoria} - ${categoriaEdad}`;
+
+                if (!atletasPorCategoria[categoriaCompleta]) {
+                    atletasPorCategoria[categoriaCompleta] = [];
+                }
+
+                totalFechas = Math.max(totalFechas, data.historial.length);
+
+                atletasPorCategoria[categoriaCompleta].push({
+                    nombre: `${data.nombre} ${data.apellido}`,
+                    localidad: data.localidad || "Desconocida",
+                    puntos: data.puntos || 0,
+                    asistencias: data.asistencias || 0,
+                    faltas: data.faltas || 0,
+                    historial: data.historial || []
+                });
+
+                for (let i = 0; i < data.historial.length; i++) {
+                    const fecha = data.historial[i]?.fecha || null;
+                    if (!fechasReales[i] && fecha) {
+                        fechasReales[i] = fecha;
+                    }
+                }
+            } catch (error) {
+                console.error(`❌ Error procesando atleta ${doc.id}:`, error);
+            }
         });
 
-        rankingContainer.prepend(infoBox);
-        rankingContainer.prepend(infoBtn);
+        const torneoRef = doc(db, "torneo", "datos");
+        await updateDoc(torneoRef, { cantidadFechas: totalFechas });
 
-        // 🔔 Aviso inicial de scroll horizontal
-        const avisoScroll = document.createElement("div");
-        avisoScroll.textContent = "🔄 Desliza hacia los lados para ver más resultados.";
-        avisoScroll.style.position = "sticky";
-        avisoScroll.style.top = "10px";
-        avisoScroll.style.zIndex = "999";
-        avisoScroll.style.backgroundColor = "#fff3cd";
-        avisoScroll.style.color = "#856404";
-        avisoScroll.style.padding = "10px 15px";
-        avisoScroll.style.marginBottom = "10px";
-        avisoScroll.style.border = "1px solid #ffeeba";
-        avisoScroll.style.borderRadius = "8px";
-        avisoScroll.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
-        avisoScroll.style.textAlign = "center";
-        avisoScroll.style.fontWeight = "500";
-        rankingContainer.prepend(avisoScroll);
-
-        setTimeout(() => {
-            avisoScroll.style.display = "none";
-        }, 8000);
+        Object.keys(atletasPorCategoria).forEach(categoria => {
+            atletasPorCategoria[categoria].forEach(atleta => {
+                while (atleta.historial.length < totalFechas) {
+                    atleta.historial.push({ posicion: "-", puntos: "-" });
+                }
+            });
+        });
 
         // 🔹 Renderizar tablas por categoría
         Object.keys(atletasPorCategoria).sort().forEach(categoria => {
@@ -510,25 +507,28 @@ async function actualizarRanking() {
 }
 
 document.getElementById("publicar-ranking").addEventListener("click", async () => {
-    try {
+    await ejecutarOperacionProtegida(async () => {
         const confirmar = confirm("¿Deseás publicar el ranking actual al público?");
         if (!confirmar) return;
 
         const contenedor = document.getElementById("ranking-container");
         const html = contenedor.innerHTML;
 
+        // Obtener el contenido del panel explicativo
+        const panel = contenedor.querySelector('.info-box-puntos');
+        const contenidoPanel = panel ? panel.innerHTML : '';
+
         const refPublico = doc(db, "torneo", "publico");
         await setDoc(refPublico, {
             html: html,
+            contenidoPanel: contenidoPanel,
             fecha: new Date().toISOString()
         });
 
         alert("✅ Ranking publicado para el público.");
-    } catch (error) {
-        console.error("❌ Error al publicar el ranking:", error);
-        alert("❌ Ocurrió un error al publicar el ranking.");
-    }
+    });
 });
+
 // =========================
 // 🔥 ACTUALIZAR RANKING DE RUNNING TEAMS (USANDO LA COLECCIÓN "grupos") 🔥
 // =========================
@@ -620,146 +620,150 @@ async function actualizarRankingTeams() {
 }
 
 document.getElementById("reset-history").addEventListener("click", async () => {
-    const confirmReset = confirm("⚠️ ¿Estás seguro de que quieres resetear todo el historial?");
-    if (!confirmReset) return;
+    await ejecutarOperacionProtegida(async () => {
+        const confirmReset = confirm("⚠️ ¿Estás seguro de que quieres resetear todo el historial?");
+        if (!confirmReset) return;
 
-    const doubleCheck = confirm("⚠️ Esta acción es IRREVERSIBLE. ¿Deseás continuar?");
-    if (!doubleCheck) return;
+        const doubleCheck = confirm("⚠️ Esta acción es IRREVERSIBLE. ¿Deseás continuar?");
+        if (!doubleCheck) return;
 
-    deshabilitarInterfaz(true);
+        deshabilitarInterfaz(true);
 
-    try {
-        const atletasRef = collection(db, "atletas");
-        const snapshot = await getDocs(atletasRef);
-        const docs = snapshot.docs;
+        try {
+            const atletasRef = collection(db, "atletas");
+            const snapshot = await getDocs(atletasRef);
+            const docs = snapshot.docs;
 
-        const chunkSize = 450;
-        for (let i = 0; i < docs.length; i += chunkSize) {
-            const batch = writeBatch(db);
-            const chunk = docs.slice(i, i + chunkSize);
+            const chunkSize = 450;
+            for (let i = 0; i < docs.length; i += chunkSize) {
+                const batch = writeBatch(db);
+                const chunk = docs.slice(i, i + chunkSize);
 
-            chunk.forEach((docSnap) => {
-                const atletaRef = doc(db, "atletas", docSnap.id);
-                batch.update(atletaRef, {
-                    historial: [],
-                    puntos: 0,
-                    asistencias: 0,
-                    faltas: 0,
-                    asistenciasConsecutivas: 0
+                chunk.forEach((docSnap) => {
+                    const atletaRef = doc(db, "atletas", docSnap.id);
+                    batch.update(atletaRef, {
+                        historial: [],
+                        puntos: 0,
+                        asistencias: 0,
+                        faltas: 0,
+                        asistenciasConsecutivas: 0
+                    });
                 });
-            });
 
-            await batch.commit(); // Ejecutamos cada batch por separado
+                await batch.commit(); // Ejecutamos cada batch por separado
+            }
+
+            const torneoRef = doc(db, "torneo", "datos");
+            await updateDoc(torneoRef, { cantidadFechas: 0, fechasProcesadas: [] });
+
+            alert("✅ El torneo ha sido reiniciado.");
+            actualizarRanking();
+        } catch (error) {
+            console.error("❌ Error al resetear el historial:", error);
+            alert("❌ Ocurrió un error al resetear el historial.");
+        } finally {
+            deshabilitarInterfaz(false);
         }
-
-        const torneoRef = doc(db, "torneo", "datos");
-        await updateDoc(torneoRef, { cantidadFechas: 0, fechasProcesadas: [] });
-
-        alert("✅ El torneo ha sido reiniciado.");
-        actualizarRanking();
-    } catch (error) {
-        console.error("❌ Error al resetear el historial:", error);
-        alert("❌ Ocurrió un error al resetear el historial.");
-    } finally {
-        deshabilitarInterfaz(false);
-    }
+    });
 });
 
 // =========================
 // 🔥 DESHACER ÚLTIMA FECHA 🔥
 // =========================
 document.getElementById("undo-last-date").addEventListener("click", async () => {
-    const confirmUndo = confirm("⚠️ ¿Querés eliminar la última fecha?");
-    if (!confirmUndo) return;
+    await ejecutarOperacionProtegida(async () => {
+        const confirmUndo = confirm("⚠️ ¿Querés eliminar la última fecha?");
+        if (!confirmUndo) return;
 
-    const doubleCheck = confirm("⚠️ Esta acción NO se puede deshacer. ¿Confirmás?");
-    if (!doubleCheck) return;
+        const doubleCheck = confirm("⚠️ Esta acción NO se puede deshacer. ¿Confirmás?");
+        if (!doubleCheck) return;
 
-    deshabilitarInterfaz(true);
+        deshabilitarInterfaz(true);
 
-    try {
-        const torneoRef = doc(db, "torneo", "datos");
-        const torneoSnap = await getDoc(torneoRef);
-        const torneoData = torneoSnap.data();
-        const fechas = torneoData.fechasProcesadas || [];
-        const cantidadFechas = torneoData.cantidadFechas || 0;
+        try {
+            const torneoRef = doc(db, "torneo", "datos");
+            const torneoSnap = await getDoc(torneoRef);
+            const torneoData = torneoSnap.data();
+            const fechas = torneoData.fechasProcesadas || [];
+            const cantidadFechas = torneoData.cantidadFechas || 0;
 
-        if (fechas.length === 0 || cantidadFechas === 0) {
-            alert("No hay fechas para deshacer.");
-            return;
-        }
+            if (fechas.length === 0 || cantidadFechas === 0) {
+                alert("No hay fechas para deshacer.");
+                return;
+            }
 
-        const ultimaFecha = fechas[fechas.length - 1];
+            const ultimaFecha = fechas[fechas.length - 1];
 
-        const atletasRef = collection(db, "atletas");
-        const snapshot = await getDocs(atletasRef);
-        const docs = snapshot.docs;
+            const atletasRef = collection(db, "atletas");
+            const snapshot = await getDocs(atletasRef);
+            const docs = snapshot.docs;
 
-        // Dividimos en grupos de 450 atletas para no superar el límite de 500 operaciones
-        const chunkSize = 450;
-        for (let i = 0; i < docs.length; i += chunkSize) {
-            const batch = writeBatch(db);
-            const chunk = docs.slice(i, i + chunkSize);
+            // Dividimos en grupos de 450 atletas para no superar el límite de 500 operaciones
+            const chunkSize = 450;
+            for (let i = 0; i < docs.length; i += chunkSize) {
+                const batch = writeBatch(db);
+                const chunk = docs.slice(i, i + chunkSize);
 
-            chunk.forEach((docSnap) => {
-                const atleta = docSnap.data();
-                const historial = [...(atleta.historial || [])];
+                chunk.forEach((docSnap) => {
+                    const atleta = docSnap.data();
+                    const historial = [...(atleta.historial || [])];
 
-                // Eliminar la última fecha
-                const nuevoHistorial = historial.filter(e => e.fecha !== ultimaFecha);
+                    // Eliminar la última fecha
+                    const nuevoHistorial = historial.filter(e => e.fecha !== ultimaFecha);
 
-                let basePoints = 0;
-                let totalBonus = 0;
-                let asistencias = 0;
-                let faltas = 0;
-                let consec = 0;
+                    let basePoints = 0;
+                    let totalBonus = 0;
+                    let asistencias = 0;
+                    let faltas = 0;
+                    let consec = 0;
 
-                nuevoHistorial.forEach(evento => {
-                    if (evento.puntos === "-") {
-                        faltas++;
-                        consec = 0;
-                    } else {
-                        const pts = parseInt(evento.puntos) || 0;
-                        asistencias++;
-                        consec++;
-                        const bonus = calcularBonus(consec);
-                        evento.bonus = bonus;
-                        totalBonus += bonus;
-                        basePoints += pts;
-                    }
+                    nuevoHistorial.forEach(evento => {
+                        if (evento.puntos === "-") {
+                            faltas++;
+                            consec = 0;
+                        } else {
+                            const pts = parseInt(evento.puntos) || 0;
+                            asistencias++;
+                            consec++;
+                            const bonus = calcularBonus(consec);
+                            evento.bonus = bonus;
+                            totalBonus += bonus;
+                            basePoints += pts;
+                        }
+                    });
+
+                    const total = basePoints + totalBonus;
+                    const atletaRef = doc(db, "atletas", docSnap.id);
+
+                    batch.update(atletaRef, {
+                        historial: nuevoHistorial,
+                        puntos: total,
+                        asistencias,
+                        faltas,
+                        asistenciasConsecutivas: consec
+                    });
                 });
 
-                const total = basePoints + totalBonus;
-                const atletaRef = doc(db, "atletas", docSnap.id);
+                await batch.commit(); // 🔥 Ejecutamos el batch actual
+            }
 
-                batch.update(atletaRef, {
-                    historial: nuevoHistorial,
-                    puntos: total,
-                    asistencias,
-                    faltas,
-                    asistenciasConsecutivas: consec
-                });
+            // Actualizar el documento del torneo con la nueva lista de fechas
+            fechas.pop(); // quitamos la última
+            await updateDoc(torneoRef, {
+                fechasProcesadas: fechas,
+                cantidadFechas: cantidadFechas - 1
             });
 
-            await batch.commit(); // 🔥 Ejecutamos el batch actual
+            alert("✅ Última fecha eliminada correctamente.");
+            actualizarRanking();
+
+        } catch (error) {
+            console.error("❌ Error al deshacer la última fecha:", error);
+            alert("❌ Ocurrió un error. Revisa la consola.");
+        } finally {
+            deshabilitarInterfaz(false);
         }
-
-        // Actualizar el documento del torneo con la nueva lista de fechas
-        fechas.pop(); // quitamos la última
-        await updateDoc(torneoRef, {
-            fechasProcesadas: fechas,
-            cantidadFechas: cantidadFechas - 1
-        });
-
-        alert("✅ Última fecha eliminada correctamente.");
-        actualizarRanking();
-
-    } catch (error) {
-        console.error("❌ Error al deshacer la última fecha:", error);
-        alert("❌ Ocurrió un error. Revisa la consola.");
-    } finally {
-        deshabilitarInterfaz(false);
-    }
+    });
 });
 
 // =========================
@@ -799,4 +803,15 @@ function determinarCategoriaEdad(edad) {
     }
 
     return "70 y más años";
+}
+
+async function verificarPermisoAdmin() {
+    const usuario = JSON.parse(sessionStorage.getItem("usuario"));
+    if (!usuario || !usuario.uid || !usuario.isAdmin) {
+        return false;
+    }
+    // Verifica también en Firestore por seguridad
+    const usuarioRef = doc(db, "usuarios", usuario.uid);
+    const usuarioDoc = await getDoc(usuarioRef);
+    return usuarioDoc.exists() && usuarioDoc.data().isAdmin === true;
 }

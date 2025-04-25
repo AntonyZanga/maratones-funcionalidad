@@ -12,8 +12,12 @@
 <body>
   <header class="header">
     <div class="container header-container">
-      <h1>Panel de Administración</h1>
-      <button id="logout" class="btn btn-secondary">Cerrar Sesión</button>
+      <div class="admin-header-buttons" style="display: flex; gap: 1rem; align-items: center;">
+        <h2 style="margin: 0; font-size: 1.5rem;">Panel Administrativo</h2>
+        <a href="index.html" id="volver-index" class="btn btn-accent">Volver al Inicio</a>
+        <a href="certificados.html" id="btn-certificados" class="btn btn-accent"><i class="fas fa-file-medical"></i> Ver Certificados Médicos</a>
+        <button id="logout" class="btn btn-secondary">Cerrar Sesión</button>
+      </div>
     </div>
   </header>
 
@@ -54,9 +58,18 @@
         </div>
       </div>
     </section>
+
+    <!-- Panel de Certificados Médicos -->
+    <!-- (Eliminado: ahora está en certificados.html) -->
+
+    <!-- Modal para ver certificado -->
+    <!-- (Eliminado: ahora está en certificados.html) -->
   </main>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script type="module" src="admin.js"></script>
+  <!-- <script type="module" src="admin-certificados.js"></script> -->
+  <!-- <script src="https://unpkg.com/html5-qrcode"></script> -->
+  <!-- <script> ... </script> -->
 </body>
 </html>

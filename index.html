@@ -3,67 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bienvenido a Maratones del Sudeste</title>
+    <title>Login - Maratones</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1>Maratones del Sudeste</h1>
-            <div id="user-info" class="hidden">
-                <p>Bienvenido, <span id="user-name"></span></p>
-                <a href="perfil.html" class="btn">Ver Perfil</a>
-                <button id="logout" class="btn">Cerrar sesión</button>
+    <div class="container">
+        <header id="main-header" style="display:none;">
+            <h1>Maratones</h1>
+        </header>
+
+        <div class="welcome-section">
+            <div style="display: flex; justify-content: center; align-items: center; margin: 2rem 0 3rem 0;">
+                <img src="assets/images/logo.png" alt="Logo" style="height: 120px; width: auto; max-width: 100%;">
+            </div>
+            
+            <h2>¡Bienvenido al Ranking de Maratones del Sudeste!</h2>
+            <p class="welcome-text">Forma parte de la comunidad más grande de corredores de la región.</p>
+
+            <div class="features-container">
+                <div class="feature-card">
+                    <i class="fas fa-trophy"></i>
+                    <h3>Seguí tus logros</h3>
+                    <p>Accedé a tu historial de carreras y mirá tu progreso en el ranking</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-users"></i>
+                    <h3>Comunidad Runner</h3>
+                    <p>Conectate con otros corredores y compartí tu pasión por el running</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-medal"></i>
+                    <h3>Sistema de Puntos</h3>
+                    <p>Sumá puntos en cada carrera y competí por los primeros puestos</p>
+                </div>
+            </div>
+
+            <div class="login-section">
+                <h3>Comenzá a participar en 3 simples pasos</h3>
+                <div class="steps-container">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <p>Iniciá sesión con tu cuenta de Google</p>
+                        <small>Es rápido, seguro y gratuito</small>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <p>Completá tu perfil de corredor</p>
+                        <small>Solo te llevará un minuto</small>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <p>¡Listo para competir!</p>
+                        <small>Participá en las próximas carreras</small>
+                    </div>
+                </div>
+
+                <div id="login-container">
+                    <button id="google-login" class="google-btn">
+                        <img src="https://www.google.com/favicon.ico" alt="Google" class="google-icon">
+                        Iniciar Sesión con Google
+                    </button>
+                </div>
+            </div>
+
+            <div class="public-ranking-section">
+                <a href="ranking.html" class="btn btn-accent btn-public-ranking">
+                    <i class="fas fa-list-ol"></i> Ver último ranking publicado
+                </a>
             </div>
         </div>
-    </header>
-    <main class="container">
-        <section id="login-section" class="card">
-            <h2>Login</h2>
-            <form id="login-form">
-                <div class="form-group">
-                    <label for="login-dni">DNI:</label>
-                    <input type="text" id="login-dni" required>
-                </div>
-                <div class="form-group">
-                    <label for="login-password">Contraseña:</label>
-                    <input type="password" id="login-password" required>
-                </div>
-                <button type="submit" class="btn">Iniciar sesión</button>
-                <p id="login-message"></p>
-            </form>
-            <p><a href="#" id="forgot-password-link">¿Olvidaste tu contraseña?</a></p>
-        </section>
-        
-        <section id="password-recovery" class="card hidden">
-            <h2>Recuperar Contraseña</h2>
-            <form id="recovery-form">
-                <div class="form-group">
-                    <label for="dni-recovery">DNI:</label>
-                    <input type="text" id="dni-recovery" required>
-                </div>
-                <div class="form-group">
-                    <label for="fecha-nacimiento-recovery">Fecha de Nacimiento:</label>
-                    <input type="date" id="fecha-nacimiento-recovery" required>
-                </div>
-                <button id="check-dni" class="btn">Verificar</button>
-                <div id="new-password-section" class="hidden">
-                    <div class="form-group">
-                        <label for="new-password">Nueva Contraseña (mínimo 6 dígitos):</label>
-                        <input type="password" id="new-password" minlength="6" required>
+
+        <!-- Información del usuario (inicialmente oculta) -->
+        <section id="user-info" class="user-info" style="display: none;">
+            <div class="container header-container">
+                <div class="user-profile">
+                    <div class="user-avatar-container">
+                        <img id="user-photo" class="user-avatar" alt="Foto de perfil">
                     </div>
-                    <button id="update-password" class="btn">Actualizar Contraseña</button>
+                    <div class="user-details">
+                        <span id="user-name" class="user-name"></span>
+                        <div class="user-stats-header">
+                            <span class="user-stat">
+                                <i class="fas fa-star"></i>
+                                <span id="header-puntos">0</span> pts
+                            </span>
+                            <span class="user-stat">
+                                <i class="fas fa-bolt"></i>
+                                <span id="header-bonus">0</span> bonus
+                            </span>
+                        </div>
+                    </div>
+                    <a href="perfil.html" id="ver-perfil-btn" class="ver-perfil-link" title="Ver mi perfil">
+                        <i class="fas fa-user-circle"></i> <span class="perfil-link-text">Perfil</span>
+                    </a>
+                    <a href="admin.html" id="admin-btn" class="ver-perfil-link" style="display:none; margin-left: 0.7em;">
+                        <i class="fas fa-cog"></i> <span class="perfil-link-text">Administrar</span>
+                    </a>
                 </div>
-                <p id="recovery-message"></p>
-            </form>
+                <button id="logout" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Cerrar Sesión</span>
+                </button>
+            </div>
         </section>
-        
-        <button id="btn-inscribirse" class="btn">Inscribirse</button>
-    </main>
-    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+
+        <!-- Panel explicativo del sistema de puntos y bonus -->
+        <div id="panel-puntos" style="display:none;"></div>
+        <button id="btn-info-puntos" class="btn-info-puntos" style="display:none; margin: 0 auto 1.5rem auto;">ℹ️ Ver cómo se otorgan los puntos</button>
+
+        <!-- Agregar div para mensajes -->
+        <div id="mensaje" class="mensaje"></div>
+    </div>
+
+    <!-- Scripts de Firebase -->
     <script type="module" src="config.js"></script>
     <script type="module" src="login.js"></script>
 </body>
